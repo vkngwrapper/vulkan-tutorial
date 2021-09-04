@@ -16,6 +16,7 @@ import (
 	"github.com/palantir/stacktrace"
 	"github.com/veandco/go-sdl2/sdl"
 	"log"
+	"unsafe"
 )
 
 //go:embed shaders
@@ -41,6 +42,46 @@ type SwapChainSupportDetails struct {
 	Capabilities *ext_surface.Capabilities
 	Formats      []ext_surface.Format
 	PresentModes []ext_surface.PresentMode
+}
+
+type Vertex struct {
+	X, Y    float32 // Could also be Position Vector2 - as long as Vector2 is a value, not a pointer
+	R, G, B float32 // Could also be Color Vector3
+}
+
+func getVertexBindingDescription() []pipeline.VertexBindingDescription {
+	v := Vertex{}
+	return []pipeline.VertexBindingDescription{
+		{
+			Binding:   0,
+			Stride:    unsafe.Sizeof(v),
+			InputRate: pipeline.RateVertex,
+		},
+	}
+}
+
+func getVertexAttributeDescriptions() []pipeline.VertexAttributeDescription {
+	v := Vertex{}
+	return []pipeline.VertexAttributeDescription{
+		{
+			Binding:  0,
+			Location: 0,
+			Format:   core.FormatR32G32SignedFloat,
+			Offset:   unsafe.Offsetof(v.X),
+		},
+		{
+			Binding:  0,
+			Location: 1,
+			Format:   core.FormatR32G32B32SignedFloat,
+			Offset:   unsafe.Offsetof(v.R),
+		},
+	}
+}
+
+var vertices = []Vertex{
+	{X: 0, Y: -0.5, R: 1, G: 0, B: 0},
+	{X: 0.5, Y: 0.5, R: 0, G: 1, B: 0},
+	{X: -0.5, Y: 0.5, R: 0, G: 0, B: 1},
 }
 
 type HelloTriangleApplication struct {
@@ -682,7 +723,10 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 	}
 	defer fragShader.Destroy()
 
-	vertexInput := &pipeline.VertexInputOptions{}
+	vertexInput := &pipeline.VertexInputOptions{
+		VertexBindingDescriptions:   getVertexBindingDescription(),
+		VertexAttributeDescriptions: getVertexAttributeDescriptions(),
+	}
 
 	inputAssembly := &pipeline.InputAssemblyOptions{
 		Topology:               core.TopologyTriangleList,

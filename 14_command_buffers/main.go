@@ -56,7 +56,7 @@ type HelloTriangleApplication struct {
 
 	swapchain             *ext_swapchain.Swapchain
 	swapchainImages       []*VKng.Image
-	swapchainImageFormat  core.ColorFormat
+	swapchainImageFormat  core.DataFormat
 	swapchainExtent       core.Extent2D
 	swapchainImageViews   []*VKng.ImageView
 	swapchainFramebuffers []*render_pass.Framebuffer
