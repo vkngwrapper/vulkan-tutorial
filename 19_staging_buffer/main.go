@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"embed"
 	"encoding/binary"
 	"fmt"
@@ -888,52 +887,104 @@ func (app *HelloTriangleApplication) createCommandPool() error {
 func (app *HelloTriangleApplication) createVertexBuffer() error {
 	var err error
 	bufferSize := binary.Size(vertices)
-	app.vertexBuffer, _, err = app.device.CreateBuffer(app.allocator, &VKng.BufferOptions{
-		BufferSize:  bufferSize,
-		Usages:      core.UsageVertexBuffer,
+
+	stagingBuffer, stagingBufferMemory, err := app.createBuffer(bufferSize, core.UsageTransferSrc, VKng.MemoryHostVisible|VKng.MemoryHostCoherent)
+	if stagingBuffer != nil {
+		defer stagingBuffer.Destroy()
+	}
+	if stagingBufferMemory != nil {
+		defer stagingBufferMemory.Free()
+	}
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stagingBufferMemory.WriteData(0, vertices)
+	if err != nil {
+		return err
+	}
+
+	app.vertexBuffer, app.vertexBufferMemory, err = app.createBuffer(bufferSize, core.UsageTransferDst|core.UsageVertexBuffer, VKng.MemoryDeviceLocal)
+	if err != nil {
+		return err
+	}
+
+	return app.copyBuffer(stagingBuffer, app.vertexBuffer, bufferSize)
+}
+
+func (app *HelloTriangleApplication) createBuffer(size int, usage core.BufferUsages, properties VKng.MemoryPropertyFlags) (*VKng.Buffer, *VKng.DeviceMemory, error) {
+	buffer, _, err := app.device.CreateBuffer(app.allocator, &VKng.BufferOptions{
+		BufferSize:  size,
+		Usages:      usage,
 		SharingMode: core.SharingExclusive,
 	})
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
-	memRequirements := app.vertexBuffer.MemoryRequirements(app.allocator)
+	memRequirements := buffer.MemoryRequirements(app.allocator)
 
-	memoryTypeIndex, err := app.findMemoryType(memRequirements.MemoryType, VKng.MemoryHostVisible|VKng.MemoryHostCoherent)
+	memoryTypeIndex, err := app.findMemoryType(memRequirements.MemoryType, properties)
 	if err != nil {
-		return err
+		return buffer, nil, err
 	}
 
-	app.vertexBufferMemory, _, err = app.device.AllocateMemory(app.allocator, &VKng.DeviceMemoryOptions{
+	memory, _, err := app.device.AllocateMemory(app.allocator, &VKng.DeviceMemoryOptions{
 		AllocationSize:  memRequirements.Size,
 		MemoryTypeIndex: memoryTypeIndex,
 	})
 	if err != nil {
-		return err
+		return buffer, nil, err
 	}
 
-	_, err = app.vertexBuffer.BindBufferMemory(app.vertexBufferMemory, 0)
+	_, err = buffer.BindBufferMemory(memory, 0)
+	return buffer, memory, err
+}
+
+func (app *HelloTriangleApplication) copyBuffer(srcBuffer *VKng.Buffer, dstBuffer *VKng.Buffer, size int) error {
+	buffers, _, err := commands.CreateCommandBuffers(app.allocator, app.device, &commands.CommandBufferOptions{
+		Level:       core.LevelPrimary,
+		BufferCount: 1,
+		CommandPool: app.commandPool,
+	})
 	if err != nil {
 		return err
 	}
 
-	memory, _, err := app.vertexBufferMemory.MapMemory(0, bufferSize)
+	buffer := buffers[0]
+	_, err = buffer.Begin(app.allocator, &commands.BeginOptions{
+		Flags: commands.OneTimeSubmit,
+	})
 	if err != nil {
 		return err
 	}
-	defer app.vertexBufferMemory.UnmapMemory()
+	defer buffer.Destroy()
 
-	dataBuffer := unsafe.Slice((*byte)(memory), bufferSize)
+	buffer.CmdCopyBuffer(app.allocator, srcBuffer, dstBuffer, []commands.BufferCopy{
+		{
+			SrcOffset: 0,
+			DstOffset: 0,
+			Size:      size,
+		},
+	})
 
-	buf := &bytes.Buffer{}
-	err = binary.Write(buf, core.ByteOrder, vertices)
+	_, err = buffer.End()
 	if err != nil {
 		return err
 	}
 
-	copy(dataBuffer, buf.Bytes())
+	_, err = commands.SubmitToQueue(app.allocator, app.graphicsQueue, nil, []*commands.SubmitOptions{
+		{
+			CommandBuffers: []*commands.CommandBuffer{buffer},
+		},
+	})
+	if err != nil {
+		return err
+	}
 
-	return nil
+	_, err = app.graphicsQueue.WaitForIdle()
+	return err
 }
 
 func (app *HelloTriangleApplication) findMemoryType(typeFilter uint32, properties VKng.MemoryPropertyFlags) (int, error) {
