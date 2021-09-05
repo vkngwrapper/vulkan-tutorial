@@ -117,7 +117,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 
 	// Add extensions
 	sdlExtensions := app.window.VulkanGetInstanceExtensions()
-	extensions, err := VKng.AvailableExtensions(app.allocator)
+	extensions, _, err := VKng.AvailableExtensions(app.allocator)
 	if err != nil {
 		return err
 	}
@@ -135,7 +135,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 	}
 
 	// Add layers
-	layers, err := VKng.AvailableLayers(app.allocator)
+	layers, _, err := VKng.AvailableLayers(app.allocator)
 	if err != nil {
 		return err
 	}
@@ -153,7 +153,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		instanceOptions.Next = app.debugMessengerOptions()
 	}
 
-	app.instance, err = VKng.CreateInstance(app.allocator, instanceOptions)
+	app.instance, _, err = VKng.CreateInstance(app.allocator, instanceOptions)
 	if err != nil {
 		return err
 	}
@@ -175,7 +175,7 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 	}
 
 	var err error
-	app.debugMessenger, err = ext_debugutils.CreateMessenger(app.allocator, app.instance, app.debugMessengerOptions())
+	app.debugMessenger, _, err = ext_debugutils.CreateMessenger(app.allocator, app.instance, app.debugMessengerOptions())
 	if err != nil {
 		return err
 	}
@@ -184,7 +184,7 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 }
 
 func (app *HelloTriangleApplication) pickPhysicalDevice() error {
-	physicalDevices, err := app.instance.PhysicalDevices(app.allocator)
+	physicalDevices, _, err := app.instance.PhysicalDevices(app.allocator)
 	if err != nil {
 		return err
 	}

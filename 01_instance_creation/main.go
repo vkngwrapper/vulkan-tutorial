@@ -87,7 +87,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 
 	// Add extensions
 	sdlExtensions := app.window.VulkanGetInstanceExtensions()
-	extensions, err := VKng.AvailableExtensions(app.allocator)
+	extensions, _, err := VKng.AvailableExtensions(app.allocator)
 	if err != nil {
 		return err
 	}
@@ -100,7 +100,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		instanceOptions.ExtensionNames = append(instanceOptions.ExtensionNames, ext)
 	}
 
-	app.instance, err = VKng.CreateInstance(app.allocator, instanceOptions)
+	app.instance, _, err = VKng.CreateInstance(app.allocator, instanceOptions)
 	if err != nil {
 		return err
 	}
