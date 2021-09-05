@@ -80,10 +80,13 @@ func getVertexAttributeDescriptions() []pipeline.VertexAttributeDescription {
 }
 
 var vertices = []Vertex{
-	{X: 0, Y: -0.5, R: 1, G: 0, B: 0},
-	{X: 0.5, Y: 0.5, R: 0, G: 1, B: 0},
-	{X: -0.5, Y: 0.5, R: 0, G: 0, B: 1},
+	{X: -0.5, Y: -0.5, R: 1, G: 0, B: 0},
+	{X: 0.5, Y: -0.5, R: 0, G: 1, B: 0},
+	{X: 0.5, Y: 0.5, R: 0, G: 0, B: 1},
+	{X: -0.5, Y: 0.5, R: 1, G: 1, B: 1},
 }
+
+var indices = []uint16{0, 1, 2, 2, 3, 0}
 
 type HelloTriangleApplication struct {
 	allocator cgoalloc.Allocator
@@ -121,6 +124,8 @@ type HelloTriangleApplication struct {
 
 	vertexBuffer       *VKng.Buffer
 	vertexBufferMemory *VKng.DeviceMemory
+	indexBuffer        *VKng.Buffer
+	indexBufferMemory  *VKng.DeviceMemory
 }
 
 func (app *HelloTriangleApplication) Run() error {
@@ -213,6 +218,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
 		return err
 	}
 
+	err = app.createIndexBuffer()
+	if err != nil {
+		return err
+	}
+
 	err = app.createCommandBuffers()
 	if err != nil {
 		return err
@@ -297,6 +307,14 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
 
 func (app *HelloTriangleApplication) cleanup() {
 	app.cleanupSwapChain()
+
+	if app.indexBuffer != nil {
+		app.indexBuffer.Destroy()
+	}
+
+	if app.indexBufferMemory != nil {
+		app.indexBufferMemory.Free()
+	}
 
 	if app.vertexBuffer != nil {
 		app.vertexBuffer.Destroy()
@@ -913,6 +931,34 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
 	return app.copyBuffer(stagingBuffer, app.vertexBuffer, bufferSize)
 }
 
+func (app *HelloTriangleApplication) createIndexBuffer() error {
+	bufferSize := binary.Size(indices)
+
+	stagingBuffer, stagingBufferMemory, err := app.createBuffer(bufferSize, core.UsageTransferSrc, VKng.MemoryHostVisible|VKng.MemoryHostCoherent)
+	if stagingBuffer != nil {
+		defer stagingBuffer.Destroy()
+	}
+	if stagingBufferMemory != nil {
+		defer stagingBufferMemory.Free()
+	}
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stagingBufferMemory.WriteData(0, indices)
+	if err != nil {
+		return err
+	}
+
+	app.indexBuffer, app.indexBufferMemory, err = app.createBuffer(bufferSize, core.UsageTransferDst|core.UsageIndexBuffer, VKng.MemoryDeviceLocal)
+	if err != nil {
+		return err
+	}
+
+	return app.copyBuffer(stagingBuffer, app.indexBuffer, bufferSize)
+}
+
 func (app *HelloTriangleApplication) createBuffer(size int, usage core.BufferUsages, properties VKng.MemoryPropertyFlags) (*VKng.Buffer, *VKng.DeviceMemory, error) {
 	buffer, _, err := app.device.CreateBuffer(app.allocator, &VKng.BufferOptions{
 		BufferSize:  size,
@@ -1036,7 +1082,8 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
 
 		buffer.CmdBindPipeline(core.BindGraphics, app.graphicsPipeline)
 		buffer.CmdBindVertexBuffers(app.allocator, 0, []*VKng.Buffer{app.vertexBuffer}, []int{0})
-		buffer.CmdDraw(len(vertices), 1, 0, 0)
+		buffer.CmdBindIndexBuffer(app.indexBuffer, 0, core.IndexUInt16)
+		buffer.CmdDrawIndexed(len(indices), 1, 0, 0, 0)
 		buffer.CmdEndRenderPass()
 
 		_, err = buffer.End()

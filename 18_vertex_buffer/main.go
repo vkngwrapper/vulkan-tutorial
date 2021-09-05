@@ -984,7 +984,7 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
 		}
 
 		buffer.CmdBindPipeline(core.BindGraphics, app.graphicsPipeline)
-		buffer.CmdBindVertexBuffers(app.allocator, 0, []*VKng.Buffer{app.vertexBuffer}, []uint64{0})
+		buffer.CmdBindVertexBuffers(app.allocator, 0, []*VKng.Buffer{app.vertexBuffer}, []int{0})
 		buffer.CmdDraw(len(vertices), 1, 0, 0)
 		buffer.CmdEndRenderPass()
 
