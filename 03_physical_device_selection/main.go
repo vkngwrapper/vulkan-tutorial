@@ -26,10 +26,10 @@ type HelloTriangleApplication struct {
 	allocator cgoalloc.Allocator
 	window    *sdl.Window
 
-	instance       *VKng.Instance
+	instance       *core.Instance
 	debugMessenger *ext_debugutils.Messenger
 
-	physicalDevice *VKng.PhysicalDevice
+	physicalDevice *core.PhysicalDevice
 }
 
 func (app *HelloTriangleApplication) Run() error {
@@ -107,17 +107,17 @@ func (app *HelloTriangleApplication) cleanup() {
 }
 
 func (app *HelloTriangleApplication) createInstance() error {
-	instanceOptions := &VKng.InstanceOptions{
+	instanceOptions := &core.InstanceOptions{
 		ApplicationName:    "Hello Triangle",
-		ApplicationVersion: core.CreateVersion(1, 0, 0),
+		ApplicationVersion: VKng.CreateVersion(1, 0, 0),
 		EngineName:         "No Engine",
-		EngineVersion:      core.CreateVersion(1, 0, 0),
-		VulkanVersion:      core.Vulkan1_2,
+		EngineVersion:      VKng.CreateVersion(1, 0, 0),
+		VulkanVersion:      VKng.Vulkan1_2,
 	}
 
 	// Add extensions
 	sdlExtensions := app.window.VulkanGetInstanceExtensions()
-	extensions, _, err := VKng.AvailableExtensions(app.allocator)
+	extensions, _, err := core.AvailableExtensions(app.allocator)
 	if err != nil {
 		return err
 	}
@@ -135,7 +135,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 	}
 
 	// Add layers
-	layers, _, err := VKng.AvailableLayers(app.allocator)
+	layers, _, err := core.AvailableLayers(app.allocator)
 	if err != nil {
 		return err
 	}
@@ -153,7 +153,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		instanceOptions.Next = app.debugMessengerOptions()
 	}
 
-	app.instance, _, err = VKng.CreateInstance(app.allocator, instanceOptions)
+	app.instance, _, err = core.CreateInstance(app.allocator, instanceOptions)
 	if err != nil {
 		return err
 	}
@@ -203,7 +203,7 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
 	return nil
 }
 
-func (app *HelloTriangleApplication) isDeviceSuitable(device *VKng.PhysicalDevice) bool {
+func (app *HelloTriangleApplication) isDeviceSuitable(device *core.PhysicalDevice) bool {
 	indices, err := app.findQueueFamilies(device)
 	if err != nil {
 		return false
@@ -212,7 +212,7 @@ func (app *HelloTriangleApplication) isDeviceSuitable(device *VKng.PhysicalDevic
 	return indices.IsComplete()
 }
 
-func (app *HelloTriangleApplication) findQueueFamilies(device *VKng.PhysicalDevice) (QueueFamilyIndices, error) {
+func (app *HelloTriangleApplication) findQueueFamilies(device *core.PhysicalDevice) (QueueFamilyIndices, error) {
 	indices := QueueFamilyIndices{}
 	queueFamilies, err := device.QueueFamilyProperties(app.allocator)
 	if err != nil {
@@ -220,7 +220,7 @@ func (app *HelloTriangleApplication) findQueueFamilies(device *VKng.PhysicalDevi
 	}
 
 	for queueFamilyIdx, queueFamily := range queueFamilies {
-		if (queueFamily.Flags & core.Graphics) != 0 {
+		if (queueFamily.Flags & VKng.Graphics) != 0 {
 			indices.GraphicsFamily = new(int)
 			*indices.GraphicsFamily = queueFamilyIdx
 		}

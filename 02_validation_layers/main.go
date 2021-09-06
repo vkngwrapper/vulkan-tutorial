@@ -18,7 +18,7 @@ type HelloTriangleApplication struct {
 	allocator cgoalloc.Allocator
 	window    *sdl.Window
 
-	instance       *VKng.Instance
+	instance       *core.Instance
 	debugMessenger *ext_debugutils.Messenger
 }
 
@@ -92,17 +92,17 @@ func (app *HelloTriangleApplication) cleanup() {
 }
 
 func (app *HelloTriangleApplication) createInstance() error {
-	instanceOptions := &VKng.InstanceOptions{
+	instanceOptions := &core.InstanceOptions{
 		ApplicationName:    "Hello Triangle",
-		ApplicationVersion: core.CreateVersion(1, 0, 0),
+		ApplicationVersion: VKng.CreateVersion(1, 0, 0),
 		EngineName:         "No Engine",
-		EngineVersion:      core.CreateVersion(1, 0, 0),
-		VulkanVersion:      core.Vulkan1_2,
+		EngineVersion:      VKng.CreateVersion(1, 0, 0),
+		VulkanVersion:      VKng.Vulkan1_2,
 	}
 
 	// Add extensions
 	sdlExtensions := app.window.VulkanGetInstanceExtensions()
-	extensions, _, err := VKng.AvailableExtensions(app.allocator)
+	extensions, _, err := core.AvailableExtensions(app.allocator)
 	if err != nil {
 		return err
 	}
@@ -120,7 +120,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 	}
 
 	// Add layers
-	layers, _, err := VKng.AvailableLayers(app.allocator)
+	layers, _, err := core.AvailableLayers(app.allocator)
 	if err != nil {
 		return err
 	}
@@ -138,7 +138,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		instanceOptions.Next = app.debugMessengerOptions()
 	}
 
-	app.instance, _, err = VKng.CreateInstance(app.allocator, instanceOptions)
+	app.instance, _, err = core.CreateInstance(app.allocator, instanceOptions)
 	if err != nil {
 		return err
 	}
