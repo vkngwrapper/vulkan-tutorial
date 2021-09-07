@@ -2,15 +2,15 @@ package main
 
 import (
 	"embed"
-	"github.com/CannibalVox/VKng"
-	"github.com/CannibalVox/VKng/commands"
 	"github.com/CannibalVox/VKng/core"
-	"github.com/CannibalVox/VKng/ext_debugutils"
-	"github.com/CannibalVox/VKng/ext_surface"
-	"github.com/CannibalVox/VKng/ext_surface_sdl2"
-	"github.com/CannibalVox/VKng/ext_swapchain"
-	"github.com/CannibalVox/VKng/pipeline"
-	"github.com/CannibalVox/VKng/render_pass"
+	commands2 "github.com/CannibalVox/VKng/core/commands"
+	pipeline2 "github.com/CannibalVox/VKng/core/pipeline"
+	render_pass2 "github.com/CannibalVox/VKng/core/render_pass"
+	"github.com/CannibalVox/VKng/core/resource"
+	ext_debugutils2 "github.com/CannibalVox/VKng/extensions/debugutils"
+	ext_surface2 "github.com/CannibalVox/VKng/extensions/surface"
+	ext_surface_sdl22 "github.com/CannibalVox/VKng/extensions/surface_sdl"
+	ext_swapchain2 "github.com/CannibalVox/VKng/extensions/swapchain"
 	"github.com/CannibalVox/cgoalloc"
 	"github.com/palantir/stacktrace"
 	"github.com/veandco/go-sdl2/sdl"
@@ -23,7 +23,7 @@ var shaders embed.FS
 const MaxFramesInFlight = 2
 
 var validationLayers = []string{"VK_LAYER_KHRONOS_validation"}
-var deviceExtensions = []string{ext_swapchain.ExtensionName}
+var deviceExtensions = []string{ext_swapchain2.ExtensionName}
 
 const enableValidationLayers = true
 
@@ -37,43 +37,43 @@ func (i *QueueFamilyIndices) IsComplete() bool {
 }
 
 type SwapChainSupportDetails struct {
-	Capabilities *ext_surface.Capabilities
-	Formats      []ext_surface.Format
-	PresentModes []ext_surface.PresentMode
+	Capabilities *ext_surface2.Capabilities
+	Formats      []ext_surface2.Format
+	PresentModes []ext_surface2.PresentMode
 }
 
 type HelloTriangleApplication struct {
 	allocator cgoalloc.Allocator
 	window    *sdl.Window
 
-	instance       *core.Instance
-	debugMessenger *ext_debugutils.Messenger
-	surface        *ext_surface.Surface
+	instance       *resource.Instance
+	debugMessenger *ext_debugutils2.Messenger
+	surface        *ext_surface2.Surface
 
-	physicalDevice *core.PhysicalDevice
-	device         *core.Device
+	physicalDevice *resource.PhysicalDevice
+	device         *resource.Device
 
-	graphicsQueue *core.Queue
-	presentQueue  *core.Queue
+	graphicsQueue *resource.Queue
+	presentQueue  *resource.Queue
 
-	swapchain             *ext_swapchain.Swapchain
-	swapchainImages       []*core.Image
-	swapchainImageFormat  VKng.DataFormat
-	swapchainExtent       VKng.Extent2D
-	swapchainImageViews   []*core.ImageView
-	swapchainFramebuffers []*render_pass.Framebuffer
+	swapchain             *ext_swapchain2.Swapchain
+	swapchainImages       []*resource.Image
+	swapchainImageFormat  core.DataFormat
+	swapchainExtent       core.Extent2D
+	swapchainImageViews   []*resource.ImageView
+	swapchainFramebuffers []*render_pass2.Framebuffer
 
-	renderPass       *render_pass.RenderPass
-	pipelineLayout   *pipeline.PipelineLayout
-	graphicsPipeline *pipeline.Pipeline
+	renderPass       *render_pass2.RenderPass
+	pipelineLayout   *pipeline2.PipelineLayout
+	graphicsPipeline *pipeline2.Pipeline
 
-	commandPool    *commands.CommandPool
-	commandBuffers []*commands.CommandBuffer
+	commandPool    *commands2.CommandPool
+	commandBuffers []*commands2.CommandBuffer
 
-	imageAvailableSemaphore []*core.Semaphore
-	renderFinishedSemaphore []*core.Semaphore
-	inFlightFence           []*core.Fence
-	imagesInFlight          []*core.Fence
+	imageAvailableSemaphore []*resource.Semaphore
+	renderFinishedSemaphore []*resource.Semaphore
+	inFlightFence           []*resource.Fence
+	imagesInFlight          []*resource.Fence
 	currentFrame            int
 }
 
@@ -250,17 +250,17 @@ func (app *HelloTriangleApplication) cleanup() {
 }
 
 func (app *HelloTriangleApplication) createInstance() error {
-	instanceOptions := &core.InstanceOptions{
+	instanceOptions := &resource.InstanceOptions{
 		ApplicationName:    "Hello Triangle",
-		ApplicationVersion: VKng.CreateVersion(1, 0, 0),
+		ApplicationVersion: core.CreateVersion(1, 0, 0),
 		EngineName:         "No Engine",
-		EngineVersion:      VKng.CreateVersion(1, 0, 0),
-		VulkanVersion:      VKng.Vulkan1_2,
+		EngineVersion:      core.CreateVersion(1, 0, 0),
+		VulkanVersion:      core.Vulkan1_2,
 	}
 
 	// Add extensions
 	sdlExtensions := app.window.VulkanGetInstanceExtensions()
-	extensions, _, err := core.AvailableExtensions(app.allocator)
+	extensions, _, err := resource.AvailableExtensions(app.allocator)
 	if err != nil {
 		return err
 	}
@@ -274,11 +274,11 @@ func (app *HelloTriangleApplication) createInstance() error {
 	}
 
 	if enableValidationLayers {
-		instanceOptions.ExtensionNames = append(instanceOptions.ExtensionNames, ext_debugutils.ExtensionName)
+		instanceOptions.ExtensionNames = append(instanceOptions.ExtensionNames, ext_debugutils2.ExtensionName)
 	}
 
 	// Add layers
-	layers, _, err := core.AvailableLayers(app.allocator)
+	layers, _, err := resource.AvailableLayers(app.allocator)
 	if err != nil {
 		return err
 	}
@@ -296,7 +296,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		instanceOptions.Next = app.debugMessengerOptions()
 	}
 
-	app.instance, _, err = core.CreateInstance(app.allocator, instanceOptions)
+	app.instance, _, err = resource.CreateInstance(app.allocator, instanceOptions)
 	if err != nil {
 		return err
 	}
@@ -304,10 +304,10 @@ func (app *HelloTriangleApplication) createInstance() error {
 	return nil
 }
 
-func (app *HelloTriangleApplication) debugMessengerOptions() *ext_debugutils.Options {
-	return &ext_debugutils.Options{
-		CaptureSeverities: ext_debugutils.SeverityError | ext_debugutils.SeverityWarning,
-		CaptureTypes:      ext_debugutils.TypeAll,
+func (app *HelloTriangleApplication) debugMessengerOptions() *ext_debugutils2.Options {
+	return &ext_debugutils2.Options{
+		CaptureSeverities: ext_debugutils2.SeverityError | ext_debugutils2.SeverityWarning,
+		CaptureTypes:      ext_debugutils2.TypeAll,
 		Callback:          app.logDebug,
 	}
 }
@@ -318,7 +318,7 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 	}
 
 	var err error
-	app.debugMessenger, _, err = ext_debugutils.CreateMessenger(app.allocator, app.instance, app.debugMessengerOptions())
+	app.debugMessenger, _, err = ext_debugutils2.CreateMessenger(app.allocator, app.instance, app.debugMessengerOptions())
 	if err != nil {
 		return err
 	}
@@ -327,7 +327,7 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 }
 
 func (app *HelloTriangleApplication) createSurface() error {
-	surface, _, err := ext_surface_sdl2.CreateSurface(app.allocator, app.instance, &ext_surface_sdl2.CreationOptions{
+	surface, _, err := ext_surface_sdl22.CreateSurface(app.allocator, app.instance, &ext_surface_sdl22.CreationOptions{
 		Window: app.window,
 	})
 	if err != nil {
@@ -369,10 +369,10 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		uniqueQueueFamilies = append(uniqueQueueFamilies, *indices.PresentFamily)
 	}
 
-	var queueFamilyOptions []*core.QueueFamilyOptions
+	var queueFamilyOptions []*resource.QueueFamilyOptions
 	queuePriority := float32(1.0)
 	for _, queueFamily := range uniqueQueueFamilies {
-		queueFamilyOptions = append(queueFamilyOptions, &core.QueueFamilyOptions{
+		queueFamilyOptions = append(queueFamilyOptions, &resource.QueueFamilyOptions{
 			QueueFamilyIndex: queueFamily,
 			QueuePriorities:  []float32{queuePriority},
 		})
@@ -386,9 +386,9 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		layerNames = append(layerNames, validationLayers...)
 	}
 
-	app.device, _, err = app.physicalDevice.CreateDevice(app.allocator, &core.DeviceOptions{
+	app.device, _, err = app.physicalDevice.CreateDevice(app.allocator, &resource.DeviceOptions{
 		QueueFamilies:   queueFamilyOptions,
-		EnabledFeatures: &VKng.PhysicalDeviceFeatures{},
+		EnabledFeatures: &core.PhysicalDeviceFeatures{},
 		ExtensionNames:  extensionNames,
 		LayerNames:      layerNames,
 	})
@@ -420,7 +420,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 		imageCount = swapchainSupport.Capabilities.MaxImageCount
 	}
 
-	sharingMode := VKng.SharingExclusive
+	sharingMode := core.SharingExclusive
 	var queueFamilyIndices []int
 
 	indices, err := app.findQueueFamilies(app.physicalDevice)
@@ -429,11 +429,11 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 	}
 
 	if *indices.GraphicsFamily != *indices.PresentFamily {
-		sharingMode = VKng.SharingConcurrent
+		sharingMode = core.SharingConcurrent
 		queueFamilyIndices = append(queueFamilyIndices, *indices.GraphicsFamily, *indices.PresentFamily)
 	}
 
-	swapchain, _, err := ext_swapchain.CreateSwapchain(app.allocator, app.device, &ext_swapchain.CreationOptions{
+	swapchain, _, err := ext_swapchain2.CreateSwapchain(app.allocator, app.device, &ext_swapchain2.CreationOptions{
 		Surface: app.surface,
 
 		MinImageCount:    imageCount,
@@ -441,13 +441,13 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 		ImageColorSpace:  surfaceFormat.ColorSpace,
 		ImageExtent:      extent,
 		ImageArrayLayers: 1,
-		ImageUsage:       VKng.ImageColorAttachment,
+		ImageUsage:       core.ImageColorAttachment,
 
 		SharingMode:        sharingMode,
 		QueueFamilyIndices: queueFamilyIndices,
 
 		PreTransform:   swapchainSupport.Capabilities.CurrentTransform,
-		CompositeAlpha: ext_surface.Opaque,
+		CompositeAlpha: ext_surface2.Opaque,
 		PresentMode:    presentMode,
 		Clipped:        true,
 	})
@@ -464,20 +464,20 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 	}
 	app.swapchainImages = images
 
-	var imageViews []*core.ImageView
+	var imageViews []*resource.ImageView
 	for _, image := range images {
-		view, _, err := app.device.CreateImageView(app.allocator, &core.ImageViewOptions{
-			ViewType: VKng.View2D,
+		view, _, err := app.device.CreateImageView(app.allocator, &resource.ImageViewOptions{
+			ViewType: core.View2D,
 			Image:    image,
 			Format:   surfaceFormat.Format,
-			Components: VKng.ComponentMapping{
-				R: VKng.SwizzleIdentity,
-				G: VKng.SwizzleIdentity,
-				B: VKng.SwizzleIdentity,
-				A: VKng.SwizzleIdentity,
+			Components: core.ComponentMapping{
+				R: core.SwizzleIdentity,
+				G: core.SwizzleIdentity,
+				B: core.SwizzleIdentity,
+				A: core.SwizzleIdentity,
 			},
-			SubresourceRange: VKng.ImageSubresourceRange{
-				AspectMask:     VKng.AspectColor,
+			SubresourceRange: core.ImageSubresourceRange{
+				AspectMask:     core.AspectColor,
 				BaseMipLevel:   0,
 				LevelCount:     1,
 				BaseArrayLayer: 0,
@@ -496,40 +496,40 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 }
 
 func (app *HelloTriangleApplication) createRenderPass() error {
-	renderPass, _, err := render_pass.CreateRenderPass(app.allocator, app.device, &render_pass.RenderPassOptions{
-		Attachments: []render_pass.AttachmentDescription{
+	renderPass, _, err := render_pass2.CreateRenderPass(app.allocator, app.device, &render_pass2.RenderPassOptions{
+		Attachments: []render_pass2.AttachmentDescription{
 			{
 				Format:         app.swapchainImageFormat,
-				Samples:        VKng.Samples1,
-				LoadOp:         VKng.LoadOpClear,
-				StoreOp:        VKng.StoreOpStore,
-				StencilLoadOp:  VKng.LoadOpDontCare,
-				StencilStoreOp: VKng.StoreOpDontCare,
-				InitialLayout:  VKng.LayoutUndefined,
-				FinalLayout:    VKng.LayoutPresentSrc,
+				Samples:        core.Samples1,
+				LoadOp:         core.LoadOpClear,
+				StoreOp:        core.StoreOpStore,
+				StencilLoadOp:  core.LoadOpDontCare,
+				StencilStoreOp: core.StoreOpDontCare,
+				InitialLayout:  core.LayoutUndefined,
+				FinalLayout:    core.LayoutPresentSrc,
 			},
 		},
-		SubPasses: []render_pass.SubPass{
+		SubPasses: []render_pass2.SubPass{
 			{
-				BindPoint: VKng.BindGraphics,
-				ColorAttachments: []VKng.AttachmentReference{
+				BindPoint: core.BindGraphics,
+				ColorAttachments: []core.AttachmentReference{
 					{
 						AttachmentIndex: 0,
-						Layout:          VKng.LayoutColorAttachmentOptimal,
+						Layout:          core.LayoutColorAttachmentOptimal,
 					},
 				},
 			},
 		},
-		SubPassDependencies: []render_pass.SubPassDependency{
+		SubPassDependencies: []render_pass2.SubPassDependency{
 			{
-				SrcSubPassIndex: render_pass.SubpassExternal,
+				SrcSubPassIndex: render_pass2.SubpassExternal,
 				DstSubPassIndex: 0,
 
-				SrcStageMask: VKng.PipelineStageColorAttachmentOutput,
+				SrcStageMask: core.PipelineStageColorAttachmentOutput,
 				SrcAccess:    0,
 
-				DstStageMask: VKng.PipelineStageColorAttachmentOutput,
-				DstAccess:    VKng.AccessColorAttachmentWrite,
+				DstStageMask: core.PipelineStageColorAttachmentOutput,
+				DstAccess:    core.AccessColorAttachmentWrite,
 			},
 		},
 	})
@@ -563,7 +563,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		return err
 	}
 
-	vertShader, _, err := app.device.CreateShaderModule(app.allocator, &core.ShaderModuleOptions{
+	vertShader, _, err := app.device.CreateShaderModule(app.allocator, &resource.ShaderModuleOptions{
 		SpirVByteCode: bytesToBytecode(vertShaderBytes),
 	})
 	if err != nil {
@@ -577,7 +577,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		return err
 	}
 
-	fragShader, _, err := app.device.CreateShaderModule(app.allocator, &core.ShaderModuleOptions{
+	fragShader, _, err := app.device.CreateShaderModule(app.allocator, &resource.ShaderModuleOptions{
 		SpirVByteCode: bytesToBytecode(fragShaderBytes),
 	})
 	if err != nil {
@@ -585,27 +585,27 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 	}
 	defer fragShader.Destroy()
 
-	vertexInput := &pipeline.VertexInputOptions{}
+	vertexInput := &pipeline2.VertexInputOptions{}
 
-	inputAssembly := &pipeline.InputAssemblyOptions{
-		Topology:               VKng.TopologyTriangleList,
+	inputAssembly := &pipeline2.InputAssemblyOptions{
+		Topology:               core.TopologyTriangleList,
 		EnablePrimitiveRestart: false,
 	}
 
-	vertStage := &pipeline.ShaderStage{
-		Stage:  VKng.StageVertex,
+	vertStage := &pipeline2.ShaderStage{
+		Stage:  core.StageVertex,
 		Shader: vertShader,
 		Name:   "main",
 	}
 
-	fragStage := &pipeline.ShaderStage{
-		Stage:  VKng.StageFragment,
+	fragStage := &pipeline2.ShaderStage{
+		Stage:  core.StageFragment,
 		Shader: fragShader,
 		Name:   "main",
 	}
 
-	viewport := &pipeline.ViewportOptions{
-		Viewports: []VKng.Viewport{
+	viewport := &pipeline2.ViewportOptions{
+		Viewports: []core.Viewport{
 			{
 				X:        0,
 				Y:        0,
@@ -615,54 +615,54 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 				MaxDepth: 1,
 			},
 		},
-		Scissors: []VKng.Rect2D{
+		Scissors: []core.Rect2D{
 			{
-				Offset: VKng.Offset2D{X: 0, Y: 0},
+				Offset: core.Offset2D{X: 0, Y: 0},
 				Extent: app.swapchainExtent,
 			},
 		},
 	}
 
-	rasterization := &pipeline.RasterizationOptions{
+	rasterization := &pipeline2.RasterizationOptions{
 		DepthClamp:        false,
 		RasterizerDiscard: false,
 
-		PolygonMode: pipeline.ModeFill,
-		CullMode:    VKng.CullBack,
-		FrontFace:   VKng.Clockwise,
+		PolygonMode: pipeline2.ModeFill,
+		CullMode:    core.CullBack,
+		FrontFace:   core.Clockwise,
 
 		DepthBias: false,
 
 		LineWidth: 1.0,
 	}
 
-	multisample := &pipeline.MultisampleOptions{
+	multisample := &pipeline2.MultisampleOptions{
 		SampleShading:        false,
-		RasterizationSamples: VKng.Samples1,
+		RasterizationSamples: core.Samples1,
 		MinSampleShading:     1.0,
 	}
 
-	colorBlend := &pipeline.ColorBlendOptions{
+	colorBlend := &pipeline2.ColorBlendOptions{
 		LogicOpEnabled: false,
-		LogicOp:        VKng.LogicOpCopy,
+		LogicOp:        core.LogicOpCopy,
 
 		BlendConstants: [4]float32{0, 0, 0, 0},
-		Attachments: []pipeline.ColorBlendAttachment{
+		Attachments: []pipeline2.ColorBlendAttachment{
 			{
 				BlendEnabled: false,
-				WriteMask:    VKng.ComponentRed | VKng.ComponentGreen | VKng.ComponentBlue | VKng.ComponentAlpha,
+				WriteMask:    core.ComponentRed | core.ComponentGreen | core.ComponentBlue | core.ComponentAlpha,
 			},
 		},
 	}
 
-	app.pipelineLayout, _, err = pipeline.CreatePipelineLayout(app.allocator, app.device, &pipeline.PipelineLayoutOptions{})
+	app.pipelineLayout, _, err = pipeline2.CreatePipelineLayout(app.allocator, app.device, &pipeline2.PipelineLayoutOptions{})
 	if err != nil {
 		return err
 	}
 
-	pipelines, _, err := pipeline.CreateGraphicsPipelines(app.allocator, app.device, []*pipeline.Options{
+	pipelines, _, err := pipeline2.CreateGraphicsPipelines(app.allocator, app.device, []*pipeline2.Options{
 		{
-			ShaderStages: []*pipeline.ShaderStage{
+			ShaderStages: []*pipeline2.ShaderStage{
 				vertStage,
 				fragStage,
 			},
@@ -688,10 +688,10 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 
 func (app *HelloTriangleApplication) createFramebuffers() error {
 	for _, imageView := range app.swapchainImageViews {
-		framebuffer, _, err := render_pass.CreateFrameBuffer(app.allocator, app.device, &render_pass.FramebufferOptions{
+		framebuffer, _, err := render_pass2.CreateFrameBuffer(app.allocator, app.device, &render_pass2.FramebufferOptions{
 			RenderPass: app.renderPass,
 			Layers:     1,
-			Attachments: []*core.ImageView{
+			Attachments: []*resource.ImageView{
 				imageView,
 			},
 			Width:  app.swapchainExtent.Width,
@@ -713,7 +713,7 @@ func (app *HelloTriangleApplication) createCommandPool() error {
 		return err
 	}
 
-	pool, _, err := commands.CreateCommandPool(app.allocator, app.device, &commands.CommandPoolOptions{
+	pool, _, err := commands2.CreateCommandPool(app.allocator, app.device, &commands2.CommandPoolOptions{
 		GraphicsQueueFamily: indices.GraphicsFamily,
 	})
 
@@ -727,8 +727,8 @@ func (app *HelloTriangleApplication) createCommandPool() error {
 
 func (app *HelloTriangleApplication) createCommandBuffers() error {
 
-	buffers, _, err := commands.CreateCommandBuffers(app.allocator, app.device, &commands.CommandBufferOptions{
-		Level:       VKng.LevelPrimary,
+	buffers, _, err := commands2.CreateCommandBuffers(app.allocator, app.device, &commands2.CommandBufferOptions{
+		Level:       core.LevelPrimary,
 		BufferCount: len(app.swapchainImages),
 		CommandPool: app.commandPool,
 	})
@@ -738,28 +738,28 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
 	app.commandBuffers = buffers
 
 	for bufferIdx, buffer := range buffers {
-		_, err = buffer.Begin(app.allocator, &commands.BeginOptions{})
+		_, err = buffer.Begin(app.allocator, &commands2.BeginOptions{})
 		if err != nil {
 			return err
 		}
 
-		err = buffer.CmdBeginRenderPass(app.allocator, commands.ContentsInline,
-			&commands.RenderPassBeginOptions{
+		err = buffer.CmdBeginRenderPass(app.allocator, commands2.ContentsInline,
+			&commands2.RenderPassBeginOptions{
 				RenderPass:  app.renderPass,
 				Framebuffer: app.swapchainFramebuffers[bufferIdx],
-				RenderArea: VKng.Rect2D{
-					Offset: VKng.Offset2D{X: 0, Y: 0},
+				RenderArea: core.Rect2D{
+					Offset: core.Offset2D{X: 0, Y: 0},
 					Extent: app.swapchainExtent,
 				},
-				ClearValues: []commands.ClearValue{
-					commands.ClearValueFloat{0, 0, 0, 1},
+				ClearValues: []commands2.ClearValue{
+					commands2.ClearValueFloat{0, 0, 0, 1},
 				},
 			})
 		if err != nil {
 			return err
 		}
 
-		buffer.CmdBindPipeline(VKng.BindGraphics, app.graphicsPipeline)
+		buffer.CmdBindPipeline(core.BindGraphics, app.graphicsPipeline)
 		buffer.CmdDraw(3, 1, 0, 0)
 		buffer.CmdEndRenderPass()
 
@@ -774,22 +774,22 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
 
 func (app *HelloTriangleApplication) createSyncObjects() error {
 	for i := 0; i < MaxFramesInFlight; i++ {
-		semaphore, _, err := app.device.CreateSemaphore(app.allocator, &core.SemaphoreOptions{})
+		semaphore, _, err := app.device.CreateSemaphore(app.allocator, &resource.SemaphoreOptions{})
 		if err != nil {
 			return err
 		}
 
 		app.imageAvailableSemaphore = append(app.imageAvailableSemaphore, semaphore)
 
-		semaphore, _, err = app.device.CreateSemaphore(app.allocator, &core.SemaphoreOptions{})
+		semaphore, _, err = app.device.CreateSemaphore(app.allocator, &resource.SemaphoreOptions{})
 		if err != nil {
 			return err
 		}
 
 		app.renderFinishedSemaphore = append(app.renderFinishedSemaphore, semaphore)
 
-		fence, _, err := app.device.CreateFence(app.allocator, &core.FenceOptions{
-			Flags: core.FenceSignaled,
+		fence, _, err := app.device.CreateFence(app.allocator, &resource.FenceOptions{
+			Flags: resource.FenceSignaled,
 		})
 		if err != nil {
 			return err
@@ -806,20 +806,20 @@ func (app *HelloTriangleApplication) createSyncObjects() error {
 }
 
 func (app *HelloTriangleApplication) drawFrame() error {
-	fences := []*core.Fence{app.inFlightFence[app.currentFrame]}
+	fences := []*resource.Fence{app.inFlightFence[app.currentFrame]}
 
-	_, err := app.device.WaitForFences(app.allocator, true, VKng.NoTimeout, fences)
+	_, err := app.device.WaitForFences(app.allocator, true, core.NoTimeout, fences)
 	if err != nil {
 		return err
 	}
 
-	imageIndex, _, err := app.swapchain.AcquireNextImage(VKng.NoTimeout, app.imageAvailableSemaphore[app.currentFrame], nil)
+	imageIndex, _, err := app.swapchain.AcquireNextImage(core.NoTimeout, app.imageAvailableSemaphore[app.currentFrame], nil)
 	if err != nil {
 		return err
 	}
 
 	if app.imagesInFlight[imageIndex] != nil {
-		_, err := app.device.WaitForFences(app.allocator, true, VKng.NoTimeout, []*core.Fence{app.imagesInFlight[imageIndex]})
+		_, err := app.device.WaitForFences(app.allocator, true, core.NoTimeout, []*resource.Fence{app.imagesInFlight[imageIndex]})
 		if err != nil {
 			return err
 		}
@@ -831,21 +831,21 @@ func (app *HelloTriangleApplication) drawFrame() error {
 		return err
 	}
 
-	_, err = commands.SubmitToQueue(app.allocator, app.graphicsQueue, app.inFlightFence[app.currentFrame], []*commands.SubmitOptions{
+	_, err = commands2.SubmitToQueue(app.allocator, app.graphicsQueue, app.inFlightFence[app.currentFrame], []*commands2.SubmitOptions{
 		{
-			WaitSemaphores:   []*core.Semaphore{app.imageAvailableSemaphore[app.currentFrame]},
-			WaitDstStages:    []VKng.PipelineStages{VKng.PipelineStageColorAttachmentOutput},
-			CommandBuffers:   []*commands.CommandBuffer{app.commandBuffers[imageIndex]},
-			SignalSemaphores: []*core.Semaphore{app.renderFinishedSemaphore[app.currentFrame]},
+			WaitSemaphores:   []*resource.Semaphore{app.imageAvailableSemaphore[app.currentFrame]},
+			WaitDstStages:    []core.PipelineStages{core.PipelineStageColorAttachmentOutput},
+			CommandBuffers:   []*commands2.CommandBuffer{app.commandBuffers[imageIndex]},
+			SignalSemaphores: []*resource.Semaphore{app.renderFinishedSemaphore[app.currentFrame]},
 		},
 	})
 	if err != nil {
 		return err
 	}
 
-	_, _, err = ext_swapchain.PresentToQueue(app.allocator, app.presentQueue, &ext_swapchain.PresentOptions{
-		WaitSemaphores: []*core.Semaphore{app.renderFinishedSemaphore[app.currentFrame]},
-		Swapchains:     []*ext_swapchain.Swapchain{app.swapchain},
+	_, _, err = ext_swapchain2.PresentToQueue(app.allocator, app.presentQueue, &ext_swapchain2.PresentOptions{
+		WaitSemaphores: []*resource.Semaphore{app.renderFinishedSemaphore[app.currentFrame]},
+		Swapchains:     []*ext_swapchain2.Swapchain{app.swapchain},
 		ImageIndices:   []int{imageIndex},
 	})
 	if err != nil {
@@ -857,9 +857,9 @@ func (app *HelloTriangleApplication) drawFrame() error {
 	return nil
 }
 
-func (app *HelloTriangleApplication) chooseSwapSurfaceFormat(availableFormats []ext_surface.Format) ext_surface.Format {
+func (app *HelloTriangleApplication) chooseSwapSurfaceFormat(availableFormats []ext_surface2.Format) ext_surface2.Format {
 	for _, format := range availableFormats {
-		if format.Format == VKng.FormatB8G8R8A8SRGB && format.ColorSpace == ext_surface.SRGBNonlinear {
+		if format.Format == core.FormatB8G8R8A8SRGB && format.ColorSpace == ext_surface2.SRGBNonlinear {
 			return format
 		}
 	}
@@ -867,17 +867,17 @@ func (app *HelloTriangleApplication) chooseSwapSurfaceFormat(availableFormats []
 	return availableFormats[0]
 }
 
-func (app *HelloTriangleApplication) chooseSwapPresentMode(availablePresentModes []ext_surface.PresentMode) ext_surface.PresentMode {
+func (app *HelloTriangleApplication) chooseSwapPresentMode(availablePresentModes []ext_surface2.PresentMode) ext_surface2.PresentMode {
 	for _, presentMode := range availablePresentModes {
-		if presentMode == ext_surface.Mailbox {
+		if presentMode == ext_surface2.Mailbox {
 			return presentMode
 		}
 	}
 
-	return ext_surface.FIFO
+	return ext_surface2.FIFO
 }
 
-func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *ext_surface.Capabilities) VKng.Extent2D {
+func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *ext_surface2.Capabilities) core.Extent2D {
 	if capabilities.CurrentExtent.Width != (^uint32(0)) {
 		return capabilities.CurrentExtent
 	}
@@ -899,10 +899,10 @@ func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *ext_surface.
 		height = capabilities.MaxImageExtent.Height
 	}
 
-	return VKng.Extent2D{Width: width, Height: height}
+	return core.Extent2D{Width: width, Height: height}
 }
 
-func (app *HelloTriangleApplication) querySwapChainSupport(device *core.PhysicalDevice) (SwapChainSupportDetails, error) {
+func (app *HelloTriangleApplication) querySwapChainSupport(device *resource.PhysicalDevice) (SwapChainSupportDetails, error) {
 	var details SwapChainSupportDetails
 	var err error
 
@@ -920,7 +920,7 @@ func (app *HelloTriangleApplication) querySwapChainSupport(device *core.Physical
 	return details, err
 }
 
-func (app *HelloTriangleApplication) isDeviceSuitable(device *core.PhysicalDevice) bool {
+func (app *HelloTriangleApplication) isDeviceSuitable(device *resource.PhysicalDevice) bool {
 	indices, err := app.findQueueFamilies(device)
 	if err != nil {
 		return false
@@ -941,7 +941,7 @@ func (app *HelloTriangleApplication) isDeviceSuitable(device *core.PhysicalDevic
 	return indices.IsComplete() && extensionsSupported && swapChainAdequate
 }
 
-func (app *HelloTriangleApplication) checkDeviceExtensionSupport(device *core.PhysicalDevice) bool {
+func (app *HelloTriangleApplication) checkDeviceExtensionSupport(device *resource.PhysicalDevice) bool {
 	extensions, _, err := device.AvailableExtensions(app.allocator)
 	if err != nil {
 		return false
@@ -957,7 +957,7 @@ func (app *HelloTriangleApplication) checkDeviceExtensionSupport(device *core.Ph
 	return true
 }
 
-func (app *HelloTriangleApplication) findQueueFamilies(device *core.PhysicalDevice) (QueueFamilyIndices, error) {
+func (app *HelloTriangleApplication) findQueueFamilies(device *resource.PhysicalDevice) (QueueFamilyIndices, error) {
 	indices := QueueFamilyIndices{}
 	queueFamilies, err := device.QueueFamilyProperties(app.allocator)
 	if err != nil {
@@ -965,7 +965,7 @@ func (app *HelloTriangleApplication) findQueueFamilies(device *core.PhysicalDevi
 	}
 
 	for queueFamilyIdx, queueFamily := range queueFamilies {
-		if (queueFamily.Flags & VKng.Graphics) != 0 {
+		if (queueFamily.Flags & core.Graphics) != 0 {
 			indices.GraphicsFamily = new(int)
 			*indices.GraphicsFamily = queueFamilyIdx
 		}
@@ -988,7 +988,7 @@ func (app *HelloTriangleApplication) findQueueFamilies(device *core.PhysicalDevi
 	return indices, nil
 }
 
-func (app *HelloTriangleApplication) logDebug(msgType ext_debugutils.MessageType, severity ext_debugutils.MessageSeverity, data *ext_debugutils.CallbackData) bool {
+func (app *HelloTriangleApplication) logDebug(msgType ext_debugutils2.MessageType, severity ext_debugutils2.MessageSeverity, data *ext_debugutils2.CallbackData) bool {
 	log.Printf("[%s %s] - %s", severity, msgType, data.Message)
 	return false
 }

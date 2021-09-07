@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/CannibalVox/VKng"
 	"github.com/CannibalVox/VKng/core"
+	"github.com/CannibalVox/VKng/core/resource"
 	"github.com/CannibalVox/cgoalloc"
 	"github.com/palantir/stacktrace"
 	"github.com/veandco/go-sdl2/sdl"
@@ -13,7 +13,7 @@ type HelloTriangleApplication struct {
 	allocator cgoalloc.Allocator
 	window    *sdl.Window
 
-	instance *core.Instance
+	instance *resource.Instance
 }
 
 func (app *HelloTriangleApplication) Run() error {
@@ -77,17 +77,17 @@ func (app *HelloTriangleApplication) cleanup() {
 }
 
 func (app *HelloTriangleApplication) createInstance() error {
-	instanceOptions := &core.InstanceOptions{
+	instanceOptions := &resource.InstanceOptions{
 		ApplicationName:    "Hello Triangle",
-		ApplicationVersion: VKng.CreateVersion(1, 0, 0),
+		ApplicationVersion: core.CreateVersion(1, 0, 0),
 		EngineName:         "No Engine",
-		EngineVersion:      VKng.CreateVersion(1, 0, 0),
-		VulkanVersion:      VKng.Vulkan1_2,
+		EngineVersion:      core.CreateVersion(1, 0, 0),
+		VulkanVersion:      core.Vulkan1_2,
 	}
 
 	// Add extensions
 	sdlExtensions := app.window.VulkanGetInstanceExtensions()
-	extensions, _, err := core.AvailableExtensions(app.allocator)
+	extensions, _, err := resource.AvailableExtensions(app.allocator)
 	if err != nil {
 		return err
 	}
@@ -100,7 +100,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		instanceOptions.ExtensionNames = append(instanceOptions.ExtensionNames, ext)
 	}
 
-	app.instance, _, err = core.CreateInstance(app.allocator, instanceOptions)
+	app.instance, _, err = resource.CreateInstance(app.allocator, instanceOptions)
 	if err != nil {
 		return err
 	}

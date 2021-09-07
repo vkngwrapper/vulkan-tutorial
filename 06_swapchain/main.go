@@ -1,12 +1,12 @@
 package main
 
 import (
-	"github.com/CannibalVox/VKng"
 	"github.com/CannibalVox/VKng/core"
-	"github.com/CannibalVox/VKng/ext_debugutils"
-	"github.com/CannibalVox/VKng/ext_surface"
-	"github.com/CannibalVox/VKng/ext_surface_sdl2"
-	"github.com/CannibalVox/VKng/ext_swapchain"
+	"github.com/CannibalVox/VKng/core/resource"
+	ext_debugutils2 "github.com/CannibalVox/VKng/extensions/debugutils"
+	ext_surface2 "github.com/CannibalVox/VKng/extensions/surface"
+	ext_surface_sdl22 "github.com/CannibalVox/VKng/extensions/surface_sdl"
+	ext_swapchain2 "github.com/CannibalVox/VKng/extensions/swapchain"
 	"github.com/CannibalVox/cgoalloc"
 	"github.com/palantir/stacktrace"
 	"github.com/veandco/go-sdl2/sdl"
@@ -14,7 +14,7 @@ import (
 )
 
 var validationLayers = []string{"VK_LAYER_KHRONOS_validation"}
-var deviceExtensions = []string{ext_swapchain.ExtensionName}
+var deviceExtensions = []string{ext_swapchain2.ExtensionName}
 
 const enableValidationLayers = true
 
@@ -28,29 +28,29 @@ func (i *QueueFamilyIndices) IsComplete() bool {
 }
 
 type SwapChainSupportDetails struct {
-	Capabilities *ext_surface.Capabilities
-	Formats      []ext_surface.Format
-	PresentModes []ext_surface.PresentMode
+	Capabilities *ext_surface2.Capabilities
+	Formats      []ext_surface2.Format
+	PresentModes []ext_surface2.PresentMode
 }
 
 type HelloTriangleApplication struct {
 	allocator cgoalloc.Allocator
 	window    *sdl.Window
 
-	instance       *core.Instance
-	debugMessenger *ext_debugutils.Messenger
-	surface        *ext_surface.Surface
+	instance       *resource.Instance
+	debugMessenger *ext_debugutils2.Messenger
+	surface        *ext_surface2.Surface
 
-	physicalDevice *core.PhysicalDevice
-	device         *core.Device
+	physicalDevice *resource.PhysicalDevice
+	device         *resource.Device
 
-	graphicsQueue *core.Queue
-	presentQueue  *core.Queue
+	graphicsQueue *resource.Queue
+	presentQueue  *resource.Queue
 
-	swapchain            *ext_swapchain.Swapchain
-	swapchainImages      []*core.Image
-	swapchainImageFormat VKng.DataFormat
-	swapchainExtent      VKng.Extent2D
+	swapchain            *ext_swapchain2.Swapchain
+	swapchainImages      []*resource.Image
+	swapchainImageFormat core.DataFormat
+	swapchainExtent      core.Extent2D
 }
 
 func (app *HelloTriangleApplication) Run() error {
@@ -155,17 +155,17 @@ func (app *HelloTriangleApplication) cleanup() {
 }
 
 func (app *HelloTriangleApplication) createInstance() error {
-	instanceOptions := &core.InstanceOptions{
+	instanceOptions := &resource.InstanceOptions{
 		ApplicationName:    "Hello Triangle",
-		ApplicationVersion: VKng.CreateVersion(1, 0, 0),
+		ApplicationVersion: core.CreateVersion(1, 0, 0),
 		EngineName:         "No Engine",
-		EngineVersion:      VKng.CreateVersion(1, 0, 0),
-		VulkanVersion:      VKng.Vulkan1_2,
+		EngineVersion:      core.CreateVersion(1, 0, 0),
+		VulkanVersion:      core.Vulkan1_2,
 	}
 
 	// Add extensions
 	sdlExtensions := app.window.VulkanGetInstanceExtensions()
-	extensions, _, err := core.AvailableExtensions(app.allocator)
+	extensions, _, err := resource.AvailableExtensions(app.allocator)
 	if err != nil {
 		return err
 	}
@@ -179,11 +179,11 @@ func (app *HelloTriangleApplication) createInstance() error {
 	}
 
 	if enableValidationLayers {
-		instanceOptions.ExtensionNames = append(instanceOptions.ExtensionNames, ext_debugutils.ExtensionName)
+		instanceOptions.ExtensionNames = append(instanceOptions.ExtensionNames, ext_debugutils2.ExtensionName)
 	}
 
 	// Add layers
-	layers, _, err := core.AvailableLayers(app.allocator)
+	layers, _, err := resource.AvailableLayers(app.allocator)
 	if err != nil {
 		return err
 	}
@@ -201,7 +201,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		instanceOptions.Next = app.debugMessengerOptions()
 	}
 
-	app.instance, _, err = core.CreateInstance(app.allocator, instanceOptions)
+	app.instance, _, err = resource.CreateInstance(app.allocator, instanceOptions)
 	if err != nil {
 		return err
 	}
@@ -209,10 +209,10 @@ func (app *HelloTriangleApplication) createInstance() error {
 	return nil
 }
 
-func (app *HelloTriangleApplication) debugMessengerOptions() *ext_debugutils.Options {
-	return &ext_debugutils.Options{
-		CaptureSeverities: ext_debugutils.SeverityError | ext_debugutils.SeverityWarning,
-		CaptureTypes:      ext_debugutils.TypeAll,
+func (app *HelloTriangleApplication) debugMessengerOptions() *ext_debugutils2.Options {
+	return &ext_debugutils2.Options{
+		CaptureSeverities: ext_debugutils2.SeverityError | ext_debugutils2.SeverityWarning,
+		CaptureTypes:      ext_debugutils2.TypeAll,
 		Callback:          app.logDebug,
 	}
 }
@@ -223,7 +223,7 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 	}
 
 	var err error
-	app.debugMessenger, _, err = ext_debugutils.CreateMessenger(app.allocator, app.instance, app.debugMessengerOptions())
+	app.debugMessenger, _, err = ext_debugutils2.CreateMessenger(app.allocator, app.instance, app.debugMessengerOptions())
 	if err != nil {
 		return err
 	}
@@ -232,7 +232,7 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 }
 
 func (app *HelloTriangleApplication) createSurface() error {
-	surface, _, err := ext_surface_sdl2.CreateSurface(app.allocator, app.instance, &ext_surface_sdl2.CreationOptions{
+	surface, _, err := ext_surface_sdl22.CreateSurface(app.allocator, app.instance, &ext_surface_sdl22.CreationOptions{
 		Window: app.window,
 	})
 	if err != nil {
@@ -274,10 +274,10 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		uniqueQueueFamilies = append(uniqueQueueFamilies, *indices.PresentFamily)
 	}
 
-	var queueFamilyOptions []*core.QueueFamilyOptions
+	var queueFamilyOptions []*resource.QueueFamilyOptions
 	queuePriority := float32(1.0)
 	for _, queueFamily := range uniqueQueueFamilies {
-		queueFamilyOptions = append(queueFamilyOptions, &core.QueueFamilyOptions{
+		queueFamilyOptions = append(queueFamilyOptions, &resource.QueueFamilyOptions{
 			QueueFamilyIndex: queueFamily,
 			QueuePriorities:  []float32{queuePriority},
 		})
@@ -291,9 +291,9 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		layerNames = append(layerNames, validationLayers...)
 	}
 
-	app.device, _, err = app.physicalDevice.CreateDevice(app.allocator, &core.DeviceOptions{
+	app.device, _, err = app.physicalDevice.CreateDevice(app.allocator, &resource.DeviceOptions{
 		QueueFamilies:   queueFamilyOptions,
-		EnabledFeatures: &VKng.PhysicalDeviceFeatures{},
+		EnabledFeatures: &core.PhysicalDeviceFeatures{},
 		ExtensionNames:  extensionNames,
 		LayerNames:      layerNames,
 	})
@@ -325,7 +325,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 		imageCount = swapchainSupport.Capabilities.MaxImageCount
 	}
 
-	sharingMode := VKng.SharingExclusive
+	sharingMode := core.SharingExclusive
 	var queueFamilyIndices []int
 
 	indices, err := app.findQueueFamilies(app.physicalDevice)
@@ -334,11 +334,11 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 	}
 
 	if *indices.GraphicsFamily != *indices.PresentFamily {
-		sharingMode = VKng.SharingConcurrent
+		sharingMode = core.SharingConcurrent
 		queueFamilyIndices = append(queueFamilyIndices, *indices.GraphicsFamily, *indices.PresentFamily)
 	}
 
-	swapchain, _, err := ext_swapchain.CreateSwapchain(app.allocator, app.device, &ext_swapchain.CreationOptions{
+	swapchain, _, err := ext_swapchain2.CreateSwapchain(app.allocator, app.device, &ext_swapchain2.CreationOptions{
 		Surface: app.surface,
 
 		MinImageCount:    imageCount,
@@ -346,13 +346,13 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 		ImageColorSpace:  surfaceFormat.ColorSpace,
 		ImageExtent:      extent,
 		ImageArrayLayers: 1,
-		ImageUsage:       VKng.ImageColorAttachment,
+		ImageUsage:       core.ImageColorAttachment,
 
 		SharingMode:        sharingMode,
 		QueueFamilyIndices: queueFamilyIndices,
 
 		PreTransform:   swapchainSupport.Capabilities.CurrentTransform,
-		CompositeAlpha: ext_surface.Opaque,
+		CompositeAlpha: ext_surface2.Opaque,
 		PresentMode:    presentMode,
 		Clipped:        true,
 	})
@@ -367,9 +367,9 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 	return nil
 }
 
-func (app *HelloTriangleApplication) chooseSwapSurfaceFormat(availableFormats []ext_surface.Format) ext_surface.Format {
+func (app *HelloTriangleApplication) chooseSwapSurfaceFormat(availableFormats []ext_surface2.Format) ext_surface2.Format {
 	for _, format := range availableFormats {
-		if format.Format == VKng.FormatB8G8R8A8SRGB && format.ColorSpace == ext_surface.SRGBNonlinear {
+		if format.Format == core.FormatB8G8R8A8SRGB && format.ColorSpace == ext_surface2.SRGBNonlinear {
 			return format
 		}
 	}
@@ -377,17 +377,17 @@ func (app *HelloTriangleApplication) chooseSwapSurfaceFormat(availableFormats []
 	return availableFormats[0]
 }
 
-func (app *HelloTriangleApplication) chooseSwapPresentMode(availablePresentModes []ext_surface.PresentMode) ext_surface.PresentMode {
+func (app *HelloTriangleApplication) chooseSwapPresentMode(availablePresentModes []ext_surface2.PresentMode) ext_surface2.PresentMode {
 	for _, presentMode := range availablePresentModes {
-		if presentMode == ext_surface.Mailbox {
+		if presentMode == ext_surface2.Mailbox {
 			return presentMode
 		}
 	}
 
-	return ext_surface.FIFO
+	return ext_surface2.FIFO
 }
 
-func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *ext_surface.Capabilities) VKng.Extent2D {
+func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *ext_surface2.Capabilities) core.Extent2D {
 	if capabilities.CurrentExtent.Width != (^uint32(0)) {
 		return capabilities.CurrentExtent
 	}
@@ -409,10 +409,10 @@ func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *ext_surface.
 		height = capabilities.MaxImageExtent.Height
 	}
 
-	return VKng.Extent2D{Width: width, Height: height}
+	return core.Extent2D{Width: width, Height: height}
 }
 
-func (app *HelloTriangleApplication) querySwapChainSupport(device *core.PhysicalDevice) (SwapChainSupportDetails, error) {
+func (app *HelloTriangleApplication) querySwapChainSupport(device *resource.PhysicalDevice) (SwapChainSupportDetails, error) {
 	var details SwapChainSupportDetails
 	var err error
 
@@ -430,7 +430,7 @@ func (app *HelloTriangleApplication) querySwapChainSupport(device *core.Physical
 	return details, err
 }
 
-func (app *HelloTriangleApplication) isDeviceSuitable(device *core.PhysicalDevice) bool {
+func (app *HelloTriangleApplication) isDeviceSuitable(device *resource.PhysicalDevice) bool {
 	indices, err := app.findQueueFamilies(device)
 	if err != nil {
 		return false
@@ -451,7 +451,7 @@ func (app *HelloTriangleApplication) isDeviceSuitable(device *core.PhysicalDevic
 	return indices.IsComplete() && extensionsSupported && swapChainAdequate
 }
 
-func (app *HelloTriangleApplication) checkDeviceExtensionSupport(device *core.PhysicalDevice) bool {
+func (app *HelloTriangleApplication) checkDeviceExtensionSupport(device *resource.PhysicalDevice) bool {
 	extensions, _, err := device.AvailableExtensions(app.allocator)
 	if err != nil {
 		return false
@@ -467,7 +467,7 @@ func (app *HelloTriangleApplication) checkDeviceExtensionSupport(device *core.Ph
 	return true
 }
 
-func (app *HelloTriangleApplication) findQueueFamilies(device *core.PhysicalDevice) (QueueFamilyIndices, error) {
+func (app *HelloTriangleApplication) findQueueFamilies(device *resource.PhysicalDevice) (QueueFamilyIndices, error) {
 	indices := QueueFamilyIndices{}
 	queueFamilies, err := device.QueueFamilyProperties(app.allocator)
 	if err != nil {
@@ -475,7 +475,7 @@ func (app *HelloTriangleApplication) findQueueFamilies(device *core.PhysicalDevi
 	}
 
 	for queueFamilyIdx, queueFamily := range queueFamilies {
-		if (queueFamily.Flags & VKng.Graphics) != 0 {
+		if (queueFamily.Flags & core.Graphics) != 0 {
 			indices.GraphicsFamily = new(int)
 			*indices.GraphicsFamily = queueFamilyIdx
 		}
@@ -498,7 +498,7 @@ func (app *HelloTriangleApplication) findQueueFamilies(device *core.PhysicalDevi
 	return indices, nil
 }
 
-func (app *HelloTriangleApplication) logDebug(msgType ext_debugutils.MessageType, severity ext_debugutils.MessageSeverity, data *ext_debugutils.CallbackData) bool {
+func (app *HelloTriangleApplication) logDebug(msgType ext_debugutils2.MessageType, severity ext_debugutils2.MessageSeverity, data *ext_debugutils2.CallbackData) bool {
 	log.Printf("[%s %s] - %s", severity, msgType, data.Message)
 	return false
 }

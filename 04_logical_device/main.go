@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/CannibalVox/VKng"
 	"github.com/CannibalVox/VKng/core"
-	"github.com/CannibalVox/VKng/ext_debugutils"
+	"github.com/CannibalVox/VKng/core/resource"
+	ext_debugutils2 "github.com/CannibalVox/VKng/extensions/debugutils"
 	"github.com/CannibalVox/cgoalloc"
 	"github.com/palantir/stacktrace"
 	"github.com/veandco/go-sdl2/sdl"
@@ -26,13 +26,13 @@ type HelloTriangleApplication struct {
 	allocator cgoalloc.Allocator
 	window    *sdl.Window
 
-	instance       *core.Instance
-	debugMessenger *ext_debugutils.Messenger
+	instance       *resource.Instance
+	debugMessenger *ext_debugutils2.Messenger
 
-	physicalDevice *core.PhysicalDevice
-	device         *core.Device
+	physicalDevice *resource.PhysicalDevice
+	device         *resource.Device
 
-	graphicsQueue *core.Queue
+	graphicsQueue *resource.Queue
 }
 
 func (app *HelloTriangleApplication) Run() error {
@@ -119,17 +119,17 @@ func (app *HelloTriangleApplication) cleanup() {
 }
 
 func (app *HelloTriangleApplication) createInstance() error {
-	instanceOptions := &core.InstanceOptions{
+	instanceOptions := &resource.InstanceOptions{
 		ApplicationName:    "Hello Triangle",
-		ApplicationVersion: VKng.CreateVersion(1, 0, 0),
+		ApplicationVersion: core.CreateVersion(1, 0, 0),
 		EngineName:         "No Engine",
-		EngineVersion:      VKng.CreateVersion(1, 0, 0),
-		VulkanVersion:      VKng.Vulkan1_2,
+		EngineVersion:      core.CreateVersion(1, 0, 0),
+		VulkanVersion:      core.Vulkan1_2,
 	}
 
 	// Add extensions
 	sdlExtensions := app.window.VulkanGetInstanceExtensions()
-	extensions, _, err := core.AvailableExtensions(app.allocator)
+	extensions, _, err := resource.AvailableExtensions(app.allocator)
 	if err != nil {
 		return err
 	}
@@ -143,11 +143,11 @@ func (app *HelloTriangleApplication) createInstance() error {
 	}
 
 	if enableValidationLayers {
-		instanceOptions.ExtensionNames = append(instanceOptions.ExtensionNames, ext_debugutils.ExtensionName)
+		instanceOptions.ExtensionNames = append(instanceOptions.ExtensionNames, ext_debugutils2.ExtensionName)
 	}
 
 	// Add layers
-	layers, _, err := core.AvailableLayers(app.allocator)
+	layers, _, err := resource.AvailableLayers(app.allocator)
 	if err != nil {
 		return err
 	}
@@ -165,7 +165,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		instanceOptions.Next = app.debugMessengerOptions()
 	}
 
-	app.instance, _, err = core.CreateInstance(app.allocator, instanceOptions)
+	app.instance, _, err = resource.CreateInstance(app.allocator, instanceOptions)
 	if err != nil {
 		return err
 	}
@@ -173,10 +173,10 @@ func (app *HelloTriangleApplication) createInstance() error {
 	return nil
 }
 
-func (app *HelloTriangleApplication) debugMessengerOptions() *ext_debugutils.Options {
-	return &ext_debugutils.Options{
-		CaptureSeverities: ext_debugutils.SeverityError | ext_debugutils.SeverityWarning,
-		CaptureTypes:      ext_debugutils.TypeAll,
+func (app *HelloTriangleApplication) debugMessengerOptions() *ext_debugutils2.Options {
+	return &ext_debugutils2.Options{
+		CaptureSeverities: ext_debugutils2.SeverityError | ext_debugutils2.SeverityWarning,
+		CaptureTypes:      ext_debugutils2.TypeAll,
 		Callback:          app.logDebug,
 	}
 }
@@ -187,7 +187,7 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 	}
 
 	var err error
-	app.debugMessenger, _, err = ext_debugutils.CreateMessenger(app.allocator, app.instance, app.debugMessengerOptions())
+	app.debugMessenger, _, err = ext_debugutils2.CreateMessenger(app.allocator, app.instance, app.debugMessengerOptions())
 	if err != nil {
 		return err
 	}
@@ -223,10 +223,10 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 
 	uniqueQueueFamilies := []int{*indices.GraphicsFamily}
 
-	var queueFamilyOptions []*core.QueueFamilyOptions
+	var queueFamilyOptions []*resource.QueueFamilyOptions
 	queuePriority := float32(1.0)
 	for _, queueFamily := range uniqueQueueFamilies {
-		queueFamilyOptions = append(queueFamilyOptions, &core.QueueFamilyOptions{
+		queueFamilyOptions = append(queueFamilyOptions, &resource.QueueFamilyOptions{
 			QueueFamilyIndex: queueFamily,
 			QueuePriorities:  []float32{queuePriority},
 		})
@@ -238,9 +238,9 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		layerNames = append(layerNames, validationLayers...)
 	}
 
-	app.device, _, err = app.physicalDevice.CreateDevice(app.allocator, &core.DeviceOptions{
+	app.device, _, err = app.physicalDevice.CreateDevice(app.allocator, &resource.DeviceOptions{
 		QueueFamilies:   queueFamilyOptions,
-		EnabledFeatures: &VKng.PhysicalDeviceFeatures{},
+		EnabledFeatures: &core.PhysicalDeviceFeatures{},
 		ExtensionNames:  extensionNames,
 		LayerNames:      layerNames,
 	})
@@ -252,7 +252,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 	return err
 }
 
-func (app *HelloTriangleApplication) isDeviceSuitable(device *core.PhysicalDevice) bool {
+func (app *HelloTriangleApplication) isDeviceSuitable(device *resource.PhysicalDevice) bool {
 	indices, err := app.findQueueFamilies(device)
 	if err != nil {
 		return false
@@ -261,7 +261,7 @@ func (app *HelloTriangleApplication) isDeviceSuitable(device *core.PhysicalDevic
 	return indices.IsComplete()
 }
 
-func (app *HelloTriangleApplication) findQueueFamilies(device *core.PhysicalDevice) (QueueFamilyIndices, error) {
+func (app *HelloTriangleApplication) findQueueFamilies(device *resource.PhysicalDevice) (QueueFamilyIndices, error) {
 	indices := QueueFamilyIndices{}
 	queueFamilies, err := device.QueueFamilyProperties(app.allocator)
 	if err != nil {
@@ -269,7 +269,7 @@ func (app *HelloTriangleApplication) findQueueFamilies(device *core.PhysicalDevi
 	}
 
 	for queueFamilyIdx, queueFamily := range queueFamilies {
-		if (queueFamily.Flags & VKng.Graphics) != 0 {
+		if (queueFamily.Flags & core.Graphics) != 0 {
 			indices.GraphicsFamily = new(int)
 			*indices.GraphicsFamily = queueFamilyIdx
 		}
@@ -282,7 +282,7 @@ func (app *HelloTriangleApplication) findQueueFamilies(device *core.PhysicalDevi
 	return indices, nil
 }
 
-func (app *HelloTriangleApplication) logDebug(msgType ext_debugutils.MessageType, severity ext_debugutils.MessageSeverity, data *ext_debugutils.CallbackData) bool {
+func (app *HelloTriangleApplication) logDebug(msgType ext_debugutils2.MessageType, severity ext_debugutils2.MessageSeverity, data *ext_debugutils2.CallbackData) bool {
 	log.Printf("[%s %s] - %s", severity, msgType, data.Message)
 	return false
 }
