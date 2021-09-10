@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/CannibalVox/VKng/core"
 	commands2 "github.com/CannibalVox/VKng/core/commands"
+	"github.com/CannibalVox/VKng/core/loader"
 	pipeline2 "github.com/CannibalVox/VKng/core/pipeline"
 	render_pass2 "github.com/CannibalVox/VKng/core/render_pass"
 	"github.com/CannibalVox/VKng/core/resource"
@@ -91,6 +92,7 @@ var indices = []uint16{0, 1, 2, 2, 3, 0}
 type HelloTriangleApplication struct {
 	allocator cgoalloc.Allocator
 	window    *sdl.Window
+	loader    *loader.Loader
 
 	instance       *resource.Instance
 	debugMessenger *ext_debugutils2.Messenger
@@ -153,6 +155,11 @@ func (app *HelloTriangleApplication) initWindow() error {
 		return err
 	}
 	app.window = window
+
+	app.loader, err = loader.CreateLoaderFromProcAddr(sdl.VulkanGetVkGetInstanceProcAddr())
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -430,7 +437,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 
 	// Add extensions
 	sdlExtensions := app.window.VulkanGetInstanceExtensions()
-	extensions, _, err := resource.AvailableExtensions(app.allocator)
+	extensions, _, err := resource.AvailableExtensions(app.allocator, app.loader)
 	if err != nil {
 		return err
 	}
@@ -448,7 +455,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 	}
 
 	// Add layers
-	layers, _, err := resource.AvailableLayers(app.allocator)
+	layers, _, err := resource.AvailableLayers(app.allocator, app.loader)
 	if err != nil {
 		return err
 	}
@@ -466,7 +473,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		instanceOptions.Next = app.debugMessengerOptions()
 	}
 
-	app.instance, _, err = resource.CreateInstance(app.allocator, instanceOptions)
+	app.instance, _, err = resource.CreateInstance(app.allocator, app.loader, instanceOptions)
 	if err != nil {
 		return err
 	}
@@ -969,7 +976,10 @@ func (app *HelloTriangleApplication) createBuffer(size int, usage core.BufferUsa
 		return nil, nil, err
 	}
 
-	memRequirements := buffer.MemoryRequirements(app.allocator)
+	memRequirements, err := buffer.MemoryRequirements(app.allocator)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	memoryTypeIndex, err := app.findMemoryType(memRequirements.MemoryType, properties)
 	if err != nil {
@@ -1137,7 +1147,7 @@ func (app *HelloTriangleApplication) drawFrame() error {
 	}
 
 	imageIndex, res, err := app.swapchain.AcquireNextImage(core.NoTimeout, app.imageAvailableSemaphore[app.currentFrame], nil)
-	if res == core.VKErrorOutOfDate {
+	if res == loader.VKErrorOutOfDate {
 		return app.recreateSwapChain()
 	} else if err != nil {
 		return err
@@ -1168,12 +1178,12 @@ func (app *HelloTriangleApplication) drawFrame() error {
 		return err
 	}
 
-	_, res, err = ext_swapchain2.PresentToQueue(app.allocator, app.presentQueue, &ext_swapchain2.PresentOptions{
+	_, res, err = app.swapchain.PresentToQueue(app.allocator, app.presentQueue, &ext_swapchain2.PresentOptions{
 		WaitSemaphores: []*resource.Semaphore{app.renderFinishedSemaphore[app.currentFrame]},
 		Swapchains:     []*ext_swapchain2.Swapchain{app.swapchain},
 		ImageIndices:   []int{imageIndex},
 	})
-	if res == core.VKErrorOutOfDate || res == core.VKSuboptimal {
+	if res == loader.VKErrorOutOfDate || res == loader.VKSuboptimal {
 		return app.recreateSwapChain()
 	} else if err != nil {
 		return err

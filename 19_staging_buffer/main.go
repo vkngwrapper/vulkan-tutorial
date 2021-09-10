@@ -5,7 +5,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	"github.com/CannibalVox/VKng/core"
-	commands2 "github.com/CannibalVox/VKng/core/commands"
+	"github.com/CannibalVox/VKng/core/commands"
+	"github.com/CannibalVox/VKng/core/loader"
 	pipeline2 "github.com/CannibalVox/VKng/core/pipeline"
 	render_pass2 "github.com/CannibalVox/VKng/core/render_pass"
 	"github.com/CannibalVox/VKng/core/resource"
@@ -14,7 +15,7 @@ import (
 	ext_surface_sdl22 "github.com/CannibalVox/VKng/extensions/surface_sdl"
 	ext_swapchain2 "github.com/CannibalVox/VKng/extensions/swapchain"
 	"github.com/CannibalVox/cgoalloc"
-	"github.com/palantir/stacktrace"
+	"github.com/cockroachdb/errors"
 	"github.com/veandco/go-sdl2/sdl"
 	"log"
 	"unsafe"
@@ -88,6 +89,7 @@ var vertices = []Vertex{
 type HelloTriangleApplication struct {
 	allocator cgoalloc.Allocator
 	window    *sdl.Window
+	loader    *loader.Loader
 
 	instance       *resource.Instance
 	debugMessenger *ext_debugutils2.Messenger
@@ -110,8 +112,8 @@ type HelloTriangleApplication struct {
 	pipelineLayout   *pipeline2.PipelineLayout
 	graphicsPipeline *pipeline2.Pipeline
 
-	commandPool    *commands2.CommandPool
-	commandBuffers []*commands2.CommandBuffer
+	commandPool    *commands.CommandPool
+	commandBuffers []*commands.CommandBuffer
 
 	imageAvailableSemaphore []*resource.Semaphore
 	renderFinishedSemaphore []*resource.Semaphore
@@ -148,6 +150,11 @@ func (app *HelloTriangleApplication) initWindow() error {
 		return err
 	}
 	app.window = window
+
+	app.loader, err = loader.CreateLoaderFromProcAddr(sdl.VulkanGetVkGetInstanceProcAddr())
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -265,8 +272,8 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
 	app.swapchainFramebuffers = []*render_pass2.Framebuffer{}
 
 	if len(app.commandBuffers) > 0 {
-		commands2.DestroyBuffers(app.allocator, app.commandPool, app.commandBuffers)
-		app.commandBuffers = []*commands2.CommandBuffer{}
+		commands.DestroyBuffers(app.allocator, app.commandPool, app.commandBuffers)
+		app.commandBuffers = []*commands.CommandBuffer{}
 	}
 
 	if app.graphicsPipeline != nil {
@@ -412,7 +419,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 
 	// Add extensions
 	sdlExtensions := app.window.VulkanGetInstanceExtensions()
-	extensions, _, err := resource.AvailableExtensions(app.allocator)
+	extensions, _, err := resource.AvailableExtensions(app.allocator, app.loader)
 	if err != nil {
 		return err
 	}
@@ -420,7 +427,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 	for _, ext := range sdlExtensions {
 		_, hasExt := extensions[ext]
 		if !hasExt {
-			return stacktrace.NewError("createinstance: cannot initialize sdl: missing extension %s", ext)
+			return errors.Newf("createinstance: cannot initialize sdl: missing extension %s", ext)
 		}
 		instanceOptions.ExtensionNames = append(instanceOptions.ExtensionNames, ext)
 	}
@@ -430,7 +437,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 	}
 
 	// Add layers
-	layers, _, err := resource.AvailableLayers(app.allocator)
+	layers, _, err := resource.AvailableLayers(app.allocator, app.loader)
 	if err != nil {
 		return err
 	}
@@ -439,7 +446,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		for _, layer := range validationLayers {
 			_, hasValidation := layers[layer]
 			if !hasValidation {
-				return stacktrace.NewError("createInstance: cannot add validation- layer %s not available- install LunarG Vulkan SDK", layer)
+				return errors.Newf("createInstance: cannot add validation- layer %s not available- install LunarG Vulkan SDK", layer)
 			}
 			instanceOptions.LayerNames = append(instanceOptions.LayerNames, layer)
 		}
@@ -448,7 +455,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		instanceOptions.Next = app.debugMessengerOptions()
 	}
 
-	app.instance, _, err = resource.CreateInstance(app.allocator, instanceOptions)
+	app.instance, _, err = resource.CreateInstance(app.allocator, app.loader, instanceOptions)
 	if err != nil {
 		return err
 	}
@@ -504,7 +511,7 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
 	}
 
 	if app.physicalDevice == nil {
-		return stacktrace.NewError("failed to find a suitable GPU!")
+		return errors.New("failed to find a suitable GPU!")
 	}
 
 	return nil
@@ -872,7 +879,7 @@ func (app *HelloTriangleApplication) createCommandPool() error {
 		return err
 	}
 
-	pool, _, err := commands2.CreateCommandPool(app.allocator, app.device, &commands2.CommandPoolOptions{
+	pool, _, err := commands.CreateCommandPool(app.allocator, app.device, &commands.CommandPoolOptions{
 		GraphicsQueueFamily: indices.GraphicsFamily,
 	})
 
@@ -923,7 +930,7 @@ func (app *HelloTriangleApplication) createBuffer(size int, usage core.BufferUsa
 		return nil, nil, err
 	}
 
-	memRequirements := buffer.MemoryRequirements(app.allocator)
+	memRequirements, err := buffer.MemoryRequirements(app.allocator)
 
 	memoryTypeIndex, err := app.findMemoryType(memRequirements.MemoryType, properties)
 	if err != nil {
@@ -943,7 +950,7 @@ func (app *HelloTriangleApplication) createBuffer(size int, usage core.BufferUsa
 }
 
 func (app *HelloTriangleApplication) copyBuffer(srcBuffer *resource.Buffer, dstBuffer *resource.Buffer, size int) error {
-	buffers, _, err := commands2.CreateCommandBuffers(app.allocator, app.device, &commands2.CommandBufferOptions{
+	buffers, _, err := commands.CreateCommandBuffers(app.allocator, app.device, &commands.CommandBufferOptions{
 		Level:       core.LevelPrimary,
 		BufferCount: 1,
 		CommandPool: app.commandPool,
@@ -953,15 +960,15 @@ func (app *HelloTriangleApplication) copyBuffer(srcBuffer *resource.Buffer, dstB
 	}
 
 	buffer := buffers[0]
-	_, err = buffer.Begin(app.allocator, &commands2.BeginOptions{
-		Flags: commands2.OneTimeSubmit,
+	_, err = buffer.Begin(app.allocator, &commands.BeginOptions{
+		Flags: commands.OneTimeSubmit,
 	})
 	if err != nil {
 		return err
 	}
 	defer buffer.Destroy()
 
-	buffer.CmdCopyBuffer(app.allocator, srcBuffer, dstBuffer, []commands2.BufferCopy{
+	buffer.CmdCopyBuffer(app.allocator, srcBuffer, dstBuffer, []commands.BufferCopy{
 		{
 			SrcOffset: 0,
 			DstOffset: 0,
@@ -974,9 +981,9 @@ func (app *HelloTriangleApplication) copyBuffer(srcBuffer *resource.Buffer, dstB
 		return err
 	}
 
-	_, err = commands2.SubmitToQueue(app.allocator, app.graphicsQueue, nil, []*commands2.SubmitOptions{
+	_, err = commands.SubmitToQueue(app.allocator, app.graphicsQueue, nil, []*commands.SubmitOptions{
 		{
-			CommandBuffers: []*commands2.CommandBuffer{buffer},
+			CommandBuffers: []*commands.CommandBuffer{buffer},
 		},
 	})
 	if err != nil {
@@ -997,12 +1004,12 @@ func (app *HelloTriangleApplication) findMemoryType(typeFilter uint32, propertie
 		}
 	}
 
-	return 0, stacktrace.NewError("failed to find any suitable memory type!")
+	return 0, errors.New("failed to find any suitable memory type!")
 }
 
 func (app *HelloTriangleApplication) createCommandBuffers() error {
 
-	buffers, _, err := commands2.CreateCommandBuffers(app.allocator, app.device, &commands2.CommandBufferOptions{
+	buffers, _, err := commands.CreateCommandBuffers(app.allocator, app.device, &commands.CommandBufferOptions{
 		Level:       core.LevelPrimary,
 		BufferCount: len(app.swapchainImages),
 		CommandPool: app.commandPool,
@@ -1013,21 +1020,21 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
 	app.commandBuffers = buffers
 
 	for bufferIdx, buffer := range buffers {
-		_, err = buffer.Begin(app.allocator, &commands2.BeginOptions{})
+		_, err = buffer.Begin(app.allocator, &commands.BeginOptions{})
 		if err != nil {
 			return err
 		}
 
-		err = buffer.CmdBeginRenderPass(app.allocator, commands2.ContentsInline,
-			&commands2.RenderPassBeginOptions{
+		err = buffer.CmdBeginRenderPass(app.allocator, commands.ContentsInline,
+			&commands.RenderPassBeginOptions{
 				RenderPass:  app.renderPass,
 				Framebuffer: app.swapchainFramebuffers[bufferIdx],
 				RenderArea: core.Rect2D{
 					Offset: core.Offset2D{X: 0, Y: 0},
 					Extent: app.swapchainExtent,
 				},
-				ClearValues: []commands2.ClearValue{
-					commands2.ClearValueFloat{0, 0, 0, 1},
+				ClearValues: []commands.ClearValue{
+					commands.ClearValueFloat{0, 0, 0, 1},
 				},
 			})
 		if err != nil {
@@ -1090,7 +1097,7 @@ func (app *HelloTriangleApplication) drawFrame() error {
 	}
 
 	imageIndex, res, err := app.swapchain.AcquireNextImage(core.NoTimeout, app.imageAvailableSemaphore[app.currentFrame], nil)
-	if res == core.VKErrorOutOfDate {
+	if res == loader.VKErrorOutOfDate {
 		return app.recreateSwapChain()
 	} else if err != nil {
 		return err
@@ -1109,11 +1116,11 @@ func (app *HelloTriangleApplication) drawFrame() error {
 		return err
 	}
 
-	_, err = commands2.SubmitToQueue(app.allocator, app.graphicsQueue, app.inFlightFence[app.currentFrame], []*commands2.SubmitOptions{
+	_, err = commands.SubmitToQueue(app.allocator, app.graphicsQueue, app.inFlightFence[app.currentFrame], []*commands.SubmitOptions{
 		{
 			WaitSemaphores:   []*resource.Semaphore{app.imageAvailableSemaphore[app.currentFrame]},
 			WaitDstStages:    []core.PipelineStages{core.PipelineStageColorAttachmentOutput},
-			CommandBuffers:   []*commands2.CommandBuffer{app.commandBuffers[imageIndex]},
+			CommandBuffers:   []*commands.CommandBuffer{app.commandBuffers[imageIndex]},
 			SignalSemaphores: []*resource.Semaphore{app.renderFinishedSemaphore[app.currentFrame]},
 		},
 	})
@@ -1121,12 +1128,12 @@ func (app *HelloTriangleApplication) drawFrame() error {
 		return err
 	}
 
-	_, res, err = ext_swapchain2.PresentToQueue(app.allocator, app.presentQueue, &ext_swapchain2.PresentOptions{
+	_, res, err = app.swapchain.PresentToQueue(app.allocator, app.presentQueue, &ext_swapchain2.PresentOptions{
 		WaitSemaphores: []*resource.Semaphore{app.renderFinishedSemaphore[app.currentFrame]},
 		Swapchains:     []*ext_swapchain2.Swapchain{app.swapchain},
 		ImageIndices:   []int{imageIndex},
 	})
-	if res == core.VKErrorOutOfDate || res == core.VKSuboptimal {
+	if res == loader.VKErrorOutOfDate || res == loader.VKSuboptimal {
 		return app.recreateSwapChain()
 	} else if err != nil {
 		return err

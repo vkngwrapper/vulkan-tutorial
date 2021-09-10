@@ -67,16 +67,20 @@ func (app *HelloTriangleApplication) cleanup() {
 	app.allocator.Destroy()
 }
 
+func fail(val interface{}) {
+	log.Fatalf("%+v\n", val)
+}
+
 func main() {
 	defAlloc := &cgoalloc.DefaultAllocator{}
 	lowTier, err := cgoalloc.CreateFixedBlockAllocator(defAlloc, 64*1024, 64, 8)
 	if err != nil {
-		log.Fatalln(err)
+		fail(err)
 	}
 
 	highTier, err := cgoalloc.CreateFixedBlockAllocator(defAlloc, 4096*1024, 4096, 8)
 	if err != nil {
-		log.Fatalln(err)
+		fail(err)
 	}
 
 	alloc := cgoalloc.CreateFallbackAllocator(highTier, defAlloc)
@@ -88,6 +92,6 @@ func main() {
 
 	err = app.Run()
 	if err != nil {
-		log.Fatalln(err)
+		fail(err)
 	}
 }

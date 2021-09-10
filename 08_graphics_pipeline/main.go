@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/CannibalVox/VKng/core"
+	"github.com/CannibalVox/VKng/core/loader"
 	"github.com/CannibalVox/VKng/core/resource"
 	ext_debugutils2 "github.com/CannibalVox/VKng/extensions/debugutils"
 	ext_surface2 "github.com/CannibalVox/VKng/extensions/surface"
@@ -36,6 +37,7 @@ type SwapChainSupportDetails struct {
 type HelloTriangleApplication struct {
 	allocator cgoalloc.Allocator
 	window    *sdl.Window
+	loader    *loader.Loader
 
 	instance       *resource.Instance
 	debugMessenger *ext_debugutils2.Messenger
@@ -79,6 +81,11 @@ func (app *HelloTriangleApplication) initWindow() error {
 		return err
 	}
 	app.window = window
+
+	app.loader, err = loader.CreateLoaderFromProcAddr(sdl.VulkanGetVkGetInstanceProcAddr())
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -175,7 +182,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 
 	// Add extensions
 	sdlExtensions := app.window.VulkanGetInstanceExtensions()
-	extensions, _, err := resource.AvailableExtensions(app.allocator)
+	extensions, _, err := resource.AvailableExtensions(app.allocator, app.loader)
 	if err != nil {
 		return err
 	}
@@ -193,7 +200,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 	}
 
 	// Add layers
-	layers, _, err := resource.AvailableLayers(app.allocator)
+	layers, _, err := resource.AvailableLayers(app.allocator, app.loader)
 	if err != nil {
 		return err
 	}
@@ -211,7 +218,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		instanceOptions.Next = app.debugMessengerOptions()
 	}
 
-	app.instance, _, err = resource.CreateInstance(app.allocator, instanceOptions)
+	app.instance, _, err = resource.CreateInstance(app.allocator, app.loader, instanceOptions)
 	if err != nil {
 		return err
 	}

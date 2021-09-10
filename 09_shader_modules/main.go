@@ -3,6 +3,7 @@ package main
 import (
 	"embed"
 	"github.com/CannibalVox/VKng/core"
+	"github.com/CannibalVox/VKng/core/loader"
 	"github.com/CannibalVox/VKng/core/pipeline"
 	"github.com/CannibalVox/VKng/core/resource"
 	ext_debugutils2 "github.com/CannibalVox/VKng/extensions/debugutils"
@@ -10,6 +11,7 @@ import (
 	ext_surface_sdl22 "github.com/CannibalVox/VKng/extensions/surface_sdl"
 	ext_swapchain2 "github.com/CannibalVox/VKng/extensions/swapchain"
 	"github.com/CannibalVox/cgoalloc"
+	"github.com/cockroachdb/errors"
 	"github.com/palantir/stacktrace"
 	"github.com/veandco/go-sdl2/sdl"
 	"log"
@@ -41,6 +43,7 @@ type SwapChainSupportDetails struct {
 type HelloTriangleApplication struct {
 	allocator cgoalloc.Allocator
 	window    *sdl.Window
+	loader    *loader.Loader
 
 	instance       *resource.Instance
 	debugMessenger *ext_debugutils2.Messenger
@@ -84,6 +87,11 @@ func (app *HelloTriangleApplication) initWindow() error {
 		return err
 	}
 	app.window = window
+
+	app.loader, err = loader.CreateLoaderFromProcAddr(sdl.VulkanGetVkGetInstanceProcAddr())
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -180,7 +188,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 
 	// Add extensions
 	sdlExtensions := app.window.VulkanGetInstanceExtensions()
-	extensions, _, err := resource.AvailableExtensions(app.allocator)
+	extensions, _, err := resource.AvailableExtensions(app.allocator, app.loader)
 	if err != nil {
 		return err
 	}
@@ -188,7 +196,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 	for _, ext := range sdlExtensions {
 		_, hasExt := extensions[ext]
 		if !hasExt {
-			return stacktrace.NewError("createinstance: cannot initialize sdl: missing extension %s", ext)
+			return errors.Newf("createinstance: cannot initialize sdl: missing extension %s", ext)
 		}
 		instanceOptions.ExtensionNames = append(instanceOptions.ExtensionNames, ext)
 	}
@@ -198,7 +206,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 	}
 
 	// Add layers
-	layers, _, err := resource.AvailableLayers(app.allocator)
+	layers, _, err := resource.AvailableLayers(app.allocator, app.loader)
 	if err != nil {
 		return err
 	}
@@ -207,7 +215,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		for _, layer := range validationLayers {
 			_, hasValidation := layers[layer]
 			if !hasValidation {
-				return stacktrace.NewError("createInstance: cannot add validation- layer %s not available- install LunarG Vulkan SDK", layer)
+				return errors.Newf("createInstance: cannot add validation- layer %s not available- install LunarG Vulkan SDK", layer)
 			}
 			instanceOptions.LayerNames = append(instanceOptions.LayerNames, layer)
 		}
@@ -216,7 +224,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		instanceOptions.Next = app.debugMessengerOptions()
 	}
 
-	app.instance, _, err = resource.CreateInstance(app.allocator, instanceOptions)
+	app.instance, _, err = resource.CreateInstance(app.allocator, app.loader, instanceOptions)
 	if err != nil {
 		return err
 	}

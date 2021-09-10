@@ -2,15 +2,17 @@ package main
 
 import (
 	"github.com/CannibalVox/VKng/core"
+	"github.com/CannibalVox/VKng/core/loader"
 	"github.com/CannibalVox/VKng/core/resource"
 	"github.com/CannibalVox/cgoalloc"
-	"github.com/palantir/stacktrace"
+	"github.com/cockroachdb/errors"
 	"github.com/veandco/go-sdl2/sdl"
 	"log"
 )
 
 type HelloTriangleApplication struct {
 	allocator cgoalloc.Allocator
+	loader    *loader.Loader
 	window    *sdl.Window
 
 	instance *resource.Instance
@@ -41,6 +43,11 @@ func (app *HelloTriangleApplication) initWindow() error {
 		return err
 	}
 	app.window = window
+
+	app.loader, err = loader.CreateStaticLinkedLoader()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -87,7 +94,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 
 	// Add extensions
 	sdlExtensions := app.window.VulkanGetInstanceExtensions()
-	extensions, _, err := resource.AvailableExtensions(app.allocator)
+	extensions, _, err := resource.AvailableExtensions(app.allocator, app.loader)
 	if err != nil {
 		return err
 	}
@@ -95,12 +102,12 @@ func (app *HelloTriangleApplication) createInstance() error {
 	for _, ext := range sdlExtensions {
 		_, hasExt := extensions[ext]
 		if !hasExt {
-			return stacktrace.NewError("createinstance: cannot initialize sdl: missing extension %s", ext)
+			return errors.Newf("createinstance: cannot initialize sdl: missing extension %s", ext)
 		}
 		instanceOptions.ExtensionNames = append(instanceOptions.ExtensionNames, ext)
 	}
 
-	app.instance, _, err = resource.CreateInstance(app.allocator, instanceOptions)
+	app.instance, _, err = resource.CreateInstance(app.allocator, app.loader, instanceOptions)
 	if err != nil {
 		return err
 	}
