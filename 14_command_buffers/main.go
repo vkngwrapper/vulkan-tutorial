@@ -3,15 +3,15 @@ package main
 import (
 	"embed"
 	"github.com/CannibalVox/VKng/core"
-	commands2 "github.com/CannibalVox/VKng/core/commands"
+	"github.com/CannibalVox/VKng/core/commands"
 	"github.com/CannibalVox/VKng/core/loader"
-	pipeline2 "github.com/CannibalVox/VKng/core/pipeline"
-	render_pass2 "github.com/CannibalVox/VKng/core/render_pass"
+	"github.com/CannibalVox/VKng/core/pipeline"
+	"github.com/CannibalVox/VKng/core/render_pass"
 	"github.com/CannibalVox/VKng/core/resource"
-	ext_debugutils2 "github.com/CannibalVox/VKng/extensions/debugutils"
-	ext_surface2 "github.com/CannibalVox/VKng/extensions/surface"
-	ext_surface_sdl22 "github.com/CannibalVox/VKng/extensions/surface_sdl"
-	ext_swapchain2 "github.com/CannibalVox/VKng/extensions/swapchain"
+	ext_debugutils "github.com/CannibalVox/VKng/extensions/debugutils"
+	ext_surface "github.com/CannibalVox/VKng/extensions/surface"
+	ext_surface_sdl2 "github.com/CannibalVox/VKng/extensions/surface_sdl"
+	ext_swapchain "github.com/CannibalVox/VKng/extensions/swapchain"
 	"github.com/CannibalVox/cgoalloc"
 	"github.com/cockroachdb/errors"
 	"github.com/veandco/go-sdl2/sdl"
@@ -22,7 +22,7 @@ import (
 var shaders embed.FS
 
 var validationLayers = []string{"VK_LAYER_KHRONOS_validation"}
-var deviceExtensions = []string{ext_swapchain2.ExtensionName}
+var deviceExtensions = []string{ext_swapchain.ExtensionName}
 
 const enableValidationLayers = true
 
@@ -36,9 +36,9 @@ func (i *QueueFamilyIndices) IsComplete() bool {
 }
 
 type SwapChainSupportDetails struct {
-	Capabilities *ext_surface2.Capabilities
-	Formats      []ext_surface2.Format
-	PresentModes []ext_surface2.PresentMode
+	Capabilities *ext_surface.Capabilities
+	Formats      []ext_surface.Format
+	PresentModes []ext_surface.PresentMode
 }
 
 type HelloTriangleApplication struct {
@@ -47,8 +47,8 @@ type HelloTriangleApplication struct {
 	loader    *loader.Loader
 
 	instance       *resource.Instance
-	debugMessenger *ext_debugutils2.Messenger
-	surface        *ext_surface2.Surface
+	debugMessenger *ext_debugutils.Messenger
+	surface        *ext_surface.Surface
 
 	physicalDevice *resource.PhysicalDevice
 	device         *resource.Device
@@ -56,19 +56,19 @@ type HelloTriangleApplication struct {
 	graphicsQueue *resource.Queue
 	presentQueue  *resource.Queue
 
-	swapchain             *ext_swapchain2.Swapchain
+	swapchain             *ext_swapchain.Swapchain
 	swapchainImages       []*resource.Image
 	swapchainImageFormat  core.DataFormat
 	swapchainExtent       core.Extent2D
 	swapchainImageViews   []*resource.ImageView
-	swapchainFramebuffers []*render_pass2.Framebuffer
+	swapchainFramebuffers []*render_pass.Framebuffer
 
-	renderPass       *render_pass2.RenderPass
-	pipelineLayout   *pipeline2.PipelineLayout
-	graphicsPipeline *pipeline2.Pipeline
+	renderPass       *render_pass.RenderPass
+	pipelineLayout   *pipeline.PipelineLayout
+	graphicsPipeline *pipeline.Pipeline
 
-	commandPool    *commands2.CommandPool
-	commandBuffers []*commands2.CommandBuffer
+	commandPool    *commands.CommandPool
+	commandBuffers []*commands.CommandBuffer
 }
 
 func (app *HelloTriangleApplication) Run() error {
@@ -251,7 +251,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 	}
 
 	if enableValidationLayers {
-		instanceOptions.ExtensionNames = append(instanceOptions.ExtensionNames, ext_debugutils2.ExtensionName)
+		instanceOptions.ExtensionNames = append(instanceOptions.ExtensionNames, ext_debugutils.ExtensionName)
 	}
 
 	// Add layers
@@ -281,10 +281,10 @@ func (app *HelloTriangleApplication) createInstance() error {
 	return nil
 }
 
-func (app *HelloTriangleApplication) debugMessengerOptions() *ext_debugutils2.Options {
-	return &ext_debugutils2.Options{
-		CaptureSeverities: ext_debugutils2.SeverityError | ext_debugutils2.SeverityWarning,
-		CaptureTypes:      ext_debugutils2.TypeAll,
+func (app *HelloTriangleApplication) debugMessengerOptions() *ext_debugutils.Options {
+	return &ext_debugutils.Options{
+		CaptureSeverities: ext_debugutils.SeverityError | ext_debugutils.SeverityWarning,
+		CaptureTypes:      ext_debugutils.TypeAll,
 		Callback:          app.logDebug,
 	}
 }
@@ -295,7 +295,7 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 	}
 
 	var err error
-	app.debugMessenger, _, err = ext_debugutils2.CreateMessenger(app.allocator, app.instance, app.debugMessengerOptions())
+	app.debugMessenger, _, err = ext_debugutils.CreateMessenger(app.allocator, app.instance, app.debugMessengerOptions())
 	if err != nil {
 		return err
 	}
@@ -304,9 +304,7 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 }
 
 func (app *HelloTriangleApplication) createSurface() error {
-	surface, _, err := ext_surface_sdl22.CreateSurface(app.allocator, app.instance, &ext_surface_sdl22.CreationOptions{
-		Window: app.window,
-	})
+	surface, _, err := ext_surface_sdl2.CreateSurface(app.allocator, app.instance, app.window)
 	if err != nil {
 		return err
 	}
@@ -410,7 +408,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 		queueFamilyIndices = append(queueFamilyIndices, *indices.GraphicsFamily, *indices.PresentFamily)
 	}
 
-	swapchain, _, err := ext_swapchain2.CreateSwapchain(app.allocator, app.device, &ext_swapchain2.CreationOptions{
+	swapchain, _, err := ext_swapchain.CreateSwapchain(app.allocator, app.device, &ext_swapchain.CreationOptions{
 		Surface: app.surface,
 
 		MinImageCount:    imageCount,
@@ -424,7 +422,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 		QueueFamilyIndices: queueFamilyIndices,
 
 		PreTransform:   swapchainSupport.Capabilities.CurrentTransform,
-		CompositeAlpha: ext_surface2.Opaque,
+		CompositeAlpha: ext_surface.Opaque,
 		PresentMode:    presentMode,
 		Clipped:        true,
 	})
@@ -473,8 +471,8 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 }
 
 func (app *HelloTriangleApplication) createRenderPass() error {
-	renderPass, _, err := render_pass2.CreateRenderPass(app.allocator, app.device, &render_pass2.RenderPassOptions{
-		Attachments: []render_pass2.AttachmentDescription{
+	renderPass, _, err := render_pass.CreateRenderPass(app.allocator, app.device, &render_pass.RenderPassOptions{
+		Attachments: []render_pass.AttachmentDescription{
 			{
 				Format:         app.swapchainImageFormat,
 				Samples:        core.Samples1,
@@ -486,7 +484,7 @@ func (app *HelloTriangleApplication) createRenderPass() error {
 				FinalLayout:    core.LayoutPresentSrc,
 			},
 		},
-		SubPasses: []render_pass2.SubPass{
+		SubPasses: []render_pass.SubPass{
 			{
 				BindPoint: core.BindGraphics,
 				ColorAttachments: []core.AttachmentReference{
@@ -497,9 +495,9 @@ func (app *HelloTriangleApplication) createRenderPass() error {
 				},
 			},
 		},
-		SubPassDependencies: []render_pass2.SubPassDependency{
+		SubPassDependencies: []render_pass.SubPassDependency{
 			{
-				SrcSubPassIndex: render_pass2.SubpassExternal,
+				SrcSubPassIndex: render_pass.SubpassExternal,
 				DstSubPassIndex: 0,
 
 				SrcStageMask: core.PipelineStageColorAttachmentOutput,
@@ -562,26 +560,26 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 	}
 	defer fragShader.Destroy()
 
-	vertexInput := &pipeline2.VertexInputOptions{}
+	vertexInput := &pipeline.VertexInputOptions{}
 
-	inputAssembly := &pipeline2.InputAssemblyOptions{
+	inputAssembly := &pipeline.InputAssemblyOptions{
 		Topology:               core.TopologyTriangleList,
 		EnablePrimitiveRestart: false,
 	}
 
-	vertStage := &pipeline2.ShaderStage{
+	vertStage := &pipeline.ShaderStage{
 		Stage:  core.StageVertex,
 		Shader: vertShader,
 		Name:   "main",
 	}
 
-	fragStage := &pipeline2.ShaderStage{
+	fragStage := &pipeline.ShaderStage{
 		Stage:  core.StageFragment,
 		Shader: fragShader,
 		Name:   "main",
 	}
 
-	viewport := &pipeline2.ViewportOptions{
+	viewport := &pipeline.ViewportOptions{
 		Viewports: []core.Viewport{
 			{
 				X:        0,
@@ -600,11 +598,11 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		},
 	}
 
-	rasterization := &pipeline2.RasterizationOptions{
+	rasterization := &pipeline.RasterizationOptions{
 		DepthClamp:        false,
 		RasterizerDiscard: false,
 
-		PolygonMode: pipeline2.ModeFill,
+		PolygonMode: pipeline.ModeFill,
 		CullMode:    core.CullBack,
 		FrontFace:   core.Clockwise,
 
@@ -613,18 +611,18 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		LineWidth: 1.0,
 	}
 
-	multisample := &pipeline2.MultisampleOptions{
+	multisample := &pipeline.MultisampleOptions{
 		SampleShading:        false,
 		RasterizationSamples: core.Samples1,
 		MinSampleShading:     1.0,
 	}
 
-	colorBlend := &pipeline2.ColorBlendOptions{
+	colorBlend := &pipeline.ColorBlendOptions{
 		LogicOpEnabled: false,
 		LogicOp:        core.LogicOpCopy,
 
 		BlendConstants: [4]float32{0, 0, 0, 0},
-		Attachments: []pipeline2.ColorBlendAttachment{
+		Attachments: []pipeline.ColorBlendAttachment{
 			{
 				BlendEnabled: false,
 				WriteMask:    core.ComponentRed | core.ComponentGreen | core.ComponentBlue | core.ComponentAlpha,
@@ -632,14 +630,14 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		},
 	}
 
-	app.pipelineLayout, _, err = pipeline2.CreatePipelineLayout(app.allocator, app.device, &pipeline2.PipelineLayoutOptions{})
+	app.pipelineLayout, _, err = pipeline.CreatePipelineLayout(app.allocator, app.device, &pipeline.PipelineLayoutOptions{})
 	if err != nil {
 		return err
 	}
 
-	pipelines, _, err := pipeline2.CreateGraphicsPipelines(app.allocator, app.device, []*pipeline2.Options{
+	pipelines, _, err := pipeline.CreateGraphicsPipelines(app.allocator, app.device, []*pipeline.Options{
 		{
-			ShaderStages: []*pipeline2.ShaderStage{
+			ShaderStages: []*pipeline.ShaderStage{
 				vertStage,
 				fragStage,
 			},
@@ -665,7 +663,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 
 func (app *HelloTriangleApplication) createFramebuffers() error {
 	for _, imageView := range app.swapchainImageViews {
-		framebuffer, _, err := render_pass2.CreateFrameBuffer(app.allocator, app.device, &render_pass2.FramebufferOptions{
+		framebuffer, _, err := render_pass.CreateFrameBuffer(app.allocator, app.device, &render_pass.FramebufferOptions{
 			RenderPass: app.renderPass,
 			Layers:     1,
 			Attachments: []*resource.ImageView{
@@ -690,7 +688,7 @@ func (app *HelloTriangleApplication) createCommandPool() error {
 		return err
 	}
 
-	pool, _, err := commands2.CreateCommandPool(app.allocator, app.device, &commands2.CommandPoolOptions{
+	pool, _, err := commands.CreateCommandPool(app.allocator, app.device, &commands.CommandPoolOptions{
 		GraphicsQueueFamily: indices.GraphicsFamily,
 	})
 
@@ -704,7 +702,7 @@ func (app *HelloTriangleApplication) createCommandPool() error {
 
 func (app *HelloTriangleApplication) createCommandBuffers() error {
 
-	buffers, _, err := commands2.CreateCommandBuffers(app.allocator, app.device, &commands2.CommandBufferOptions{
+	buffers, _, err := commands.CreateCommandBuffers(app.allocator, app.device, &commands.CommandBufferOptions{
 		Level:       core.LevelPrimary,
 		BufferCount: len(app.swapchainImages),
 		CommandPool: app.commandPool,
@@ -715,21 +713,21 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
 	app.commandBuffers = buffers
 
 	for bufferIdx, buffer := range buffers {
-		_, err = buffer.Begin(app.allocator, &commands2.BeginOptions{})
+		_, err = buffer.Begin(app.allocator, &commands.BeginOptions{})
 		if err != nil {
 			return err
 		}
 
-		err = buffer.CmdBeginRenderPass(app.allocator, commands2.ContentsInline,
-			&commands2.RenderPassBeginOptions{
+		err = buffer.CmdBeginRenderPass(app.allocator, commands.ContentsInline,
+			&commands.RenderPassBeginOptions{
 				RenderPass:  app.renderPass,
 				Framebuffer: app.swapchainFramebuffers[bufferIdx],
 				RenderArea: core.Rect2D{
 					Offset: core.Offset2D{X: 0, Y: 0},
 					Extent: app.swapchainExtent,
 				},
-				ClearValues: []commands2.ClearValue{
-					commands2.ClearValueFloat{0, 0, 0, 1},
+				ClearValues: []commands.ClearValue{
+					commands.ClearValueFloat{0, 0, 0, 1},
 				},
 			})
 		if err != nil {
@@ -749,9 +747,9 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
 	return nil
 }
 
-func (app *HelloTriangleApplication) chooseSwapSurfaceFormat(availableFormats []ext_surface2.Format) ext_surface2.Format {
+func (app *HelloTriangleApplication) chooseSwapSurfaceFormat(availableFormats []ext_surface.Format) ext_surface.Format {
 	for _, format := range availableFormats {
-		if format.Format == core.FormatB8G8R8A8SRGB && format.ColorSpace == ext_surface2.SRGBNonlinear {
+		if format.Format == core.FormatB8G8R8A8SRGB && format.ColorSpace == ext_surface.SRGBNonlinear {
 			return format
 		}
 	}
@@ -759,17 +757,17 @@ func (app *HelloTriangleApplication) chooseSwapSurfaceFormat(availableFormats []
 	return availableFormats[0]
 }
 
-func (app *HelloTriangleApplication) chooseSwapPresentMode(availablePresentModes []ext_surface2.PresentMode) ext_surface2.PresentMode {
+func (app *HelloTriangleApplication) chooseSwapPresentMode(availablePresentModes []ext_surface.PresentMode) ext_surface.PresentMode {
 	for _, presentMode := range availablePresentModes {
-		if presentMode == ext_surface2.Mailbox {
+		if presentMode == ext_surface.Mailbox {
 			return presentMode
 		}
 	}
 
-	return ext_surface2.FIFO
+	return ext_surface.FIFO
 }
 
-func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *ext_surface2.Capabilities) core.Extent2D {
+func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *ext_surface.Capabilities) core.Extent2D {
 	if capabilities.CurrentExtent.Width != (^uint32(0)) {
 		return capabilities.CurrentExtent
 	}
@@ -880,7 +878,7 @@ func (app *HelloTriangleApplication) findQueueFamilies(device *resource.Physical
 	return indices, nil
 }
 
-func (app *HelloTriangleApplication) logDebug(msgType ext_debugutils2.MessageType, severity ext_debugutils2.MessageSeverity, data *ext_debugutils2.CallbackData) bool {
+func (app *HelloTriangleApplication) logDebug(msgType ext_debugutils.MessageType, severity ext_debugutils.MessageSeverity, data *ext_debugutils.CallbackData) bool {
 	log.Printf("[%s %s] - %s", severity, msgType, data.Message)
 	return false
 }
