@@ -92,7 +92,7 @@ var indices = []uint16{0, 1, 2, 2, 3, 0}
 type HelloTriangleApplication struct {
 	allocator cgoalloc.Allocator
 	window    *sdl.Window
-	loader    *loader.Loader
+	loader    loader.Loader
 
 	instance       resource.Instance
 	debugMessenger ext_debugutils.Messenger

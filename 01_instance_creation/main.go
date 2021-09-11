@@ -12,7 +12,7 @@ import (
 
 type HelloTriangleApplication struct {
 	allocator cgoalloc.Allocator
-	loader    *loader.Loader
+	loader    loader.Loader
 	window    *sdl.Window
 
 	instance resource.Instance

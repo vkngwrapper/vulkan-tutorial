@@ -38,7 +38,7 @@ type SwapChainSupportDetails struct {
 type HelloTriangleApplication struct {
 	allocator cgoalloc.Allocator
 	window    *sdl.Window
-	loader    *loader.Loader
+	loader    loader.Loader
 
 	instance       resource.Instance
 	debugMessenger ext_debugutils.Messenger
