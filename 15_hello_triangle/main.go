@@ -49,8 +49,8 @@ type HelloTriangleApplication struct {
 	loader    *loader.Loader
 
 	instance       resource.Instance
-	debugMessenger *ext_debugutils.Messenger
-	surface        *ext_surface.Surface
+	debugMessenger ext_debugutils.Messenger
+	surface        ext_surface.Surface
 
 	physicalDevice resource.PhysicalDevice
 	device         resource.Device
@@ -58,7 +58,7 @@ type HelloTriangleApplication struct {
 	graphicsQueue resource.Queue
 	presentQueue  resource.Queue
 
-	swapchain             *ext_swapchain.Swapchain
+	swapchain             ext_swapchain.Swapchain
 	swapchainImages       []resource.Image
 	swapchainImageFormat  core.DataFormat
 	swapchainExtent       core.Extent2D
@@ -861,7 +861,7 @@ func (app *HelloTriangleApplication) drawFrame() error {
 
 	_, _, err = app.swapchain.PresentToQueue(app.allocator, app.presentQueue, &ext_swapchain.PresentOptions{
 		WaitSemaphores: []resource.Semaphore{app.renderFinishedSemaphore[app.currentFrame]},
-		Swapchains:     []*ext_swapchain.Swapchain{app.swapchain},
+		Swapchains:     []ext_swapchain.Swapchain{app.swapchain},
 		ImageIndices:   []int{imageIndex},
 	})
 	if err != nil {

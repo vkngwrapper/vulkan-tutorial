@@ -46,8 +46,8 @@ type HelloTriangleApplication struct {
 	loader    *loader.Loader
 
 	instance       resource.Instance
-	debugMessenger *ext_debugutils.Messenger
-	surface        *ext_surface.Surface
+	debugMessenger ext_debugutils.Messenger
+	surface        ext_surface.Surface
 
 	physicalDevice resource.PhysicalDevice
 	device         resource.Device
@@ -55,7 +55,7 @@ type HelloTriangleApplication struct {
 	graphicsQueue resource.Queue
 	presentQueue  resource.Queue
 
-	swapchain            *ext_swapchain.Swapchain
+	swapchain            ext_swapchain.Swapchain
 	swapchainImages      []resource.Image
 	swapchainImageFormat core.DataFormat
 	swapchainExtent      core.Extent2D

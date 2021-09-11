@@ -32,8 +32,8 @@ type HelloTriangleApplication struct {
 	loader    *loader.Loader
 
 	instance       resource.Instance
-	debugMessenger *ext_debugutils.Messenger
-	surface        *ext_surface.Surface
+	debugMessenger ext_debugutils.Messenger
+	surface        ext_surface.Surface
 
 	physicalDevice resource.PhysicalDevice
 	device         resource.Device

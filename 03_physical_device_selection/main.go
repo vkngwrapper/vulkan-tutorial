@@ -4,7 +4,7 @@ import (
 	"github.com/CannibalVox/VKng/core"
 	"github.com/CannibalVox/VKng/core/loader"
 	"github.com/CannibalVox/VKng/core/resource"
-	ext_debugutils2 "github.com/CannibalVox/VKng/extensions/debugutils"
+	ext_debugutils "github.com/CannibalVox/VKng/extensions/debugutils"
 	"github.com/CannibalVox/cgoalloc"
 	"github.com/cockroachdb/errors"
 	"github.com/veandco/go-sdl2/sdl"
@@ -29,7 +29,7 @@ type HelloTriangleApplication struct {
 	loader    *loader.Loader
 
 	instance       resource.Instance
-	debugMessenger *ext_debugutils2.Messenger
+	debugMessenger ext_debugutils.Messenger
 
 	physicalDevice resource.PhysicalDevice
 }
@@ -138,7 +138,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 	}
 
 	if enableValidationLayers {
-		instanceOptions.ExtensionNames = append(instanceOptions.ExtensionNames, ext_debugutils2.ExtensionName)
+		instanceOptions.ExtensionNames = append(instanceOptions.ExtensionNames, ext_debugutils.ExtensionName)
 	}
 
 	// Add layers
@@ -168,10 +168,10 @@ func (app *HelloTriangleApplication) createInstance() error {
 	return nil
 }
 
-func (app *HelloTriangleApplication) debugMessengerOptions() *ext_debugutils2.Options {
-	return &ext_debugutils2.Options{
-		CaptureSeverities: ext_debugutils2.SeverityError | ext_debugutils2.SeverityWarning,
-		CaptureTypes:      ext_debugutils2.TypeAll,
+func (app *HelloTriangleApplication) debugMessengerOptions() *ext_debugutils.Options {
+	return &ext_debugutils.Options{
+		CaptureSeverities: ext_debugutils.SeverityError | ext_debugutils.SeverityWarning,
+		CaptureTypes:      ext_debugutils.TypeAll,
 		Callback:          app.logDebug,
 	}
 }
@@ -182,7 +182,7 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 	}
 
 	var err error
-	app.debugMessenger, _, err = ext_debugutils2.CreateMessenger(app.allocator, app.instance, app.debugMessengerOptions())
+	app.debugMessenger, _, err = ext_debugutils.CreateMessenger(app.allocator, app.instance, app.debugMessengerOptions())
 	if err != nil {
 		return err
 	}
@@ -240,7 +240,7 @@ func (app *HelloTriangleApplication) findQueueFamilies(device resource.PhysicalD
 	return indices, nil
 }
 
-func (app *HelloTriangleApplication) logDebug(msgType ext_debugutils2.MessageType, severity ext_debugutils2.MessageSeverity, data *ext_debugutils2.CallbackData) bool {
+func (app *HelloTriangleApplication) logDebug(msgType ext_debugutils.MessageType, severity ext_debugutils.MessageSeverity, data *ext_debugutils.CallbackData) bool {
 	log.Printf("[%s %s] - %s", severity, msgType, data.Message)
 	return false
 }
