@@ -521,6 +521,17 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 	var extensionNames []string
 	extensionNames = append(extensionNames, deviceExtensions...)
 
+	// Makes this example compatible with vulkan portability, necessary to run on mobile & mac
+	extensions, _, err := app.physicalDevice.AvailableExtensions(app.allocator)
+	if err != nil {
+		return err
+	}
+
+	_, supported := extensions["VK_KHR_portability_subset"]
+	if supported {
+		extensionNames = append(extensionNames, "VK_KHR_portability_subset")
+	}
+
 	var layerNames []string
 	if enableValidationLayers {
 		layerNames = append(layerNames, validationLayers...)

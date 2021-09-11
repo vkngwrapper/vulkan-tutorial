@@ -556,6 +556,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 	var extensionNames []string
 	extensionNames = append(extensionNames, deviceExtensions...)
 
+	// Makes this example compatible with vulkan portability, necessary to run on mobile & mac
 	extensions, _, err := app.physicalDevice.AvailableExtensions(app.allocator)
 	if err != nil {
 		return err
