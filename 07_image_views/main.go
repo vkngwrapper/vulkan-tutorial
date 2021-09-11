@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/CannibalVox/VKng/core"
 	"github.com/CannibalVox/VKng/core/loader"
-	"github.com/CannibalVox/VKng/core/resource"
+	"github.com/CannibalVox/VKng/core/resources"
 	ext_debugutils "github.com/CannibalVox/VKng/extensions/debugutils"
 	ext_surface "github.com/CannibalVox/VKng/extensions/surface"
 	ext_surface_sdl2 "github.com/CannibalVox/VKng/extensions/surface_sdl"
@@ -40,21 +40,21 @@ type HelloTriangleApplication struct {
 	window    *sdl.Window
 	loader    loader.Loader
 
-	instance       resource.Instance
+	instance       resources.Instance
 	debugMessenger ext_debugutils.Messenger
 	surface        ext_surface.Surface
 
-	physicalDevice resource.PhysicalDevice
-	device         resource.Device
+	physicalDevice resources.PhysicalDevice
+	device         resources.Device
 
-	graphicsQueue resource.Queue
-	presentQueue  resource.Queue
+	graphicsQueue resources.Queue
+	presentQueue  resources.Queue
 
 	swapchain            ext_swapchain.Swapchain
-	swapchainImages      []resource.Image
+	swapchainImages      []resources.Image
 	swapchainImageFormat core.DataFormat
 	swapchainExtent      core.Extent2D
-	swapchainImageViews  []resource.ImageView
+	swapchainImageViews  []resources.ImageView
 }
 
 func (app *HelloTriangleApplication) Run() error {
@@ -168,7 +168,7 @@ func (app *HelloTriangleApplication) cleanup() {
 }
 
 func (app *HelloTriangleApplication) createInstance() error {
-	instanceOptions := &resource.InstanceOptions{
+	instanceOptions := &resources.InstanceOptions{
 		ApplicationName:    "Hello Triangle",
 		ApplicationVersion: core.CreateVersion(1, 0, 0),
 		EngineName:         "No Engine",
@@ -178,7 +178,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 
 	// Add extensions
 	sdlExtensions := app.window.VulkanGetInstanceExtensions()
-	extensions, _, err := resource.AvailableExtensions(app.allocator, app.loader)
+	extensions, _, err := resources.AvailableExtensions(app.allocator, app.loader)
 	if err != nil {
 		return err
 	}
@@ -196,7 +196,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 	}
 
 	// Add layers
-	layers, _, err := resource.AvailableLayers(app.allocator, app.loader)
+	layers, _, err := resources.AvailableLayers(app.allocator, app.loader)
 	if err != nil {
 		return err
 	}
@@ -214,7 +214,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		instanceOptions.Next = app.debugMessengerOptions()
 	}
 
-	app.instance, _, err = resource.CreateInstance(app.allocator, app.loader, instanceOptions)
+	app.instance, _, err = resources.CreateInstance(app.allocator, app.loader, instanceOptions)
 	if err != nil {
 		return err
 	}
@@ -285,10 +285,10 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		uniqueQueueFamilies = append(uniqueQueueFamilies, *indices.PresentFamily)
 	}
 
-	var queueFamilyOptions []*resource.QueueFamilyOptions
+	var queueFamilyOptions []*resources.QueueFamilyOptions
 	queuePriority := float32(1.0)
 	for _, queueFamily := range uniqueQueueFamilies {
-		queueFamilyOptions = append(queueFamilyOptions, &resource.QueueFamilyOptions{
+		queueFamilyOptions = append(queueFamilyOptions, &resources.QueueFamilyOptions{
 			QueueFamilyIndex: queueFamily,
 			QueuePriorities:  []float32{queuePriority},
 		})
@@ -313,7 +313,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		layerNames = append(layerNames, validationLayers...)
 	}
 
-	app.device, _, err = app.physicalDevice.CreateDevice(app.allocator, &resource.DeviceOptions{
+	app.device, _, err = app.physicalDevice.CreateDevice(app.allocator, &resources.DeviceOptions{
 		QueueFamilies:   queueFamilyOptions,
 		EnabledFeatures: &core.PhysicalDeviceFeatures{},
 		ExtensionNames:  extensionNames,
@@ -390,9 +390,9 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 	}
 	app.swapchainImages = images
 
-	var imageViews []resource.ImageView
+	var imageViews []resources.ImageView
 	for _, image := range images {
-		view, _, err := app.device.CreateImageView(app.allocator, &resource.ImageViewOptions{
+		view, _, err := app.device.CreateImageView(app.allocator, &resources.ImageViewOptions{
 			ViewType: core.View2D,
 			Image:    image,
 			Format:   surfaceFormat.Format,
@@ -467,7 +467,7 @@ func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *ext_surface.
 	return core.Extent2D{Width: width, Height: height}
 }
 
-func (app *HelloTriangleApplication) querySwapChainSupport(device resource.PhysicalDevice) (SwapChainSupportDetails, error) {
+func (app *HelloTriangleApplication) querySwapChainSupport(device resources.PhysicalDevice) (SwapChainSupportDetails, error) {
 	var details SwapChainSupportDetails
 	var err error
 
@@ -485,7 +485,7 @@ func (app *HelloTriangleApplication) querySwapChainSupport(device resource.Physi
 	return details, err
 }
 
-func (app *HelloTriangleApplication) isDeviceSuitable(device resource.PhysicalDevice) bool {
+func (app *HelloTriangleApplication) isDeviceSuitable(device resources.PhysicalDevice) bool {
 	indices, err := app.findQueueFamilies(device)
 	if err != nil {
 		return false
@@ -506,7 +506,7 @@ func (app *HelloTriangleApplication) isDeviceSuitable(device resource.PhysicalDe
 	return indices.IsComplete() && extensionsSupported && swapChainAdequate
 }
 
-func (app *HelloTriangleApplication) checkDeviceExtensionSupport(device resource.PhysicalDevice) bool {
+func (app *HelloTriangleApplication) checkDeviceExtensionSupport(device resources.PhysicalDevice) bool {
 	extensions, _, err := device.AvailableExtensions(app.allocator)
 	if err != nil {
 		return false
@@ -522,7 +522,7 @@ func (app *HelloTriangleApplication) checkDeviceExtensionSupport(device resource
 	return true
 }
 
-func (app *HelloTriangleApplication) findQueueFamilies(device resource.PhysicalDevice) (QueueFamilyIndices, error) {
+func (app *HelloTriangleApplication) findQueueFamilies(device resources.PhysicalDevice) (QueueFamilyIndices, error) {
 	indices := QueueFamilyIndices{}
 	queueFamilies, err := device.QueueFamilyProperties(app.allocator)
 	if err != nil {

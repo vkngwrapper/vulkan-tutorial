@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/CannibalVox/VKng/core"
 	"github.com/CannibalVox/VKng/core/loader"
-	"github.com/CannibalVox/VKng/core/resource"
+	"github.com/CannibalVox/VKng/core/resources"
 	"github.com/CannibalVox/cgoalloc"
 	"github.com/cockroachdb/errors"
 	"github.com/veandco/go-sdl2/sdl"
@@ -15,7 +15,7 @@ type HelloTriangleApplication struct {
 	loader    loader.Loader
 	window    *sdl.Window
 
-	instance resource.Instance
+	instance resources.Instance
 }
 
 func (app *HelloTriangleApplication) Run() error {
@@ -84,7 +84,7 @@ func (app *HelloTriangleApplication) cleanup() {
 }
 
 func (app *HelloTriangleApplication) createInstance() error {
-	instanceOptions := &resource.InstanceOptions{
+	instanceOptions := &resources.InstanceOptions{
 		ApplicationName:    "Hello Triangle",
 		ApplicationVersion: core.CreateVersion(1, 0, 0),
 		EngineName:         "No Engine",
@@ -94,7 +94,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 
 	// Add extensions
 	sdlExtensions := app.window.VulkanGetInstanceExtensions()
-	extensions, _, err := resource.AvailableExtensions(app.allocator, app.loader)
+	extensions, _, err := resources.AvailableExtensions(app.allocator, app.loader)
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		instanceOptions.ExtensionNames = append(instanceOptions.ExtensionNames, ext)
 	}
 
-	app.instance, _, err = resource.CreateInstance(app.allocator, app.loader, instanceOptions)
+	app.instance, _, err = resources.CreateInstance(app.allocator, app.loader, instanceOptions)
 	if err != nil {
 		return err
 	}

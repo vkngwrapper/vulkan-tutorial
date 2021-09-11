@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/CannibalVox/VKng/core"
 	"github.com/CannibalVox/VKng/core/loader"
-	"github.com/CannibalVox/VKng/core/resource"
+	"github.com/CannibalVox/VKng/core/resources"
 	ext_debugutils "github.com/CannibalVox/VKng/extensions/debugutils"
 	"github.com/CannibalVox/VKng/extensions/surface"
 	ext_surface_sdl2 "github.com/CannibalVox/VKng/extensions/surface_sdl"
@@ -31,15 +31,15 @@ type HelloTriangleApplication struct {
 	window    *sdl.Window
 	loader    loader.Loader
 
-	instance       resource.Instance
+	instance       resources.Instance
 	debugMessenger ext_debugutils.Messenger
 	surface        ext_surface.Surface
 
-	physicalDevice resource.PhysicalDevice
-	device         resource.Device
+	physicalDevice resources.PhysicalDevice
+	device         resources.Device
 
-	graphicsQueue resource.Queue
-	presentQueue  resource.Queue
+	graphicsQueue resources.Queue
+	presentQueue  resources.Queue
 }
 
 func (app *HelloTriangleApplication) Run() error {
@@ -140,7 +140,7 @@ func (app *HelloTriangleApplication) cleanup() {
 }
 
 func (app *HelloTriangleApplication) createInstance() error {
-	instanceOptions := &resource.InstanceOptions{
+	instanceOptions := &resources.InstanceOptions{
 		ApplicationName:    "Hello Triangle",
 		ApplicationVersion: core.CreateVersion(1, 0, 0),
 		EngineName:         "No Engine",
@@ -150,7 +150,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 
 	// Add extensions
 	sdlExtensions := app.window.VulkanGetInstanceExtensions()
-	extensions, _, err := resource.AvailableExtensions(app.allocator, app.loader)
+	extensions, _, err := resources.AvailableExtensions(app.allocator, app.loader)
 	if err != nil {
 		return err
 	}
@@ -168,7 +168,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 	}
 
 	// Add layers
-	layers, _, err := resource.AvailableLayers(app.allocator, app.loader)
+	layers, _, err := resources.AvailableLayers(app.allocator, app.loader)
 	if err != nil {
 		return err
 	}
@@ -186,7 +186,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		instanceOptions.Next = app.debugMessengerOptions()
 	}
 
-	app.instance, _, err = resource.CreateInstance(app.allocator, app.loader, instanceOptions)
+	app.instance, _, err = resources.CreateInstance(app.allocator, app.loader, instanceOptions)
 	if err != nil {
 		return err
 	}
@@ -257,10 +257,10 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		uniqueQueueFamilies = append(uniqueQueueFamilies, *indices.PresentFamily)
 	}
 
-	var queueFamilyOptions []*resource.QueueFamilyOptions
+	var queueFamilyOptions []*resources.QueueFamilyOptions
 	queuePriority := float32(1.0)
 	for _, queueFamily := range uniqueQueueFamilies {
-		queueFamilyOptions = append(queueFamilyOptions, &resource.QueueFamilyOptions{
+		queueFamilyOptions = append(queueFamilyOptions, &resources.QueueFamilyOptions{
 			QueueFamilyIndex: queueFamily,
 			QueuePriorities:  []float32{queuePriority},
 		})
@@ -284,7 +284,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		layerNames = append(layerNames, validationLayers...)
 	}
 
-	app.device, _, err = app.physicalDevice.CreateDevice(app.allocator, &resource.DeviceOptions{
+	app.device, _, err = app.physicalDevice.CreateDevice(app.allocator, &resources.DeviceOptions{
 		QueueFamilies:   queueFamilyOptions,
 		EnabledFeatures: &core.PhysicalDeviceFeatures{},
 		ExtensionNames:  extensionNames,
@@ -303,7 +303,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 	return err
 }
 
-func (app *HelloTriangleApplication) isDeviceSuitable(device resource.PhysicalDevice) bool {
+func (app *HelloTriangleApplication) isDeviceSuitable(device resources.PhysicalDevice) bool {
 	indices, err := app.findQueueFamilies(device)
 	if err != nil {
 		return false
@@ -312,7 +312,7 @@ func (app *HelloTriangleApplication) isDeviceSuitable(device resource.PhysicalDe
 	return indices.IsComplete()
 }
 
-func (app *HelloTriangleApplication) findQueueFamilies(device resource.PhysicalDevice) (QueueFamilyIndices, error) {
+func (app *HelloTriangleApplication) findQueueFamilies(device resources.PhysicalDevice) (QueueFamilyIndices, error) {
 	indices := QueueFamilyIndices{}
 	queueFamilies, err := device.QueueFamilyProperties(app.allocator)
 	if err != nil {
