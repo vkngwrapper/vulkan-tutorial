@@ -13,7 +13,6 @@ import (
 	ext_surface "github.com/CannibalVox/VKng/extensions/surface"
 	ext_surface_sdl2 "github.com/CannibalVox/VKng/extensions/surface_sdl"
 	ext_swapchain "github.com/CannibalVox/VKng/extensions/swapchain"
-	"github.com/CannibalVox/cgoalloc"
 	"github.com/cockroachdb/errors"
 	"github.com/veandco/go-sdl2/sdl"
 	"log"
@@ -45,9 +44,8 @@ type SwapChainSupportDetails struct {
 }
 
 type HelloTriangleApplication struct {
-	allocator cgoalloc.Allocator
-	window    *sdl.Window
-	loader    loader.Loader
+	window *sdl.Window
+	loader loader.Loader
 
 	instance       resources.Instance
 	debugMessenger ext_debugutils.Messenger
@@ -222,7 +220,7 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
 	app.swapchainFramebuffers = []render_pass.Framebuffer{}
 
 	if len(app.commandBuffers) > 0 {
-		app.commandPool.DestroyBuffers(app.allocator, app.commandBuffers)
+		app.commandPool.DestroyBuffers(app.commandBuffers)
 		app.commandBuffers = []commands.CommandBuffer{}
 	}
 
@@ -291,8 +289,6 @@ func (app *HelloTriangleApplication) cleanup() {
 		app.window.Destroy()
 	}
 	sdl.Quit()
-
-	app.allocator.Destroy()
 }
 
 func (app *HelloTriangleApplication) recreateSwapChain() error {
@@ -361,7 +357,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 
 	// Add extensions
 	sdlExtensions := app.window.VulkanGetInstanceExtensions()
-	extensions, _, err := resources.AvailableExtensions(app.allocator, app.loader)
+	extensions, _, err := resources.AvailableExtensions(app.loader)
 	if err != nil {
 		return err
 	}
@@ -379,7 +375,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 	}
 
 	// Add layers
-	layers, _, err := resources.AvailableLayers(app.allocator, app.loader)
+	layers, _, err := resources.AvailableLayers(app.loader)
 	if err != nil {
 		return err
 	}
@@ -397,7 +393,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		instanceOptions.Next = app.debugMessengerOptions()
 	}
 
-	app.instance, _, err = resources.CreateInstance(app.allocator, app.loader, instanceOptions)
+	app.instance, _, err = resources.CreateInstance(app.loader, instanceOptions)
 	if err != nil {
 		return err
 	}
@@ -419,7 +415,7 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 	}
 
 	var err error
-	app.debugMessenger, _, err = ext_debugutils.CreateMessenger(app.allocator, app.instance, app.debugMessengerOptions())
+	app.debugMessenger, _, err = ext_debugutils.CreateMessenger(app.instance, app.debugMessengerOptions())
 	if err != nil {
 		return err
 	}
@@ -428,7 +424,7 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 }
 
 func (app *HelloTriangleApplication) createSurface() error {
-	surface, _, err := ext_surface_sdl2.CreateSurface(app.allocator, app.instance, app.window)
+	surface, _, err := ext_surface_sdl2.CreateSurface(app.instance, app.window)
 	if err != nil {
 		return err
 	}
@@ -438,7 +434,7 @@ func (app *HelloTriangleApplication) createSurface() error {
 }
 
 func (app *HelloTriangleApplication) pickPhysicalDevice() error {
-	physicalDevices, _, err := app.instance.PhysicalDevices(app.allocator)
+	physicalDevices, _, err := app.instance.PhysicalDevices()
 	if err != nil {
 		return err
 	}
@@ -481,7 +477,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 	extensionNames = append(extensionNames, deviceExtensions...)
 
 	// Makes this example compatible with vulkan portability, necessary to run on mobile & mac
-	extensions, _, err := app.physicalDevice.AvailableExtensions(app.allocator)
+	extensions, _, err := app.physicalDevice.AvailableExtensions()
 	if err != nil {
 		return err
 	}
@@ -496,7 +492,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		layerNames = append(layerNames, validationLayers...)
 	}
 
-	app.device, _, err = app.physicalDevice.CreateDevice(app.allocator, &resources.DeviceOptions{
+	app.device, _, err = app.physicalDevice.CreateDevice(&resources.DeviceOptions{
 		QueueFamilies:   queueFamilyOptions,
 		EnabledFeatures: &core.PhysicalDeviceFeatures{},
 		ExtensionNames:  extensionNames,
@@ -543,7 +539,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 		queueFamilyIndices = append(queueFamilyIndices, *indices.GraphicsFamily, *indices.PresentFamily)
 	}
 
-	swapchain, _, err := ext_swapchain.CreateSwapchain(app.allocator, app.device, &ext_swapchain.CreationOptions{
+	swapchain, _, err := ext_swapchain.CreateSwapchain(app.device, &ext_swapchain.CreationOptions{
 		Surface: app.surface,
 
 		MinImageCount:    imageCount,
@@ -572,7 +568,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 }
 
 func (app *HelloTriangleApplication) createImageViews() error {
-	images, _, err := app.swapchain.Images(app.allocator)
+	images, _, err := app.swapchain.Images()
 	if err != nil {
 		return err
 	}
@@ -580,7 +576,7 @@ func (app *HelloTriangleApplication) createImageViews() error {
 
 	var imageViews []resources.ImageView
 	for _, image := range images {
-		view, _, err := app.device.CreateImageView(app.allocator, &resources.ImageViewOptions{
+		view, _, err := app.device.CreateImageView(&resources.ImageViewOptions{
 			ViewType: core.View2D,
 			Image:    image,
 			Format:   app.swapchainImageFormat,
@@ -610,7 +606,7 @@ func (app *HelloTriangleApplication) createImageViews() error {
 }
 
 func (app *HelloTriangleApplication) createRenderPass() error {
-	renderPass, _, err := render_pass.CreateRenderPass(app.allocator, app.device, &render_pass.RenderPassOptions{
+	renderPass, _, err := render_pass.CreateRenderPass(app.device, &render_pass.RenderPassOptions{
 		Attachments: []render_pass.AttachmentDescription{
 			{
 				Format:         app.swapchainImageFormat,
@@ -677,7 +673,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		return err
 	}
 
-	vertShader, _, err := app.device.CreateShaderModule(app.allocator, &resources.ShaderModuleOptions{
+	vertShader, _, err := app.device.CreateShaderModule(&resources.ShaderModuleOptions{
 		SpirVByteCode: bytesToBytecode(vertShaderBytes),
 	})
 	if err != nil {
@@ -691,7 +687,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		return err
 	}
 
-	fragShader, _, err := app.device.CreateShaderModule(app.allocator, &resources.ShaderModuleOptions{
+	fragShader, _, err := app.device.CreateShaderModule(&resources.ShaderModuleOptions{
 		SpirVByteCode: bytesToBytecode(fragShaderBytes),
 	})
 	if err != nil {
@@ -769,12 +765,12 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		},
 	}
 
-	app.pipelineLayout, _, err = pipeline.CreatePipelineLayout(app.allocator, app.device, &pipeline.PipelineLayoutOptions{})
+	app.pipelineLayout, _, err = pipeline.CreatePipelineLayout(app.device, &pipeline.PipelineLayoutOptions{})
 	if err != nil {
 		return err
 	}
 
-	pipelines, _, err := pipeline.CreateGraphicsPipelines(app.allocator, app.device, []*pipeline.Options{
+	pipelines, _, err := pipeline.CreateGraphicsPipelines(app.device, []*pipeline.Options{
 		{
 			ShaderStages: []*pipeline.ShaderStage{
 				vertStage,
@@ -802,7 +798,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 
 func (app *HelloTriangleApplication) createFramebuffers() error {
 	for _, imageView := range app.swapchainImageViews {
-		framebuffer, _, err := render_pass.CreateFrameBuffer(app.allocator, app.device, &render_pass.FramebufferOptions{
+		framebuffer, _, err := render_pass.CreateFrameBuffer(app.device, &render_pass.FramebufferOptions{
 			RenderPass: app.renderPass,
 			Layers:     1,
 			Attachments: []resources.ImageView{
@@ -827,7 +823,7 @@ func (app *HelloTriangleApplication) createCommandPool() error {
 		return err
 	}
 
-	pool, _, err := commands.CreateCommandPool(app.allocator, app.device, &commands.CommandPoolOptions{
+	pool, _, err := commands.CreateCommandPool(app.device, &commands.CommandPoolOptions{
 		GraphicsQueueFamily: indices.GraphicsFamily,
 	})
 
@@ -841,7 +837,7 @@ func (app *HelloTriangleApplication) createCommandPool() error {
 
 func (app *HelloTriangleApplication) createCommandBuffers() error {
 
-	buffers, _, err := commands.CreateCommandBuffers(app.allocator, app.device, &commands.CommandBufferOptions{
+	buffers, _, err := commands.CreateCommandBuffers(app.device, &commands.CommandBufferOptions{
 		Level:       core.LevelPrimary,
 		BufferCount: len(app.swapchainImages),
 		CommandPool: app.commandPool,
@@ -852,12 +848,12 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
 	app.commandBuffers = buffers
 
 	for bufferIdx, buffer := range buffers {
-		_, err = buffer.Begin(app.allocator, &commands.BeginOptions{})
+		_, err = buffer.Begin(&commands.BeginOptions{})
 		if err != nil {
 			return err
 		}
 
-		err = buffer.CmdBeginRenderPass(app.allocator, commands.ContentsInline,
+		err = buffer.CmdBeginRenderPass(commands.ContentsInline,
 			&commands.RenderPassBeginOptions{
 				RenderPass:  app.renderPass,
 				Framebuffer: app.swapchainFramebuffers[bufferIdx],
@@ -888,21 +884,21 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
 
 func (app *HelloTriangleApplication) createSyncObjects() error {
 	for i := 0; i < MaxFramesInFlight; i++ {
-		semaphore, _, err := app.device.CreateSemaphore(app.allocator, &resources.SemaphoreOptions{})
+		semaphore, _, err := app.device.CreateSemaphore(&resources.SemaphoreOptions{})
 		if err != nil {
 			return err
 		}
 
 		app.imageAvailableSemaphore = append(app.imageAvailableSemaphore, semaphore)
 
-		semaphore, _, err = app.device.CreateSemaphore(app.allocator, &resources.SemaphoreOptions{})
+		semaphore, _, err = app.device.CreateSemaphore(&resources.SemaphoreOptions{})
 		if err != nil {
 			return err
 		}
 
 		app.renderFinishedSemaphore = append(app.renderFinishedSemaphore, semaphore)
 
-		fence, _, err := app.device.CreateFence(app.allocator, &resources.FenceOptions{
+		fence, _, err := app.device.CreateFence(&resources.FenceOptions{
 			Flags: resources.FenceSignaled,
 		})
 		if err != nil {
@@ -922,7 +918,7 @@ func (app *HelloTriangleApplication) createSyncObjects() error {
 func (app *HelloTriangleApplication) drawFrame() error {
 	fences := []resources.Fence{app.inFlightFence[app.currentFrame]}
 
-	_, err := app.device.WaitForFences(app.allocator, true, core.NoTimeout, fences)
+	_, err := app.device.WaitForFences(true, core.NoTimeout, fences)
 	if err != nil {
 		return err
 	}
@@ -935,19 +931,19 @@ func (app *HelloTriangleApplication) drawFrame() error {
 	}
 
 	if app.imagesInFlight[imageIndex] != nil {
-		_, err := app.device.WaitForFences(app.allocator, true, core.NoTimeout, []resources.Fence{app.imagesInFlight[imageIndex]})
+		_, err := app.device.WaitForFences(true, core.NoTimeout, []resources.Fence{app.imagesInFlight[imageIndex]})
 		if err != nil {
 			return err
 		}
 	}
 	app.imagesInFlight[imageIndex] = app.inFlightFence[app.currentFrame]
 
-	_, err = app.device.ResetFences(app.allocator, fences)
+	_, err = app.device.ResetFences(fences)
 	if err != nil {
 		return err
 	}
 
-	_, err = commands.SubmitToQueue(app.allocator, app.graphicsQueue, app.inFlightFence[app.currentFrame], []*commands.SubmitOptions{
+	_, err = commands.SubmitToQueue(app.graphicsQueue, app.inFlightFence[app.currentFrame], []*commands.SubmitOptions{
 		{
 			WaitSemaphores:   []resources.Semaphore{app.imageAvailableSemaphore[app.currentFrame]},
 			WaitDstStages:    []core.PipelineStages{core.PipelineStageColorAttachmentOutput},
@@ -959,7 +955,7 @@ func (app *HelloTriangleApplication) drawFrame() error {
 		return err
 	}
 
-	results, _, err := app.swapchain.PresentToQueue(app.allocator, app.presentQueue, &ext_swapchain.PresentOptions{
+	results, _, err := app.swapchain.PresentToQueue(app.presentQueue, &ext_swapchain.PresentOptions{
 		WaitSemaphores: []resources.Semaphore{app.renderFinishedSemaphore[app.currentFrame]},
 		Swapchains:     []ext_swapchain.Swapchain{app.swapchain},
 		ImageIndices:   []int{imageIndex},
@@ -1024,17 +1020,17 @@ func (app *HelloTriangleApplication) querySwapChainSupport(device resources.Phys
 	var details SwapChainSupportDetails
 	var err error
 
-	details.Capabilities, _, err = app.surface.Capabilities(app.allocator, device)
+	details.Capabilities, _, err = app.surface.Capabilities(device)
 	if err != nil {
 		return details, err
 	}
 
-	details.Formats, _, err = app.surface.Formats(app.allocator, device)
+	details.Formats, _, err = app.surface.Formats(device)
 	if err != nil {
 		return details, err
 	}
 
-	details.PresentModes, _, err = app.surface.PresentModes(app.allocator, device)
+	details.PresentModes, _, err = app.surface.PresentModes(device)
 	return details, err
 }
 
@@ -1060,7 +1056,7 @@ func (app *HelloTriangleApplication) isDeviceSuitable(device resources.PhysicalD
 }
 
 func (app *HelloTriangleApplication) checkDeviceExtensionSupport(device resources.PhysicalDevice) bool {
-	extensions, _, err := device.AvailableExtensions(app.allocator)
+	extensions, _, err := device.AvailableExtensions()
 	if err != nil {
 		return false
 	}
@@ -1077,7 +1073,7 @@ func (app *HelloTriangleApplication) checkDeviceExtensionSupport(device resource
 
 func (app *HelloTriangleApplication) findQueueFamilies(device resources.PhysicalDevice) (QueueFamilyIndices, error) {
 	indices := QueueFamilyIndices{}
-	queueFamilies, err := device.QueueFamilyProperties(app.allocator)
+	queueFamilies, err := device.QueueFamilyProperties()
 	if err != nil {
 		return indices, err
 	}
@@ -1112,25 +1108,9 @@ func (app *HelloTriangleApplication) logDebug(msgType ext_debugutils.MessageType
 }
 
 func main() {
-	defAlloc := &cgoalloc.DefaultAllocator{}
-	lowTier, err := cgoalloc.CreateFixedBlockAllocator(defAlloc, 64*1024, 64, 8)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	app := &HelloTriangleApplication{}
 
-	highTier, err := cgoalloc.CreateFixedBlockAllocator(defAlloc, 4096*1024, 4096, 8)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	alloc := cgoalloc.CreateFallbackAllocator(highTier, defAlloc)
-	alloc = cgoalloc.CreateFallbackAllocator(lowTier, alloc)
-
-	app := &HelloTriangleApplication{
-		allocator: alloc,
-	}
-
-	err = app.Run()
+	err := app.Run()
 	if err != nil {
 		log.Fatalln(err)
 	}

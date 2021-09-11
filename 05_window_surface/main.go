@@ -7,7 +7,6 @@ import (
 	ext_debugutils "github.com/CannibalVox/VKng/extensions/debugutils"
 	"github.com/CannibalVox/VKng/extensions/surface"
 	ext_surface_sdl2 "github.com/CannibalVox/VKng/extensions/surface_sdl"
-	"github.com/CannibalVox/cgoalloc"
 	"github.com/palantir/stacktrace"
 	"github.com/veandco/go-sdl2/sdl"
 	"log"
@@ -27,9 +26,8 @@ func (i *QueueFamilyIndices) IsComplete() bool {
 }
 
 type HelloTriangleApplication struct {
-	allocator cgoalloc.Allocator
-	window    *sdl.Window
-	loader    loader.Loader
+	window *sdl.Window
+	loader loader.Loader
 
 	instance       resources.Instance
 	debugMessenger ext_debugutils.Messenger
@@ -135,8 +133,6 @@ func (app *HelloTriangleApplication) cleanup() {
 		app.window.Destroy()
 	}
 	sdl.Quit()
-
-	app.allocator.Destroy()
 }
 
 func (app *HelloTriangleApplication) createInstance() error {
@@ -150,7 +146,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 
 	// Add extensions
 	sdlExtensions := app.window.VulkanGetInstanceExtensions()
-	extensions, _, err := resources.AvailableExtensions(app.allocator, app.loader)
+	extensions, _, err := resources.AvailableExtensions(app.loader)
 	if err != nil {
 		return err
 	}
@@ -168,7 +164,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 	}
 
 	// Add layers
-	layers, _, err := resources.AvailableLayers(app.allocator, app.loader)
+	layers, _, err := resources.AvailableLayers(app.loader)
 	if err != nil {
 		return err
 	}
@@ -186,7 +182,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		instanceOptions.Next = app.debugMessengerOptions()
 	}
 
-	app.instance, _, err = resources.CreateInstance(app.allocator, app.loader, instanceOptions)
+	app.instance, _, err = resources.CreateInstance(app.loader, instanceOptions)
 	if err != nil {
 		return err
 	}
@@ -208,7 +204,7 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 	}
 
 	var err error
-	app.debugMessenger, _, err = ext_debugutils.CreateMessenger(app.allocator, app.instance, app.debugMessengerOptions())
+	app.debugMessenger, _, err = ext_debugutils.CreateMessenger(app.instance, app.debugMessengerOptions())
 	if err != nil {
 		return err
 	}
@@ -217,7 +213,7 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 }
 
 func (app *HelloTriangleApplication) createSurface() error {
-	surface, _, err := ext_surface_sdl2.CreateSurface(app.allocator, app.instance, app.window)
+	surface, _, err := ext_surface_sdl2.CreateSurface(app.instance, app.window)
 	if err != nil {
 		return err
 	}
@@ -227,7 +223,7 @@ func (app *HelloTriangleApplication) createSurface() error {
 }
 
 func (app *HelloTriangleApplication) pickPhysicalDevice() error {
-	physicalDevices, _, err := app.instance.PhysicalDevices(app.allocator)
+	physicalDevices, _, err := app.instance.PhysicalDevices()
 	if err != nil {
 		return err
 	}
@@ -269,7 +265,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 	var extensionNames []string
 
 	// Makes this example compatible with vulkan portability, necessary to run on mobile & mac
-	extensions, _, err := app.physicalDevice.AvailableExtensions(app.allocator)
+	extensions, _, err := app.physicalDevice.AvailableExtensions()
 	if err != nil {
 		return err
 	}
@@ -284,7 +280,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		layerNames = append(layerNames, validationLayers...)
 	}
 
-	app.device, _, err = app.physicalDevice.CreateDevice(app.allocator, &resources.DeviceOptions{
+	app.device, _, err = app.physicalDevice.CreateDevice(&resources.DeviceOptions{
 		QueueFamilies:   queueFamilyOptions,
 		EnabledFeatures: &core.PhysicalDeviceFeatures{},
 		ExtensionNames:  extensionNames,
@@ -314,7 +310,7 @@ func (app *HelloTriangleApplication) isDeviceSuitable(device resources.PhysicalD
 
 func (app *HelloTriangleApplication) findQueueFamilies(device resources.PhysicalDevice) (QueueFamilyIndices, error) {
 	indices := QueueFamilyIndices{}
-	queueFamilies, err := device.QueueFamilyProperties(app.allocator)
+	queueFamilies, err := device.QueueFamilyProperties()
 	if err != nil {
 		return indices, err
 	}
@@ -349,25 +345,9 @@ func (app *HelloTriangleApplication) logDebug(msgType ext_debugutils.MessageType
 }
 
 func main() {
-	defAlloc := &cgoalloc.DefaultAllocator{}
-	lowTier, err := cgoalloc.CreateFixedBlockAllocator(defAlloc, 64*1024, 64, 8)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	app := &HelloTriangleApplication{}
 
-	highTier, err := cgoalloc.CreateFixedBlockAllocator(defAlloc, 4096*1024, 4096, 8)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	alloc := cgoalloc.CreateFallbackAllocator(highTier, defAlloc)
-	alloc = cgoalloc.CreateFallbackAllocator(lowTier, alloc)
-
-	app := &HelloTriangleApplication{
-		allocator: alloc,
-	}
-
-	err = app.Run()
+	err := app.Run()
 	if err != nil {
 		log.Fatalln(err)
 	}

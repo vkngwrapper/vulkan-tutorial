@@ -1,14 +1,12 @@
 package main
 
 import (
-	"github.com/CannibalVox/cgoalloc"
 	"github.com/veandco/go-sdl2/sdl"
 	"log"
 )
 
 type HelloTriangleApplication struct {
-	allocator cgoalloc.Allocator
-	window    *sdl.Window
+	window *sdl.Window
 }
 
 func (app *HelloTriangleApplication) Run() error {
@@ -63,8 +61,6 @@ func (app *HelloTriangleApplication) cleanup() {
 		app.window.Destroy()
 	}
 	sdl.Quit()
-
-	app.allocator.Destroy()
 }
 
 func fail(val interface{}) {
@@ -72,25 +68,9 @@ func fail(val interface{}) {
 }
 
 func main() {
-	defAlloc := &cgoalloc.DefaultAllocator{}
-	lowTier, err := cgoalloc.CreateFixedBlockAllocator(defAlloc, 64*1024, 64, 8)
-	if err != nil {
-		fail(err)
-	}
+	app := &HelloTriangleApplication{}
 
-	highTier, err := cgoalloc.CreateFixedBlockAllocator(defAlloc, 4096*1024, 4096, 8)
-	if err != nil {
-		fail(err)
-	}
-
-	alloc := cgoalloc.CreateFallbackAllocator(highTier, defAlloc)
-	alloc = cgoalloc.CreateFallbackAllocator(lowTier, alloc)
-
-	app := &HelloTriangleApplication{
-		allocator: alloc,
-	}
-
-	err = app.Run()
+	err := app.Run()
 	if err != nil {
 		fail(err)
 	}
