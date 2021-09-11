@@ -20,7 +20,7 @@ type HelloTriangleApplication struct {
 	window    *sdl.Window
 	loader    *loader.Loader
 
-	instance       *resource.Instance
+	instance       resource.Instance
 	debugMessenger *ext_debugutils2.Messenger
 }
 

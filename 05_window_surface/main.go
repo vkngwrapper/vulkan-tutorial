@@ -31,15 +31,15 @@ type HelloTriangleApplication struct {
 	window    *sdl.Window
 	loader    *loader.Loader
 
-	instance       *resource.Instance
+	instance       resource.Instance
 	debugMessenger *ext_debugutils.Messenger
 	surface        *ext_surface.Surface
 
-	physicalDevice *resource.PhysicalDevice
-	device         *resource.Device
+	physicalDevice resource.PhysicalDevice
+	device         resource.Device
 
-	graphicsQueue *resource.Queue
-	presentQueue  *resource.Queue
+	graphicsQueue resource.Queue
+	presentQueue  resource.Queue
 }
 
 func (app *HelloTriangleApplication) Run() error {
@@ -303,7 +303,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 	return err
 }
 
-func (app *HelloTriangleApplication) isDeviceSuitable(device *resource.PhysicalDevice) bool {
+func (app *HelloTriangleApplication) isDeviceSuitable(device resource.PhysicalDevice) bool {
 	indices, err := app.findQueueFamilies(device)
 	if err != nil {
 		return false
@@ -312,7 +312,7 @@ func (app *HelloTriangleApplication) isDeviceSuitable(device *resource.PhysicalD
 	return indices.IsComplete()
 }
 
-func (app *HelloTriangleApplication) findQueueFamilies(device *resource.PhysicalDevice) (QueueFamilyIndices, error) {
+func (app *HelloTriangleApplication) findQueueFamilies(device resource.PhysicalDevice) (QueueFamilyIndices, error) {
 	indices := QueueFamilyIndices{}
 	queueFamilies, err := device.QueueFamilyProperties(app.allocator)
 	if err != nil {

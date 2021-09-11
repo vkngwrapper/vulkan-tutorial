@@ -45,21 +45,21 @@ type HelloTriangleApplication struct {
 	window    *sdl.Window
 	loader    *loader.Loader
 
-	instance       *resource.Instance
+	instance       resource.Instance
 	debugMessenger *ext_debugutils.Messenger
 	surface        *ext_surface.Surface
 
-	physicalDevice *resource.PhysicalDevice
-	device         *resource.Device
+	physicalDevice resource.PhysicalDevice
+	device         resource.Device
 
-	graphicsQueue *resource.Queue
-	presentQueue  *resource.Queue
+	graphicsQueue resource.Queue
+	presentQueue  resource.Queue
 
 	swapchain            *ext_swapchain.Swapchain
-	swapchainImages      []*resource.Image
+	swapchainImages      []resource.Image
 	swapchainImageFormat core.DataFormat
 	swapchainExtent      core.Extent2D
-	swapchainImageViews  []*resource.ImageView
+	swapchainImageViews  []resource.ImageView
 }
 
 func (app *HelloTriangleApplication) Run() error {
@@ -400,7 +400,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 	}
 	app.swapchainImages = images
 
-	var imageViews []*resource.ImageView
+	var imageViews []resource.ImageView
 	for _, image := range images {
 		view, _, err := app.device.CreateImageView(app.allocator, &resource.ImageViewOptions{
 			ViewType: core.View2D,
@@ -535,7 +535,7 @@ func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *ext_surface.
 	return core.Extent2D{Width: width, Height: height}
 }
 
-func (app *HelloTriangleApplication) querySwapChainSupport(device *resource.PhysicalDevice) (SwapChainSupportDetails, error) {
+func (app *HelloTriangleApplication) querySwapChainSupport(device resource.PhysicalDevice) (SwapChainSupportDetails, error) {
 	var details SwapChainSupportDetails
 	var err error
 
@@ -553,7 +553,7 @@ func (app *HelloTriangleApplication) querySwapChainSupport(device *resource.Phys
 	return details, err
 }
 
-func (app *HelloTriangleApplication) isDeviceSuitable(device *resource.PhysicalDevice) bool {
+func (app *HelloTriangleApplication) isDeviceSuitable(device resource.PhysicalDevice) bool {
 	indices, err := app.findQueueFamilies(device)
 	if err != nil {
 		return false
@@ -574,7 +574,7 @@ func (app *HelloTriangleApplication) isDeviceSuitable(device *resource.PhysicalD
 	return indices.IsComplete() && extensionsSupported && swapChainAdequate
 }
 
-func (app *HelloTriangleApplication) checkDeviceExtensionSupport(device *resource.PhysicalDevice) bool {
+func (app *HelloTriangleApplication) checkDeviceExtensionSupport(device resource.PhysicalDevice) bool {
 	extensions, _, err := device.AvailableExtensions(app.allocator)
 	if err != nil {
 		return false
@@ -590,7 +590,7 @@ func (app *HelloTriangleApplication) checkDeviceExtensionSupport(device *resourc
 	return true
 }
 
-func (app *HelloTriangleApplication) findQueueFamilies(device *resource.PhysicalDevice) (QueueFamilyIndices, error) {
+func (app *HelloTriangleApplication) findQueueFamilies(device resource.PhysicalDevice) (QueueFamilyIndices, error) {
 	indices := QueueFamilyIndices{}
 	queueFamilies, err := device.QueueFamilyProperties(app.allocator)
 	if err != nil {

@@ -15,7 +15,7 @@ type HelloTriangleApplication struct {
 	loader    *loader.Loader
 	window    *sdl.Window
 
-	instance *resource.Instance
+	instance resource.Instance
 }
 
 func (app *HelloTriangleApplication) Run() error {
