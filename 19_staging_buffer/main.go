@@ -3,7 +3,6 @@ package main
 import (
 	"embed"
 	"encoding/binary"
-	"fmt"
 	"github.com/CannibalVox/VKng/core"
 	"github.com/CannibalVox/VKng/core/commands"
 	"github.com/CannibalVox/VKng/core/loader"
@@ -350,7 +349,6 @@ func (app *HelloTriangleApplication) cleanup() {
 }
 
 func (app *HelloTriangleApplication) recreateSwapChain() error {
-	fmt.Println("Recreating swap chain")
 	w, h := app.window.VulkanGetDrawableSize()
 	if w == 0 || h == 0 {
 		return nil
