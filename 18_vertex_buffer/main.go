@@ -245,6 +245,7 @@ appLoop:
 					w, h := app.window.GetSize()
 					if w > 0 && h > 0 {
 						rendering = true
+						app.recreateSwapChain()
 					} else {
 						rendering = false
 					}
