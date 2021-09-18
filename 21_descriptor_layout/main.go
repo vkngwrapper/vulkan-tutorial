@@ -94,7 +94,7 @@ var indices = []uint16{0, 1, 2, 2, 3, 0}
 
 type HelloTriangleApplication struct {
 	window *sdl.Window
-	driver core.Driver
+	loader *core.VulkanLoader1_0
 
 	instance       core.Instance
 	debugMessenger ext_debugutils.Messenger
@@ -163,7 +163,7 @@ func (app *HelloTriangleApplication) initWindow() error {
 	}
 	app.window = window
 
-	app.driver, err = core.CreateLoaderFromProcAddr(sdl.VulkanGetVkGetInstanceProcAddr())
+	app.loader, err = core.CreateLoaderFromProcAddr(sdl.VulkanGetVkGetInstanceProcAddr())
 	if err != nil {
 		return err
 	}
@@ -471,7 +471,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 
 	// Add extensions
 	sdlExtensions := app.window.VulkanGetInstanceExtensions()
-	extensions, _, err := core.AvailableExtensions(app.driver)
+	extensions, _, err := app.loader.AvailableExtensions()
 	if err != nil {
 		return err
 	}
@@ -489,7 +489,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 	}
 
 	// Add layers
-	layers, _, err := core.AvailableLayers(app.driver)
+	layers, _, err := app.loader.AvailableLayers()
 	if err != nil {
 		return err
 	}
@@ -507,7 +507,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		instanceOptions.Next = app.debugMessengerOptions()
 	}
 
-	app.instance, _, err = core.CreateInstance(app.driver, instanceOptions)
+	app.instance, _, err = app.loader.CreateInstance(instanceOptions)
 	if err != nil {
 		return err
 	}
@@ -606,7 +606,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		layerNames = append(layerNames, validationLayers...)
 	}
 
-	app.device, _, err = app.physicalDevice.CreateDevice(&core.DeviceOptions{
+	app.device, _, err = app.loader.CreateDevice(app.physicalDevice, &core.DeviceOptions{
 		QueueFamilies:   queueFamilyOptions,
 		EnabledFeatures: &common.PhysicalDeviceFeatures{},
 		ExtensionNames:  extensionNames,
@@ -690,7 +690,7 @@ func (app *HelloTriangleApplication) createImageViews() error {
 
 	var imageViews []core.ImageView
 	for _, image := range images {
-		view, _, err := app.device.CreateImageView(&core.ImageViewOptions{
+		view, _, err := app.loader.CreateImageView(app.device, &core.ImageViewOptions{
 			ViewType: common.View2D,
 			Image:    image,
 			Format:   app.swapchainImageFormat,
@@ -768,7 +768,7 @@ func (app *HelloTriangleApplication) createRenderPass() error {
 
 func (app *HelloTriangleApplication) createDescriptorSetLayout() error {
 	var err error
-	app.descriptorSetLayout, _, err = app.device.CreateDescriptorSetLayout(&core.DescriptorSetLayoutOptions{
+	app.descriptorSetLayout, _, err = app.loader.CreateDescriptorSetLayout(app.device, &core.DescriptorSetLayoutOptions{
 		Bindings: []*core.DescriptorLayoutBinding{
 			{
 				Binding: 0,
@@ -807,7 +807,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		return err
 	}
 
-	vertShader, _, err := app.device.CreateShaderModule(&core.ShaderModuleOptions{
+	vertShader, _, err := app.loader.CreateShaderModule(app.device, &core.ShaderModuleOptions{
 		SpirVByteCode: bytesToBytecode(vertShaderBytes),
 	})
 	if err != nil {
@@ -821,7 +821,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		return err
 	}
 
-	fragShader, _, err := app.device.CreateShaderModule(&core.ShaderModuleOptions{
+	fragShader, _, err := app.loader.CreateShaderModule(app.device, &core.ShaderModuleOptions{
 		SpirVByteCode: bytesToBytecode(fragShaderBytes),
 	})
 	if err != nil {
@@ -1050,7 +1050,7 @@ func (app *HelloTriangleApplication) createUniformBuffers() error {
 }
 
 func (app *HelloTriangleApplication) createBuffer(size int, usage common.BufferUsages, properties core.MemoryPropertyFlags) (core.Buffer, core.DeviceMemory, error) {
-	buffer, _, err := app.device.CreateBuffer(&core.BufferOptions{
+	buffer, _, err := app.loader.CreateBuffer(app.device, &core.BufferOptions{
 		BufferSize:  size,
 		Usages:      usage,
 		SharingMode: common.SharingExclusive,
@@ -1190,21 +1190,21 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
 
 func (app *HelloTriangleApplication) createSyncObjects() error {
 	for i := 0; i < MaxFramesInFlight; i++ {
-		semaphore, _, err := app.device.CreateSemaphore(&core.SemaphoreOptions{})
+		semaphore, _, err := app.loader.CreateSemaphore(app.device, &core.SemaphoreOptions{})
 		if err != nil {
 			return err
 		}
 
 		app.imageAvailableSemaphore = append(app.imageAvailableSemaphore, semaphore)
 
-		semaphore, _, err = app.device.CreateSemaphore(&core.SemaphoreOptions{})
+		semaphore, _, err = app.loader.CreateSemaphore(app.device, &core.SemaphoreOptions{})
 		if err != nil {
 			return err
 		}
 
 		app.renderFinishedSemaphore = append(app.renderFinishedSemaphore, semaphore)
 
-		fence, _, err := app.device.CreateFence(&core.FenceOptions{
+		fence, _, err := app.loader.CreateFence(app.device, &core.FenceOptions{
 			Flags: core.FenceSignaled,
 		})
 		if err != nil {
@@ -1438,6 +1438,6 @@ func main() {
 
 	err := app.Run()
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("%+v\n", err)
 	}
 }
