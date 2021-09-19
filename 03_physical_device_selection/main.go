@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/CannibalVox/VKng/core"
 	"github.com/CannibalVox/VKng/core/common"
-	ext_debugutils "github.com/CannibalVox/VKng/extensions/debugutils"
+	"github.com/CannibalVox/VKng/extensions/ext_debug_utils"
 	"github.com/cockroachdb/errors"
 	"github.com/veandco/go-sdl2/sdl"
 	"log"
@@ -26,7 +26,7 @@ type HelloTriangleApplication struct {
 	loader *core.VulkanLoader1_0
 
 	instance       core.Instance
-	debugMessenger ext_debugutils.Messenger
+	debugMessenger ext_debug_utils.Messenger
 
 	physicalDevice core.PhysicalDevice
 }
@@ -133,7 +133,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 	}
 
 	if enableValidationLayers {
-		instanceOptions.ExtensionNames = append(instanceOptions.ExtensionNames, ext_debugutils.ExtensionName)
+		instanceOptions.ExtensionNames = append(instanceOptions.ExtensionNames, ext_debug_utils.ExtensionName)
 	}
 
 	// Add layers
@@ -163,10 +163,10 @@ func (app *HelloTriangleApplication) createInstance() error {
 	return nil
 }
 
-func (app *HelloTriangleApplication) debugMessengerOptions() *ext_debugutils.Options {
-	return &ext_debugutils.Options{
-		CaptureSeverities: ext_debugutils.SeverityError | ext_debugutils.SeverityWarning,
-		CaptureTypes:      ext_debugutils.TypeAll,
+func (app *HelloTriangleApplication) debugMessengerOptions() *ext_debug_utils.Options {
+	return &ext_debug_utils.Options{
+		CaptureSeverities: ext_debug_utils.SeverityError | ext_debug_utils.SeverityWarning,
+		CaptureTypes:      ext_debug_utils.TypeAll,
 		Callback:          app.logDebug,
 	}
 }
@@ -177,7 +177,7 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 	}
 
 	var err error
-	app.debugMessenger, _, err = ext_debugutils.CreateMessenger(app.instance, app.debugMessengerOptions())
+	app.debugMessenger, _, err = ext_debug_utils.CreateMessenger(app.instance, app.debugMessengerOptions())
 	if err != nil {
 		return err
 	}
@@ -235,7 +235,7 @@ func (app *HelloTriangleApplication) findQueueFamilies(device core.PhysicalDevic
 	return indices, nil
 }
 
-func (app *HelloTriangleApplication) logDebug(msgType ext_debugutils.MessageType, severity ext_debugutils.MessageSeverity, data *ext_debugutils.CallbackData) bool {
+func (app *HelloTriangleApplication) logDebug(msgType ext_debug_utils.MessageType, severity ext_debug_utils.MessageSeverity, data *ext_debug_utils.CallbackData) bool {
 	log.Printf("[%s %s] - %s", severity, msgType, data.Message)
 	return false
 }

@@ -5,10 +5,10 @@ import (
 	"encoding/binary"
 	"github.com/CannibalVox/VKng/core"
 	"github.com/CannibalVox/VKng/core/common"
-	ext_debugutils "github.com/CannibalVox/VKng/extensions/debugutils"
-	ext_surface "github.com/CannibalVox/VKng/extensions/surface"
-	ext_surface_sdl2 "github.com/CannibalVox/VKng/extensions/surface_sdl"
-	ext_swapchain "github.com/CannibalVox/VKng/extensions/swapchain"
+	"github.com/CannibalVox/VKng/extensions/ext_debug_utils"
+	"github.com/CannibalVox/VKng/extensions/khr_surface"
+	"github.com/CannibalVox/VKng/extensions/khr_surface_sdl2"
+	"github.com/CannibalVox/VKng/extensions/khr_swapchain"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/loov/hrtime"
 	"github.com/palantir/stacktrace"
@@ -24,7 +24,7 @@ var shaders embed.FS
 const MaxFramesInFlight = 2
 
 var validationLayers = []string{"VK_LAYER_KHRONOS_validation"}
-var deviceExtensions = []string{ext_swapchain.ExtensionName}
+var deviceExtensions = []string{khr_swapchain.ExtensionName}
 
 const enableValidationLayers = true
 
@@ -38,9 +38,9 @@ func (i *QueueFamilyIndices) IsComplete() bool {
 }
 
 type SwapChainSupportDetails struct {
-	Capabilities *ext_surface.Capabilities
-	Formats      []ext_surface.Format
-	PresentModes []ext_surface.PresentMode
+	Capabilities *khr_surface.Capabilities
+	Formats      []khr_surface.Format
+	PresentModes []khr_surface.PresentMode
 }
 
 type Vertex struct {
@@ -97,8 +97,8 @@ type HelloTriangleApplication struct {
 	loader core.Loader1_0
 
 	instance       core.Instance
-	debugMessenger ext_debugutils.Messenger
-	surface        ext_surface.Surface
+	debugMessenger ext_debug_utils.Messenger
+	surface        khr_surface.Surface
 
 	physicalDevice core.PhysicalDevice
 	device         core.Device
@@ -106,7 +106,8 @@ type HelloTriangleApplication struct {
 	graphicsQueue core.Queue
 	presentQueue  core.Queue
 
-	swapchain             ext_swapchain.Swapchain
+	swapchainLoader       khr_swapchain.Loader
+	swapchain             khr_swapchain.Swapchain
 	swapchainImages       []core.Image
 	swapchainImageFormat  common.DataFormat
 	swapchainExtent       common.Extent2D
@@ -509,7 +510,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 	}
 
 	if enableValidationLayers {
-		instanceOptions.ExtensionNames = append(instanceOptions.ExtensionNames, ext_debugutils.ExtensionName)
+		instanceOptions.ExtensionNames = append(instanceOptions.ExtensionNames, ext_debug_utils.ExtensionName)
 	}
 
 	// Add layers
@@ -539,10 +540,10 @@ func (app *HelloTriangleApplication) createInstance() error {
 	return nil
 }
 
-func (app *HelloTriangleApplication) debugMessengerOptions() *ext_debugutils.Options {
-	return &ext_debugutils.Options{
-		CaptureSeverities: ext_debugutils.SeverityError | ext_debugutils.SeverityWarning,
-		CaptureTypes:      ext_debugutils.TypeAll,
+func (app *HelloTriangleApplication) debugMessengerOptions() *ext_debug_utils.Options {
+	return &ext_debug_utils.Options{
+		CaptureSeverities: ext_debug_utils.SeverityError | ext_debug_utils.SeverityWarning,
+		CaptureTypes:      ext_debug_utils.TypeAll,
 		Callback:          app.logDebug,
 	}
 }
@@ -553,7 +554,7 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 	}
 
 	var err error
-	app.debugMessenger, _, err = ext_debugutils.CreateMessenger(app.instance, app.debugMessengerOptions())
+	app.debugMessenger, _, err = ext_debug_utils.CreateMessenger(app.instance, app.debugMessengerOptions())
 	if err != nil {
 		return err
 	}
@@ -562,7 +563,8 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 }
 
 func (app *HelloTriangleApplication) createSurface() error {
-	surface, _, err := ext_surface_sdl2.CreateSurface(app.instance, app.window)
+	surfaceLoader := khr_surface_sdl2.CreateLoaderFromInstance(app.instance)
+	surface, _, err := surfaceLoader.CreateSurface(app.window)
 	if err != nil {
 		return err
 	}
@@ -650,6 +652,8 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 }
 
 func (app *HelloTriangleApplication) createSwapchain() error {
+	app.swapchainLoader = khr_swapchain.CreateLoaderFromDevice(app.device)
+
 	swapchainSupport, err := app.querySwapChainSupport(app.physicalDevice)
 	if err != nil {
 		return err
@@ -677,7 +681,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 		queueFamilyIndices = append(queueFamilyIndices, *indices.GraphicsFamily, *indices.PresentFamily)
 	}
 
-	swapchain, _, err := ext_swapchain.CreateSwapchain(app.device, &ext_swapchain.CreationOptions{
+	swapchain, _, err := app.swapchainLoader.CreateSwapchain(app.device, &khr_swapchain.CreationOptions{
 		Surface: app.surface,
 
 		MinImageCount:    imageCount,
@@ -691,7 +695,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 		QueueFamilyIndices: queueFamilyIndices,
 
 		PreTransform:   swapchainSupport.Capabilities.CurrentTransform,
-		CompositeAlpha: ext_surface.Opaque,
+		CompositeAlpha: khr_surface.Opaque,
 		PresentMode:    presentMode,
 		Clipped:        true,
 	})
@@ -1342,9 +1346,9 @@ func (app *HelloTriangleApplication) drawFrame() error {
 		return err
 	}
 
-	_, res, err = app.swapchain.PresentToQueue(app.presentQueue, &ext_swapchain.PresentOptions{
+	_, res, err = app.swapchain.PresentToQueue(app.presentQueue, &khr_swapchain.PresentOptions{
 		WaitSemaphores: []core.Semaphore{app.renderFinishedSemaphore[app.currentFrame]},
-		Swapchains:     []ext_swapchain.Swapchain{app.swapchain},
+		Swapchains:     []khr_swapchain.Swapchain{app.swapchain},
 		ImageIndices:   []int{imageIndex},
 	})
 	if res == core.VKErrorOutOfDate || res == core.VKSuboptimal {
@@ -1373,9 +1377,9 @@ func (app *HelloTriangleApplication) updateUniformBuffer(currentImage int) error
 	return err
 }
 
-func (app *HelloTriangleApplication) chooseSwapSurfaceFormat(availableFormats []ext_surface.Format) ext_surface.Format {
+func (app *HelloTriangleApplication) chooseSwapSurfaceFormat(availableFormats []khr_surface.Format) khr_surface.Format {
 	for _, format := range availableFormats {
-		if format.Format == common.FormatB8G8R8A8SRGB && format.ColorSpace == ext_surface.SRGBNonlinear {
+		if format.Format == common.FormatB8G8R8A8SRGB && format.ColorSpace == khr_surface.SRGBNonlinear {
 			return format
 		}
 	}
@@ -1383,17 +1387,17 @@ func (app *HelloTriangleApplication) chooseSwapSurfaceFormat(availableFormats []
 	return availableFormats[0]
 }
 
-func (app *HelloTriangleApplication) chooseSwapPresentMode(availablePresentModes []ext_surface.PresentMode) ext_surface.PresentMode {
+func (app *HelloTriangleApplication) chooseSwapPresentMode(availablePresentModes []khr_surface.PresentMode) khr_surface.PresentMode {
 	for _, presentMode := range availablePresentModes {
-		if presentMode == ext_surface.Mailbox {
+		if presentMode == khr_surface.Mailbox {
 			return presentMode
 		}
 	}
 
-	return ext_surface.FIFO
+	return khr_surface.FIFO
 }
 
-func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *ext_surface.Capabilities) common.Extent2D {
+func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *khr_surface.Capabilities) common.Extent2D {
 	if capabilities.CurrentExtent.Width != (^uint32(0)) {
 		return capabilities.CurrentExtent
 	}
@@ -1504,7 +1508,7 @@ func (app *HelloTriangleApplication) findQueueFamilies(device core.PhysicalDevic
 	return indices, nil
 }
 
-func (app *HelloTriangleApplication) logDebug(msgType ext_debugutils.MessageType, severity ext_debugutils.MessageSeverity, data *ext_debugutils.CallbackData) bool {
+func (app *HelloTriangleApplication) logDebug(msgType ext_debug_utils.MessageType, severity ext_debug_utils.MessageSeverity, data *ext_debug_utils.CallbackData) bool {
 	log.Printf("[%s %s] - %s", severity, msgType, data.Message)
 	return false
 }

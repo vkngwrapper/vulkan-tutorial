@@ -3,9 +3,9 @@ package main
 import (
 	"github.com/CannibalVox/VKng/core"
 	"github.com/CannibalVox/VKng/core/common"
-	ext_debugutils "github.com/CannibalVox/VKng/extensions/debugutils"
-	"github.com/CannibalVox/VKng/extensions/surface"
-	ext_surface_sdl2 "github.com/CannibalVox/VKng/extensions/surface_sdl"
+	"github.com/CannibalVox/VKng/extensions/ext_debug_utils"
+	"github.com/CannibalVox/VKng/extensions/khr_surface"
+	"github.com/CannibalVox/VKng/extensions/khr_surface_sdl2"
 	"github.com/palantir/stacktrace"
 	"github.com/veandco/go-sdl2/sdl"
 	"log"
@@ -29,8 +29,8 @@ type HelloTriangleApplication struct {
 	loader *core.VulkanLoader1_0
 
 	instance       core.Instance
-	debugMessenger ext_debugutils.Messenger
-	surface        ext_surface.Surface
+	debugMessenger ext_debug_utils.Messenger
+	surface        khr_surface.Surface
 
 	physicalDevice core.PhysicalDevice
 	device         core.Device
@@ -159,7 +159,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 	}
 
 	if enableValidationLayers {
-		instanceOptions.ExtensionNames = append(instanceOptions.ExtensionNames, ext_debugutils.ExtensionName)
+		instanceOptions.ExtensionNames = append(instanceOptions.ExtensionNames, ext_debug_utils.ExtensionName)
 	}
 
 	// Add layers
@@ -189,10 +189,10 @@ func (app *HelloTriangleApplication) createInstance() error {
 	return nil
 }
 
-func (app *HelloTriangleApplication) debugMessengerOptions() *ext_debugutils.Options {
-	return &ext_debugutils.Options{
-		CaptureSeverities: ext_debugutils.SeverityError | ext_debugutils.SeverityWarning,
-		CaptureTypes:      ext_debugutils.TypeAll,
+func (app *HelloTriangleApplication) debugMessengerOptions() *ext_debug_utils.Options {
+	return &ext_debug_utils.Options{
+		CaptureSeverities: ext_debug_utils.SeverityError | ext_debug_utils.SeverityWarning,
+		CaptureTypes:      ext_debug_utils.TypeAll,
 		Callback:          app.logDebug,
 	}
 }
@@ -203,7 +203,7 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 	}
 
 	var err error
-	app.debugMessenger, _, err = ext_debugutils.CreateMessenger(app.instance, app.debugMessengerOptions())
+	app.debugMessenger, _, err = ext_debug_utils.CreateMessenger(app.instance, app.debugMessengerOptions())
 	if err != nil {
 		return err
 	}
@@ -212,7 +212,8 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 }
 
 func (app *HelloTriangleApplication) createSurface() error {
-	surface, _, err := ext_surface_sdl2.CreateSurface(app.instance, app.window)
+	surfaceLoader := khr_surface_sdl2.CreateLoaderFromInstance(app.instance)
+	surface, _, err := surfaceLoader.CreateSurface(app.window)
 	if err != nil {
 		return err
 	}
@@ -338,7 +339,7 @@ func (app *HelloTriangleApplication) findQueueFamilies(device core.PhysicalDevic
 	return indices, nil
 }
 
-func (app *HelloTriangleApplication) logDebug(msgType ext_debugutils.MessageType, severity ext_debugutils.MessageSeverity, data *ext_debugutils.CallbackData) bool {
+func (app *HelloTriangleApplication) logDebug(msgType ext_debug_utils.MessageType, severity ext_debug_utils.MessageSeverity, data *ext_debug_utils.CallbackData) bool {
 	log.Printf("[%s %s] - %s", severity, msgType, data.Message)
 	return false
 }
