@@ -300,7 +300,7 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
 	app.swapchainFramebuffers = []core.Framebuffer{}
 
 	if len(app.commandBuffers) > 0 {
-		app.commandPool.DestroyBuffers(app.commandBuffers)
+		app.commandPool.FreeCommandBuffers(app.commandBuffers)
 		app.commandBuffers = []core.CommandBuffer{}
 	}
 
@@ -720,7 +720,7 @@ func (app *HelloTriangleApplication) createImageViews() error {
 }
 
 func (app *HelloTriangleApplication) createRenderPass() error {
-	renderPass, _, err := core.CreateRenderPass(app.device, &core.RenderPassOptions{
+	renderPass, _, err := app.loader.CreateRenderPass(app.device, &core.RenderPassOptions{
 		Attachments: []core.AttachmentDescription{
 			{
 				Format:         app.swapchainImageFormat,
@@ -902,7 +902,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		},
 	}
 
-	app.pipelineLayout, _, err = core.CreatePipelineLayout(app.device, &core.PipelineLayoutOptions{
+	app.pipelineLayout, _, err = app.loader.CreatePipelineLayout(app.device, &core.PipelineLayoutOptions{
 		SetLayouts: []core.DescriptorSetLayout{
 			app.descriptorSetLayout,
 		},
@@ -911,7 +911,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		return err
 	}
 
-	pipelines, _, err := core.CreateGraphicsPipelines(app.device, []*core.Options{
+	pipelines, _, err := app.loader.CreateGraphicsPipelines(app.device, []*core.Options{
 		{
 			ShaderStages: []*core.ShaderStage{
 				vertStage,
@@ -939,7 +939,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 
 func (app *HelloTriangleApplication) createFramebuffers() error {
 	for _, imageView := range app.swapchainImageViews {
-		framebuffer, _, err := core.CreateFrameBuffer(app.device, &core.FramebufferOptions{
+		framebuffer, _, err := app.loader.CreateFrameBuffer(app.device, &core.FramebufferOptions{
 			RenderPass: app.renderPass,
 			Layers:     1,
 			Attachments: []core.ImageView{
@@ -964,7 +964,7 @@ func (app *HelloTriangleApplication) createCommandPool() error {
 		return err
 	}
 
-	pool, _, err := core.CreateCommandPool(app.device, &core.CommandPoolOptions{
+	pool, _, err := app.loader.CreateCommandPool(app.device, &core.CommandPoolOptions{
 		GraphicsQueueFamily: indices.GraphicsFamily,
 	})
 
@@ -1082,10 +1082,9 @@ func (app *HelloTriangleApplication) createBuffer(size int, usage common.BufferU
 }
 
 func (app *HelloTriangleApplication) copyBuffer(srcBuffer core.Buffer, dstBuffer core.Buffer, size int) error {
-	buffers, _, err := core.CreateCommandBuffers(app.device, &core.CommandBufferOptions{
+	buffers, _, err := app.commandPool.AllocateCommandBuffers(&core.CommandBufferOptions{
 		Level:       common.LevelPrimary,
 		BufferCount: 1,
-		CommandPool: app.commandPool,
 	})
 	if err != nil {
 		return err
@@ -1098,7 +1097,7 @@ func (app *HelloTriangleApplication) copyBuffer(srcBuffer core.Buffer, dstBuffer
 	if err != nil {
 		return err
 	}
-	defer buffer.Destroy()
+	defer app.commandPool.FreeCommandBuffers(buffers)
 
 	buffer.CmdCopyBuffer(srcBuffer, dstBuffer, []core.BufferCopy{
 		{
@@ -1141,10 +1140,9 @@ func (app *HelloTriangleApplication) findMemoryType(typeFilter uint32, propertie
 
 func (app *HelloTriangleApplication) createCommandBuffers() error {
 
-	buffers, _, err := core.CreateCommandBuffers(app.device, &core.CommandBufferOptions{
+	buffers, _, err := app.commandPool.AllocateCommandBuffers(&core.CommandBufferOptions{
 		Level:       common.LevelPrimary,
 		BufferCount: len(app.swapchainImages),
-		CommandPool: app.commandPool,
 	})
 	if err != nil {
 		return err

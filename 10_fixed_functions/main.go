@@ -544,7 +544,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		},
 	}
 
-	app.pipelineLayout, _, err = core.CreatePipelineLayout(app.device, &core.PipelineLayoutOptions{})
+	app.pipelineLayout, _, err = app.loader.CreatePipelineLayout(app.device, &core.PipelineLayoutOptions{})
 	if err != nil {
 		return err
 	}

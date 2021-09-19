@@ -447,7 +447,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 }
 
 func (app *HelloTriangleApplication) createRenderPass() error {
-	renderPass, _, err := core.CreateRenderPass(app.device, &core.RenderPassOptions{
+	renderPass, _, err := app.loader.CreateRenderPass(app.device, &core.RenderPassOptions{
 		Attachments: []core.AttachmentDescription{
 			{
 				Format:         app.swapchainImageFormat,
@@ -606,12 +606,12 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		},
 	}
 
-	app.pipelineLayout, _, err = core.CreatePipelineLayout(app.device, &core.PipelineLayoutOptions{})
+	app.pipelineLayout, _, err = app.loader.CreatePipelineLayout(app.device, &core.PipelineLayoutOptions{})
 	if err != nil {
 		return err
 	}
 
-	pipelines, _, err := core.CreateGraphicsPipelines(app.device, []*core.Options{
+	pipelines, _, err := app.loader.CreateGraphicsPipelines(app.device, []*core.Options{
 		{
 			ShaderStages: []*core.ShaderStage{
 				vertStage,
