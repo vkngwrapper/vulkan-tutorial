@@ -241,7 +241,8 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 	}
 
 	var err error
-	app.debugMessenger, _, err = ext_debug_utils.CreateMessenger(app.instance, app.debugMessengerOptions())
+	debugLoader := ext_debug_utils.CreateLoaderFromInstance(app.instance)
+	app.debugMessenger, _, err = debugLoader.CreateMessenger(app.instance, app.debugMessengerOptions())
 	if err != nil {
 		return err
 	}
@@ -251,7 +252,7 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 
 func (app *HelloTriangleApplication) createSurface() error {
 	surfaceLoader := khr_surface_sdl2.CreateLoaderFromInstance(app.instance)
-	surface, _, err := surfaceLoader.CreateSurface(app.window)
+	surface, _, err := surfaceLoader.CreateSurface(app.instance, app.window)
 	if err != nil {
 		return err
 	}

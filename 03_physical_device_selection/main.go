@@ -177,7 +177,8 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 	}
 
 	var err error
-	app.debugMessenger, _, err = ext_debug_utils.CreateMessenger(app.instance, app.debugMessengerOptions())
+	debugLoader := ext_debug_utils.CreateLoaderFromInstance(app.instance)
+	app.debugMessenger, _, err = debugLoader.CreateMessenger(app.instance, app.debugMessengerOptions())
 	if err != nil {
 		return err
 	}
