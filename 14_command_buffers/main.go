@@ -643,7 +643,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		return err
 	}
 
-	pipelines, _, err := app.loader.CreateGraphicsPipelines(app.device, []*core.Options{
+	pipelines, _, err := app.loader.CreateGraphicsPipelines(app.device, []*core.GraphicsPipelineOptions{
 		{
 			ShaderStages: []*core.ShaderStage{
 				vertStage,

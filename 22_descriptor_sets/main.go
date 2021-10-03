@@ -937,7 +937,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		},
 	})
 
-	pipelines, _, err := app.loader.CreateGraphicsPipelines(app.device, []*core.Options{
+	pipelines, _, err := app.loader.CreateGraphicsPipelines(app.device, []*core.GraphicsPipelineOptions{
 		{
 			ShaderStages: []*core.ShaderStage{
 				vertStage,
@@ -1172,7 +1172,7 @@ func (app *HelloTriangleApplication) copyBuffer(srcBuffer core.Buffer, dstBuffer
 
 	buffer := buffers[0]
 	_, err = buffer.Begin(&core.BeginOptions{
-		Flags: core.OneTimeSubmit,
+		Flags: core.BeginInfoOneTimeSubmit,
 	})
 	if err != nil {
 		return err
