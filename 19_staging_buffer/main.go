@@ -305,7 +305,7 @@ func (app *HelloTriangleApplication) cleanup() {
 	}
 
 	if app.vertexBufferMemory != nil {
-		app.vertexBufferMemory.Free()
+		app.device.FreeMemory(app.vertexBufferMemory)
 	}
 
 	for _, fence := range app.inFlightFence {
@@ -905,7 +905,7 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
 		defer stagingBuffer.Destroy()
 	}
 	if stagingBufferMemory != nil {
-		defer stagingBufferMemory.Free()
+		defer app.device.FreeMemory(stagingBufferMemory)
 	}
 
 	if err != nil {

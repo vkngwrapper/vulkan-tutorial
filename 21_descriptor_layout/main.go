@@ -336,7 +336,7 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
 	app.uniformBuffers = app.uniformBuffers[:0]
 
 	for i := 0; i < len(app.uniformBuffersMemory); i++ {
-		app.uniformBuffersMemory[i].Free()
+		app.device.FreeMemory(app.uniformBuffersMemory[i])
 	}
 	app.uniformBuffersMemory = app.uniformBuffersMemory[:0]
 }
@@ -353,7 +353,7 @@ func (app *HelloTriangleApplication) cleanup() {
 	}
 
 	if app.indexBufferMemory != nil {
-		app.indexBufferMemory.Free()
+		app.device.FreeMemory(app.indexBufferMemory)
 	}
 
 	if app.vertexBuffer != nil {
@@ -361,7 +361,7 @@ func (app *HelloTriangleApplication) cleanup() {
 	}
 
 	if app.vertexBufferMemory != nil {
-		app.vertexBufferMemory.Free()
+		app.device.FreeMemory(app.vertexBufferMemory)
 	}
 
 	for _, fence := range app.inFlightFence {
@@ -990,7 +990,7 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
 		defer stagingBuffer.Destroy()
 	}
 	if stagingBufferMemory != nil {
-		defer stagingBufferMemory.Free()
+		defer app.device.FreeMemory(stagingBufferMemory)
 	}
 
 	if err != nil {
@@ -1018,7 +1018,7 @@ func (app *HelloTriangleApplication) createIndexBuffer() error {
 		defer stagingBuffer.Destroy()
 	}
 	if stagingBufferMemory != nil {
-		defer stagingBufferMemory.Free()
+		defer app.device.FreeMemory(stagingBufferMemory)
 	}
 
 	if err != nil {
