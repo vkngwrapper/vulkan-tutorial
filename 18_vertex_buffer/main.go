@@ -952,7 +952,11 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
 }
 
 func (app *HelloTriangleApplication) findMemoryType(typeFilter uint32, properties core.MemoryPropertyFlags) (int, error) {
-	memProperties := app.physicalDevice.MemoryProperties()
+	memProperties, err := app.physicalDevice.MemoryProperties()
+	if err != nil {
+		return 0, err
+	}
+
 	for i, memoryType := range memProperties.MemoryTypes {
 		typeBit := uint32(1 << i)
 
