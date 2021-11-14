@@ -519,7 +519,7 @@ func (app *HelloTriangleApplication) createRenderPass() error {
 				StencilLoadOp:  common.LoadOpDontCare,
 				StencilStoreOp: common.StoreOpDontCare,
 				InitialLayout:  common.LayoutUndefined,
-				FinalLayout:    common.LayoutPresentSrc,
+				FinalLayout:    common.LayoutPresentSrcKHR,
 			},
 		},
 		SubPasses: []core.SubPass{

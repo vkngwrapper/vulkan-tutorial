@@ -657,7 +657,7 @@ func (app *HelloTriangleApplication) createRenderPass() error {
 				StencilLoadOp:  common.LoadOpDontCare,
 				StencilStoreOp: common.StoreOpDontCare,
 				InitialLayout:  common.LayoutUndefined,
-				FinalLayout:    common.LayoutPresentSrc,
+				FinalLayout:    common.LayoutPresentSrcKHR,
 			},
 		},
 		SubPasses: []core.SubPass{
@@ -967,7 +967,7 @@ func (app *HelloTriangleApplication) drawFrame() error {
 	}
 
 	imageIndex, res, err := app.swapchain.AcquireNextImage(common.NoTimeout, app.imageAvailableSemaphore[app.currentFrame], nil)
-	if res == core.VKErrorOutOfDate {
+	if res == core.VKErrorOutOfDateKHR {
 		return app.recreateSwapChain()
 	} else if err != nil {
 		return err
@@ -1003,7 +1003,7 @@ func (app *HelloTriangleApplication) drawFrame() error {
 		Swapchains:     []khr_swapchain.Swapchain{app.swapchain},
 		ImageIndices:   []int{imageIndex},
 	})
-	if results[0] == core.VKErrorOutOfDate || results[0] == core.VKSuboptimal {
+	if results[0] == core.VKErrorOutOfDateKHR || results[0] == core.VKSuboptimalKHR {
 		return app.recreateSwapChain()
 	} else if err != nil {
 		return err
