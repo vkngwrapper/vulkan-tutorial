@@ -1076,7 +1076,7 @@ func (app *HelloTriangleApplication) drawFrame() error {
 		return err
 	}
 
-	_, err = core.SubmitToQueue(app.graphicsQueue, app.inFlightFence[app.currentFrame], []*core.SubmitOptions{
+	_, err = app.graphicsQueue.SubmitToQueue(app.inFlightFence[app.currentFrame], []*core.SubmitOptions{
 		{
 			WaitSemaphores:   []core.Semaphore{app.imageAvailableSemaphore[app.currentFrame]},
 			WaitDstStages:    []common.PipelineStages{common.PipelineStageColorAttachmentOutput},
@@ -1125,13 +1125,13 @@ func (app *HelloTriangleApplication) chooseSwapPresentMode(availablePresentModes
 }
 
 func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *khr_surface.Capabilities) common.Extent2D {
-	if capabilities.CurrentExtent.Width != (^uint32(0)) {
+	if capabilities.CurrentExtent.Width != -1 {
 		return capabilities.CurrentExtent
 	}
 
 	widthInt, heightInt := app.window.VulkanGetDrawableSize()
-	width := uint32(widthInt)
-	height := uint32(heightInt)
+	width := int(widthInt)
+	height := int(heightInt)
 
 	if width < capabilities.MinImageExtent.Width {
 		width = capabilities.MinImageExtent.Width

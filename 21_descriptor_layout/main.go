@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"embed"
 	"encoding/binary"
 	"github.com/CannibalVox/VKng/core"
@@ -981,6 +982,27 @@ func (app *HelloTriangleApplication) createCommandPool() error {
 	return nil
 }
 
+func writeData(memory core.DeviceMemory, offset int, data interface{}) error {
+	bufferSize := binary.Size(data)
+
+	memoryPtr, _, err := memory.MapMemory(offset, bufferSize, 0)
+	if err != nil {
+		return err
+	}
+	defer memory.UnmapMemory()
+
+	dataBuffer := unsafe.Slice((*byte)(memoryPtr), bufferSize)
+
+	buf := &bytes.Buffer{}
+	err = binary.Write(buf, common.ByteOrder, data)
+	if err != nil {
+		return err
+	}
+
+	copy(dataBuffer, buf.Bytes())
+	return nil
+}
+
 func (app *HelloTriangleApplication) createVertexBuffer() error {
 	var err error
 	bufferSize := binary.Size(vertices)
@@ -997,7 +1019,7 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
 		return err
 	}
 
-	_, err = stagingBufferMemory.WriteData(0, vertices)
+	err = writeData(stagingBufferMemory, 0, vertices)
 	if err != nil {
 		return err
 	}
@@ -1025,7 +1047,7 @@ func (app *HelloTriangleApplication) createIndexBuffer() error {
 		return err
 	}
 
-	_, err = stagingBufferMemory.WriteData(0, indices)
+	err = writeData(stagingBufferMemory, 0, indices)
 	if err != nil {
 		return err
 	}
@@ -1117,7 +1139,7 @@ func (app *HelloTriangleApplication) copyBuffer(srcBuffer core.Buffer, dstBuffer
 		return err
 	}
 
-	_, err = core.SubmitToQueue(app.graphicsQueue, nil, []*core.SubmitOptions{
+	_, err = app.graphicsQueue.SubmitToQueue(nil, []*core.SubmitOptions{
 		{
 			CommandBuffers: []core.CommandBuffer{buffer},
 		},
@@ -1261,7 +1283,7 @@ func (app *HelloTriangleApplication) drawFrame() error {
 		return err
 	}
 
-	_, err = core.SubmitToQueue(app.graphicsQueue, app.inFlightFence[app.currentFrame], []*core.SubmitOptions{
+	_, err = app.graphicsQueue.SubmitToQueue(app.inFlightFence[app.currentFrame], []*core.SubmitOptions{
 		{
 			WaitSemaphores:   []core.Semaphore{app.imageAvailableSemaphore[app.currentFrame]},
 			WaitDstStages:    []common.PipelineStages{common.PipelineStageColorAttachmentOutput},
@@ -1300,7 +1322,7 @@ func (app *HelloTriangleApplication) updateUniformBuffer(currentImage int) error
 	ubo.Proj = mgl32.Perspective(mgl32.DegToRad(45), aspectRatio, 0.1, 10)
 	ubo.Proj[5] *= -1
 
-	_, err := app.uniformBuffersMemory[currentImage].WriteData(0, &ubo)
+	err := writeData(app.uniformBuffersMemory[currentImage], 0, &ubo)
 	return err
 }
 
@@ -1325,13 +1347,13 @@ func (app *HelloTriangleApplication) chooseSwapPresentMode(availablePresentModes
 }
 
 func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *khr_surface.Capabilities) common.Extent2D {
-	if capabilities.CurrentExtent.Width != (^uint32(0)) {
+	if capabilities.CurrentExtent.Width != -1 {
 		return capabilities.CurrentExtent
 	}
 
 	widthInt, heightInt := app.window.VulkanGetDrawableSize()
-	width := uint32(widthInt)
-	height := uint32(heightInt)
+	width := int(widthInt)
+	height := int(heightInt)
 
 	if width < capabilities.MinImageExtent.Width {
 		width = capabilities.MinImageExtent.Width

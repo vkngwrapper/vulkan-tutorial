@@ -10,17 +10,19 @@ import (
 	"github.com/CannibalVox/VKng/extensions/khr_surface"
 	"github.com/CannibalVox/VKng/extensions/khr_surface_sdl2"
 	"github.com/CannibalVox/VKng/extensions/khr_swapchain"
+	"github.com/cockroachdb/errors"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/loov/hrtime"
 	"github.com/palantir/stacktrace"
 	"github.com/veandco/go-sdl2/sdl"
+	"image/png"
 	"log"
 	"math"
 	"unsafe"
 )
 
-//go:embed shaders
-var shaders embed.FS
+//go:embed shaders images
+var fileSystem embed.FS
 
 const MaxFramesInFlight = 2
 
@@ -139,6 +141,9 @@ type HelloTriangleApplication struct {
 
 	uniformBuffers       []core.Buffer
 	uniformBuffersMemory []core.DeviceMemory
+
+	textureImage       core.Image
+	textureImageMemory core.DeviceMemory
 }
 
 func (app *HelloTriangleApplication) Run() error {
@@ -232,6 +237,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
 	}
 
 	err = app.createCommandPool()
+	if err != nil {
+		return err
+	}
+
+	err = app.createTextureImage()
 	if err != nil {
 		return err
 	}
@@ -358,6 +368,14 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
 
 func (app *HelloTriangleApplication) cleanup() {
 	app.cleanupSwapChain()
+
+	if app.textureImage != nil {
+		app.textureImage.Destroy()
+	}
+
+	if app.textureImageMemory != nil {
+		app.device.FreeMemory(app.textureImageMemory)
+	}
 
 	if app.descriptorSetLayout != nil {
 		app.descriptorSetLayout.Destroy()
@@ -832,7 +850,7 @@ func bytesToBytecode(b []byte) []uint32 {
 
 func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 	// Load vertex shader
-	vertShaderBytes, err := shaders.ReadFile("shaders/vert.spv")
+	vertShaderBytes, err := fileSystem.ReadFile("shaders/vert.spv")
 	if err != nil {
 		return err
 	}
@@ -846,7 +864,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 	defer vertShader.Destroy()
 
 	// Load fragment shader
-	fragShaderBytes, err := shaders.ReadFile("shaders/frag.spv")
+	fragShaderBytes, err := fileSystem.ReadFile("shaders/frag.spv")
 	if err != nil {
 		return err
 	}
@@ -1001,6 +1019,68 @@ func (app *HelloTriangleApplication) createCommandPool() error {
 	app.commandPool = pool
 
 	return nil
+}
+
+func (app *HelloTriangleApplication) createTextureImage() error {
+	//Put image data into staging buffer
+	imageBytes, err := fileSystem.ReadFile("images/texture.png")
+	if err != nil {
+		return err
+	}
+
+	decodedImage, err := png.Decode(bytes.NewBuffer(imageBytes))
+	if err != nil {
+		return err
+	}
+	imageBounds := decodedImage.Bounds()
+	imageDims := imageBounds.Size()
+	imageSize := imageDims.X * imageDims.Y * 4
+
+	stagingBuffer, stagingMemory, err := app.createBuffer(imageSize, common.UsageTransferSrc, core.MemoryHostVisible|core.MemoryHostCoherent)
+	if err != nil {
+		return err
+	}
+
+	var pixelData []byte
+
+	for y := imageBounds.Min.Y; y < imageBounds.Max.Y; y++ {
+		for x := imageBounds.Min.X; x < imageBounds.Max.Y; x++ {
+			r, g, b, a := decodedImage.At(x, y).RGBA()
+			pixelData = append(pixelData, byte(r), byte(g), byte(b), byte(a))
+		}
+	}
+
+	err = writeData(stagingMemory, 0, pixelData)
+	if err != nil {
+		return err
+	}
+
+	//Create final image
+	app.textureImage, app.textureImageMemory, err = app.createImage(imageDims.X, imageDims.Y, common.FormatR8G8B8A8SRGB, common.ImageTilingOptimal, common.ImageTransferDest|common.ImageSampled, core.MemoryDeviceLocal)
+	if err != nil {
+		return err
+	}
+
+	// Copy staging to final
+	err = app.transitionImageLayout(app.textureImage, common.FormatR8G8B8A8SRGB, common.LayoutUndefined, common.LayoutTransferDstOptimal)
+	if err != nil {
+		return err
+	}
+	err = app.copyBufferToImage(stagingBuffer, app.textureImage, imageDims.X, imageDims.Y)
+	if err != nil {
+		return err
+	}
+	err = app.transitionImageLayout(app.textureImage, common.FormatR8G8B8A8SRGB, common.LayoutTransferDstOptimal, common.LayoutShaderReadOnlyOptimal)
+	if err != nil {
+		return err
+	}
+
+	err = stagingBuffer.Destroy()
+	if err != nil {
+		return err
+	}
+
+	return app.device.FreeMemory(stagingMemory)
 }
 
 func writeData(memory core.DeviceMemory, offset int, data interface{}) error {
@@ -1183,33 +1263,68 @@ func (app *HelloTriangleApplication) createBuffer(size int, usage common.BufferU
 	return buffer, memory, err
 }
 
-func (app *HelloTriangleApplication) copyBuffer(srcBuffer core.Buffer, dstBuffer core.Buffer, size int) error {
+func (app *HelloTriangleApplication) createImage(width, height int, format common.DataFormat, tiling common.ImageTiling, usage common.ImageUsages, memoryProperties core.MemoryPropertyFlags) (core.Image, core.DeviceMemory, error) {
+	image, _, err := app.loader.CreateImage(app.device, &core.ImageOptions{
+		Type: common.ImageType2D,
+		Extent: common.Extent3D{
+			Width:  width,
+			Height: height,
+			Depth:  1,
+		},
+		MipLevels:     1,
+		ArrayLayers:   1,
+		Format:        format,
+		Tiling:        tiling,
+		InitialLayout: common.LayoutUndefined,
+		Usage:         usage,
+		SharingMode:   common.SharingExclusive,
+		Samples:       common.Samples1,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	memReqs, err := image.MemoryRequirements()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	memoryIndex, err := app.findMemoryType(memReqs.MemoryType, memoryProperties)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	imageMemory, _, err := app.device.AllocateMemory(&core.DeviceMemoryOptions{
+		AllocationSize:  memReqs.Size,
+		MemoryTypeIndex: memoryIndex,
+	})
+
+	_, err = image.BindImageMemory(imageMemory, 0)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return image, imageMemory, nil
+}
+
+func (app *HelloTriangleApplication) beginSingleTimeCommands() (core.CommandBuffer, error) {
 	buffers, _, err := app.commandPool.AllocateCommandBuffers(&core.CommandBufferOptions{
 		Level:       common.LevelPrimary,
 		BufferCount: 1,
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	buffer := buffers[0]
 	_, err = buffer.Begin(&core.BeginOptions{
 		Flags: core.BeginInfoOneTimeSubmit,
 	})
-	if err != nil {
-		return err
-	}
-	defer app.commandPool.FreeCommandBuffers(buffers)
+	return buffer, err
+}
 
-	buffer.CmdCopyBuffer(srcBuffer, dstBuffer, []core.BufferCopy{
-		{
-			SrcOffset: 0,
-			DstOffset: 0,
-			Size:      size,
-		},
-	})
-
-	_, err = buffer.End()
+func (app *HelloTriangleApplication) endSingleTimeCommands(buffer core.CommandBuffer) error {
+	_, err := buffer.End()
 	if err != nil {
 		return err
 	}
@@ -1219,12 +1334,114 @@ func (app *HelloTriangleApplication) copyBuffer(srcBuffer core.Buffer, dstBuffer
 			CommandBuffers: []core.CommandBuffer{buffer},
 		},
 	})
+
 	if err != nil {
 		return err
 	}
 
 	_, err = app.graphicsQueue.WaitForIdle()
-	return err
+	if err != nil {
+		return err
+	}
+
+	return app.commandPool.FreeCommandBuffers([]core.CommandBuffer{buffer})
+}
+
+func (app *HelloTriangleApplication) copyBuffer(srcBuffer core.Buffer, dstBuffer core.Buffer, size int) error {
+	buffer, err := app.beginSingleTimeCommands()
+	if err != nil {
+		return err
+	}
+
+	err = buffer.CmdCopyBuffer(srcBuffer, dstBuffer, []core.BufferCopy{
+		{
+			SrcOffset: 0,
+			DstOffset: 0,
+			Size:      size,
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	return app.endSingleTimeCommands(buffer)
+}
+
+func (app *HelloTriangleApplication) transitionImageLayout(image core.Image, format common.DataFormat, oldLayout common.ImageLayout, newLayout common.ImageLayout) error {
+	buffer, err := app.beginSingleTimeCommands()
+	if err != nil {
+		return err
+	}
+
+	var sourceStage, destStage common.PipelineStages
+	var sourceAccess, destAccess common.AccessFlags
+
+	if oldLayout == common.LayoutUndefined && newLayout == common.LayoutTransferDstOptimal {
+		sourceAccess = 0
+		destAccess = common.AccessTransferWrite
+		sourceStage = common.PipelineStageTopOfPipe
+		destStage = common.PipelineStageTransfer
+	} else if oldLayout == common.LayoutTransferDstOptimal && newLayout == common.LayoutShaderReadOnlyOptimal {
+		sourceAccess = common.AccessTransferWrite
+		destAccess = common.AccessShaderRead
+		sourceStage = common.PipelineStageTransfer
+		destStage = common.PipelineStageFragmentShader
+	} else {
+		return errors.Newf("unexpected layout transition: %s -> %s", oldLayout, newLayout)
+	}
+
+	err = buffer.CmdPipelineBarrier(sourceStage, destStage, 0, nil, nil, []*core.ImageMemoryBarrierOptions{
+		{
+			OldLayout:            oldLayout,
+			NewLayout:            newLayout,
+			SrcQueueFamilyIndex:  -1,
+			DestQueueFamilyIndex: -1,
+			Image:                image,
+			SubresourceRange: core.ImageSubresourceRange{
+				AspectMask:     common.AspectColor,
+				BaseMipLevel:   0,
+				LevelCount:     1,
+				BaseArrayLayer: 0,
+				LayerCount:     1,
+			},
+			SrcAccessMask:  sourceAccess,
+			DestAccessMask: destAccess,
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	return app.endSingleTimeCommands(buffer)
+}
+
+func (app *HelloTriangleApplication) copyBufferToImage(buffer core.Buffer, image core.Image, width, height int) error {
+	cmdBuffer, err := app.beginSingleTimeCommands()
+	if err != nil {
+		return err
+	}
+
+	err = cmdBuffer.CmdCopyBufferToImage(buffer, image, common.LayoutTransferDstOptimal, []*core.BufferImageCopy{
+		{
+			BufferOffset:      0,
+			BufferRowLength:   0,
+			BufferImageHeight: 0,
+
+			ImageSubresource: core.ImageSubresourceLayers{
+				AspectMask:     common.AspectColor,
+				MipLevel:       0,
+				BaseArrayLayer: 0,
+				LayerCount:     1,
+			},
+			ImageOffset: common.Offset3D{X: 0, Y: 0, Z: 0},
+			ImageExtent: common.Extent3D{Width: width, Height: height, Depth: 1},
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	return app.endSingleTimeCommands(cmdBuffer)
 }
 
 func (app *HelloTriangleApplication) findMemoryType(typeFilter uint32, properties core.MemoryPropertyFlags) (int, error) {
