@@ -49,6 +49,7 @@ type SwapChainSupportDetails struct {
 type Vertex struct {
 	Position mgl32.Vec2
 	Color    mgl32.Vec3
+	TexCoord mgl32.Vec2
 }
 
 type UniformBufferObject struct {
@@ -83,14 +84,20 @@ func getVertexAttributeDescriptions() []core.VertexAttributeDescription {
 			Format:   common.FormatR32G32B32SignedFloat,
 			Offset:   unsafe.Offsetof(v.Color),
 		},
+		{
+			Binding:  0,
+			Location: 2,
+			Format:   common.FormatR32G32SignedFloat,
+			Offset:   unsafe.Offsetof(v.TexCoord),
+		},
 	}
 }
 
 var vertices = []Vertex{
-	{Position: mgl32.Vec2{-0.5, -0.5}, Color: mgl32.Vec3{1, 0, 0}},
-	{Position: mgl32.Vec2{0.5, -0.5}, Color: mgl32.Vec3{0, 1, 0}},
-	{Position: mgl32.Vec2{0.5, 0.5}, Color: mgl32.Vec3{0, 0, 1}},
-	{Position: mgl32.Vec2{-0.5, 0.5}, Color: mgl32.Vec3{1, 1, 1}},
+	{Position: mgl32.Vec2{-0.5, -0.5}, Color: mgl32.Vec3{1, 0, 0}, TexCoord: mgl32.Vec2{1, 0}},
+	{Position: mgl32.Vec2{0.5, -0.5}, Color: mgl32.Vec3{0, 1, 0}, TexCoord: mgl32.Vec2{0, 0}},
+	{Position: mgl32.Vec2{0.5, 0.5}, Color: mgl32.Vec3{0, 0, 1}, TexCoord: mgl32.Vec2{0, 1}},
+	{Position: mgl32.Vec2{-0.5, 0.5}, Color: mgl32.Vec3{1, 1, 1}, TexCoord: mgl32.Vec2{1, 1}},
 }
 
 var indices = []uint16{0, 1, 2, 2, 3, 0}
@@ -144,6 +151,8 @@ type HelloTriangleApplication struct {
 
 	textureImage       core.Image
 	textureImageMemory core.DeviceMemory
+	textureImageView   core.ImageView
+	textureSampler     core.Sampler
 }
 
 func (app *HelloTriangleApplication) Run() error {
@@ -242,6 +251,16 @@ func (app *HelloTriangleApplication) initVulkan() error {
 	}
 
 	err = app.createTextureImage()
+	if err != nil {
+		return err
+	}
+
+	err = app.createTextureImageView()
+	if err != nil {
+		return err
+	}
+
+	err = app.createSampler()
 	if err != nil {
 		return err
 	}
@@ -368,6 +387,14 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
 
 func (app *HelloTriangleApplication) cleanup() {
 	app.cleanupSwapChain()
+
+	if app.textureSampler != nil {
+		app.textureSampler.Destroy()
+	}
+
+	if app.textureImageView != nil {
+		app.textureImageView.Destroy()
+	}
 
 	if app.textureImage != nil {
 		app.textureImage.Destroy()
@@ -653,10 +680,12 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 	}
 
 	app.device, _, err = app.loader.CreateDevice(app.physicalDevice, &core.DeviceOptions{
-		QueueFamilies:   queueFamilyOptions,
-		EnabledFeatures: &common.PhysicalDeviceFeatures{},
-		ExtensionNames:  extensionNames,
-		LayerNames:      layerNames,
+		QueueFamilies: queueFamilyOptions,
+		EnabledFeatures: &common.PhysicalDeviceFeatures{
+			SamplerAnisotropy: true,
+		},
+		ExtensionNames: extensionNames,
+		LayerNames:     layerNames,
 	})
 	if err != nil {
 		return err
@@ -738,24 +767,7 @@ func (app *HelloTriangleApplication) createImageViews() error {
 
 	var imageViews []core.ImageView
 	for _, image := range images {
-		view, _, err := app.loader.CreateImageView(app.device, &core.ImageViewOptions{
-			ViewType: common.View2D,
-			Image:    image,
-			Format:   app.swapchainImageFormat,
-			Components: common.ComponentMapping{
-				R: common.SwizzleIdentity,
-				G: common.SwizzleIdentity,
-				B: common.SwizzleIdentity,
-				A: common.SwizzleIdentity,
-			},
-			SubresourceRange: common.ImageSubresourceRange{
-				AspectMask:     common.AspectColor,
-				BaseMipLevel:   0,
-				LevelCount:     1,
-				BaseArrayLayer: 0,
-				LayerCount:     1,
-			},
-		})
+		view, err := app.createImageView(image, app.swapchainImageFormat)
 		if err != nil {
 			return err
 		}
@@ -824,6 +836,13 @@ func (app *HelloTriangleApplication) createDescriptorSetLayout() error {
 				Count:   1,
 
 				ShaderStages: common.StageVertex,
+			},
+			{
+				Binding: 1,
+				Type:    common.DescriptorCombinedImageSampler,
+				Count:   1,
+
+				ShaderStages: common.StageFragment,
 			},
 		},
 	})
@@ -1083,6 +1102,52 @@ func (app *HelloTriangleApplication) createTextureImage() error {
 	return app.device.FreeMemory(stagingMemory)
 }
 
+func (app *HelloTriangleApplication) createTextureImageView() error {
+	var err error
+	app.textureImageView, err = app.createImageView(app.textureImage, common.FormatR8G8B8A8SRGB)
+	return err
+}
+
+func (app *HelloTriangleApplication) createSampler() error {
+	properties, err := app.physicalDevice.Properties()
+	if err != nil {
+		return err
+	}
+
+	app.textureSampler, _, err = app.loader.CreateSampler(app.device, &core.SamplerOptions{
+		MagFilter:    common.FilterLinear,
+		MinFilter:    common.FilterLinear,
+		AddressModeU: common.AddressModeRepeat,
+		AddressModeV: common.AddressModeRepeat,
+		AddressModeW: common.AddressModeRepeat,
+
+		AnisotropyEnable: true,
+		MaxAnisotropy:    properties.Limits.MaxSamplerAnisotropy,
+
+		BorderColor: common.BorderColorIntOpaqueBlack,
+
+		MipmapMode: common.MipmapLinear,
+	})
+
+	return err
+}
+
+func (app *HelloTriangleApplication) createImageView(image core.Image, format common.DataFormat) (core.ImageView, error) {
+	imageView, _, err := app.loader.CreateImageView(app.device, &core.ImageViewOptions{
+		Image:    image,
+		ViewType: common.View2D,
+		Format:   format,
+		SubresourceRange: common.ImageSubresourceRange{
+			AspectMask:     common.AspectColor,
+			BaseMipLevel:   0,
+			LevelCount:     1,
+			BaseArrayLayer: 0,
+			LayerCount:     1,
+		},
+	})
+	return imageView, err
+}
+
 func (app *HelloTriangleApplication) createImage(width, height int, format common.DataFormat, tiling common.ImageTiling, usage common.ImageUsages, memoryProperties core.MemoryPropertyFlags) (core.Image, core.DeviceMemory, error) {
 	image, _, err := app.loader.CreateImage(app.device, &core.ImageOptions{
 		Type: common.ImageType2D,
@@ -1307,6 +1372,10 @@ func (app *HelloTriangleApplication) createDescriptorPool() error {
 				Type:  common.DescriptorUniformBuffer,
 				Count: len(app.swapchainImages),
 			},
+			{
+				Type:  common.DescriptorCombinedImageSampler,
+				Count: len(app.swapchainImages),
+			},
 		},
 	})
 	return err
@@ -1340,6 +1409,21 @@ func (app *HelloTriangleApplication) createDescriptorSets() error {
 						Buffer: app.uniformBuffers[i],
 						Offset: 0,
 						Range:  uint64(unsafe.Sizeof(UniformBufferObject{})),
+					},
+				},
+			},
+			{
+				Destination:             app.descriptorSets[i],
+				DestinationBinding:      1,
+				DestinationArrayElement: 0,
+
+				DescriptorType: common.DescriptorCombinedImageSampler,
+
+				ImageInfo: []core.DescriptorImageInfo{
+					{
+						ImageView:   app.textureImageView,
+						Sampler:     app.textureSampler,
+						ImageLayout: common.LayoutShaderReadOnlyOptimal,
 					},
 				},
 			},
@@ -1702,7 +1786,12 @@ func (app *HelloTriangleApplication) isDeviceSuitable(device core.PhysicalDevice
 		swapChainAdequate = len(swapChainSupport.Formats) > 0 && len(swapChainSupport.PresentModes) > 0
 	}
 
-	return indices.IsComplete() && extensionsSupported && swapChainAdequate
+	features, err := device.Features()
+	if err != nil {
+		return false
+	}
+
+	return indices.IsComplete() && extensionsSupported && swapChainAdequate && features.SamplerAnisotropy
 }
 
 func (app *HelloTriangleApplication) checkDeviceExtensionSupport(device core.PhysicalDevice) bool {
