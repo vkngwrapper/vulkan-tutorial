@@ -143,6 +143,7 @@ type HelloTriangleApplication struct {
 	uniformBuffers       []core.Buffer
 	uniformBuffersMemory []core.DeviceMemory
 
+	mipLevels          uint32
 	textureImage       core.Image
 	textureImageMemory core.DeviceMemory
 	textureImageView   core.ImageView
@@ -794,7 +795,7 @@ func (app *HelloTriangleApplication) createImageViews() error {
 
 	var imageViews []core.ImageView
 	for _, image := range images {
-		view, err := app.createImageView(image, app.swapchainImageFormat, common.AspectColor)
+		view, err := app.createImageView(image, app.swapchainImageFormat, common.AspectColor, 1)
 		if err != nil {
 			return err
 		}
@@ -1102,6 +1103,7 @@ func (app *HelloTriangleApplication) createDepthResources() error {
 
 	app.depthImage, app.depthImageMemory, err = app.createImage(app.swapchainExtent.Width,
 		app.swapchainExtent.Height,
+		1,
 		depthFormat,
 		common.ImageTilingOptimal,
 		common.ImageDepthStencilAttachment,
@@ -1109,7 +1111,7 @@ func (app *HelloTriangleApplication) createDepthResources() error {
 	if err != nil {
 		return err
 	}
-	app.depthImageView, err = app.createImageView(app.depthImage, depthFormat, common.AspectDepth)
+	app.depthImageView, err = app.createImageView(app.depthImage, depthFormat, common.AspectDepth, 1)
 	return err
 }
 
@@ -1155,6 +1157,8 @@ func (app *HelloTriangleApplication) createTextureImage() error {
 	imageDims := imageBounds.Size()
 	imageSize := imageDims.X * imageDims.Y * 4
 
+	app.mipLevels = uint32(math.Log2(math.Max(float64(imageDims.X), float64(imageDims.Y))))
+
 	stagingBuffer, stagingMemory, err := app.createBuffer(imageSize, common.UsageTransferSrc, core.MemoryHostVisible|core.MemoryHostCoherent)
 	if err != nil {
 		return err
@@ -1175,13 +1179,13 @@ func (app *HelloTriangleApplication) createTextureImage() error {
 	}
 
 	//Create final image
-	app.textureImage, app.textureImageMemory, err = app.createImage(imageDims.X, imageDims.Y, common.FormatR8G8B8A8SRGB, common.ImageTilingOptimal, common.ImageTransferDest|common.ImageSampled, core.MemoryDeviceLocal)
+	app.textureImage, app.textureImageMemory, err = app.createImage(imageDims.X, imageDims.Y, app.mipLevels, common.FormatR8G8B8A8SRGB, common.ImageTilingOptimal, common.ImageTransferSrc|common.ImageTransferDest|common.ImageSampled, core.MemoryDeviceLocal)
 	if err != nil {
 		return err
 	}
 
 	// Copy staging to final
-	err = app.transitionImageLayout(app.textureImage, common.FormatR8G8B8A8SRGB, common.LayoutUndefined, common.LayoutTransferDstOptimal)
+	err = app.transitionImageLayout(app.textureImage, common.FormatR8G8B8A8SRGB, common.LayoutUndefined, common.LayoutTransferDstOptimal, app.mipLevels)
 	if err != nil {
 		return err
 	}
@@ -1189,7 +1193,8 @@ func (app *HelloTriangleApplication) createTextureImage() error {
 	if err != nil {
 		return err
 	}
-	err = app.transitionImageLayout(app.textureImage, common.FormatR8G8B8A8SRGB, common.LayoutTransferDstOptimal, common.LayoutShaderReadOnlyOptimal)
+
+	err = app.generateMipmaps(app.textureImage, common.FormatR8G8B8A8SRGB, imageDims.X, imageDims.Y, app.mipLevels)
 	if err != nil {
 		return err
 	}
@@ -1202,9 +1207,120 @@ func (app *HelloTriangleApplication) createTextureImage() error {
 	return app.device.FreeMemory(stagingMemory)
 }
 
+func (app *HelloTriangleApplication) generateMipmaps(image core.Image, imageFormat common.DataFormat, width, height int, mipLevels uint32) error {
+
+	properties, err := app.physicalDevice.FormatProperties(imageFormat)
+	if err != nil {
+		return err
+	}
+
+	if (properties.OptimalTilingFeatures & common.FormatFeatureSampledImageFilterLinear) == 0 {
+		return errors.Newf("texture image format %s does not support linear blitting", imageFormat)
+	}
+
+	commandBuffer, err := app.beginSingleTimeCommands()
+	if err != nil {
+		return err
+	}
+
+	barrier := &core.ImageMemoryBarrierOptions{
+		Image:                image,
+		SrcQueueFamilyIndex:  -1,
+		DestQueueFamilyIndex: -1,
+		SubresourceRange: common.ImageSubresourceRange{
+			AspectMask:     common.AspectColor,
+			BaseArrayLayer: 0,
+			LayerCount:     1,
+			LevelCount:     1,
+		},
+	}
+
+	mipWidth := width
+	mipHeight := height
+	for i := uint32(1); i < mipLevels; i++ {
+		barrier.SubresourceRange.BaseMipLevel = i - 1
+		barrier.OldLayout = common.LayoutTransferDstOptimal
+		barrier.NewLayout = common.LayoutTransferSrcOptimal
+		barrier.SrcAccessMask = common.AccessTransferWrite
+		barrier.DestAccessMask = common.AccessTransferRead
+
+		err = commandBuffer.CmdPipelineBarrier(common.PipelineStageTransfer, common.PipelineStageTransfer, 0, nil, nil, []*core.ImageMemoryBarrierOptions{barrier})
+		if err != nil {
+			return err
+		}
+
+		nextMipWidth := mipWidth
+		nextMipHeight := mipHeight
+
+		if nextMipWidth > 1 {
+			nextMipWidth /= 2
+		}
+		if nextMipHeight > 1 {
+			nextMipHeight /= 2
+		}
+		err = commandBuffer.CmdBlitImage(image, common.LayoutTransferSrcOptimal, image, common.LayoutTransferDstOptimal, []*core.ImageBlit{
+			{
+				SourceSubresource: common.ImageSubresourceLayers{
+					AspectMask:     common.AspectColor,
+					MipLevel:       i - 1,
+					BaseArrayLayer: 0,
+					LayerCount:     1,
+				},
+				SourceOffsets: [2]common.Offset3D{
+					{X: 0, Y: 0, Z: 0},
+					{X: mipWidth, Y: mipHeight, Z: 1},
+				},
+
+				DestinationSubresource: common.ImageSubresourceLayers{
+					AspectMask:     common.AspectColor,
+					MipLevel:       i,
+					BaseArrayLayer: 0,
+					LayerCount:     1,
+				},
+				DestinationOffsets: [2]common.Offset3D{
+					{X: 0, Y: 0, Z: 0},
+					{X: nextMipWidth, Y: nextMipHeight, Z: 1},
+				},
+			},
+		}, common.FilterLinear)
+		if err != nil {
+			return err
+		}
+
+		barrier.OldLayout = common.LayoutTransferSrcOptimal
+		barrier.NewLayout = common.LayoutShaderReadOnlyOptimal
+		barrier.SrcAccessMask = common.AccessTransferRead
+		barrier.DestAccessMask = common.AccessShaderRead
+		err = commandBuffer.CmdPipelineBarrier(common.PipelineStageTransfer, common.PipelineStageFragmentShader, 0, nil, nil, []*core.ImageMemoryBarrierOptions{barrier})
+		if err != nil {
+			return err
+		}
+
+		mipWidth = nextMipWidth
+		mipHeight = nextMipHeight
+	}
+
+	barrier.SubresourceRange.BaseMipLevel = mipLevels - 1
+	barrier.OldLayout = common.LayoutTransferDstOptimal
+	barrier.NewLayout = common.LayoutShaderReadOnlyOptimal
+	barrier.SrcAccessMask = common.AccessTransferWrite
+	barrier.DestAccessMask = common.AccessShaderRead
+
+	err = commandBuffer.CmdPipelineBarrier(
+		common.PipelineStageTransfer,
+		common.PipelineStageFragmentShader,
+		0, nil, nil,
+		[]*core.ImageMemoryBarrierOptions{barrier})
+	if err != nil {
+		return err
+	}
+
+	return app.endSingleTimeCommands(commandBuffer)
+}
+
 func (app *HelloTriangleApplication) createTextureImageView() error {
 	var err error
-	app.textureImageView, err = app.createImageView(app.textureImage, common.FormatR8G8B8A8SRGB, common.AspectColor)
+	app.textureImageView, err = app.createImageView(app.textureImage, common.FormatR8G8B8A8SRGB, common.AspectColor, app.mipLevels)
 	return err
 }
 
@@ -1227,12 +1343,14 @@ func (app *HelloTriangleApplication) createSampler() error {
 		BorderColor: common.BorderColorIntOpaqueBlack,
 
 		MipmapMode: common.MipmapLinear,
+		MinLod:     0,
+		MaxLod:     float32(app.mipLevels),
 	})
 
 	return err
 }
 
-func (app *HelloTriangleApplication) createImageView(image core.Image, format common.DataFormat, aspect common.ImageAspectFlags) (core.ImageView, error) {
+func (app *HelloTriangleApplication) createImageView(image core.Image, format common.DataFormat, aspect common.ImageAspectFlags, mipLevels uint32) (core.ImageView, error) {
 	imageView, _, err := app.loader.CreateImageView(app.device, &core.ImageViewOptions{
 		Image:    image,
 		ViewType: common.View2D,
@@ -1240,7 +1358,7 @@ func (app *HelloTriangleApplication) createImageView(image core.Image, format co
 		SubresourceRange: common.ImageSubresourceRange{
 			AspectMask:     aspect,
 			BaseMipLevel:   0,
-			LevelCount:     1,
+			LevelCount:     mipLevels,
 			BaseArrayLayer: 0,
 			LayerCount:     1,
 		},
@@ -1248,7 +1366,7 @@ func (app *HelloTriangleApplication) createImageView(image core.Image, format co
 	return imageView, err
 }
 
-func (app *HelloTriangleApplication) createImage(width, height int, format common.DataFormat, tiling common.ImageTiling, usage common.ImageUsages, memoryProperties core.MemoryPropertyFlags) (core.Image, core.DeviceMemory, error) {
+func (app *HelloTriangleApplication) createImage(width, height int, mipLevels uint32, format common.DataFormat, tiling common.ImageTiling, usage common.ImageUsages, memoryProperties core.MemoryPropertyFlags) (core.Image, core.DeviceMemory, error) {
 	image, _, err := app.loader.CreateImage(app.device, &core.ImageOptions{
 		Type: common.ImageType2D,
 		Extent: common.Extent3D{
@@ -1256,7 +1374,7 @@ func (app *HelloTriangleApplication) createImage(width, height int, format commo
 			Height: height,
 			Depth:  1,
 		},
-		MipLevels:     1,
+		MipLevels:     mipLevels,
 		ArrayLayers:   1,
 		Format:        format,
 		Tiling:        tiling,
@@ -1292,7 +1410,7 @@ func (app *HelloTriangleApplication) createImage(width, height int, format commo
 	return image, imageMemory, nil
 }
 
-func (app *HelloTriangleApplication) transitionImageLayout(image core.Image, format common.DataFormat, oldLayout common.ImageLayout, newLayout common.ImageLayout) error {
+func (app *HelloTriangleApplication) transitionImageLayout(image core.Image, format common.DataFormat, oldLayout common.ImageLayout, newLayout common.ImageLayout, mipLevels uint32) error {
 	buffer, err := app.beginSingleTimeCommands()
 	if err != nil {
 		return err
@@ -1325,7 +1443,7 @@ func (app *HelloTriangleApplication) transitionImageLayout(image core.Image, for
 			SubresourceRange: common.ImageSubresourceRange{
 				AspectMask:     common.AspectColor,
 				BaseMipLevel:   0,
-				LevelCount:     1,
+				LevelCount:     mipLevels,
 				BaseArrayLayer: 0,
 				LayerCount:     1,
 			},
