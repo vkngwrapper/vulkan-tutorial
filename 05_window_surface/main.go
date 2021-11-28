@@ -189,8 +189,8 @@ func (app *HelloTriangleApplication) createInstance() error {
 	return nil
 }
 
-func (app *HelloTriangleApplication) debugMessengerOptions() *ext_debug_utils.Options {
-	return &ext_debug_utils.Options{
+func (app *HelloTriangleApplication) debugMessengerOptions() *ext_debug_utils.CreationOptions {
+	return &ext_debug_utils.CreationOptions{
 		CaptureSeverities: ext_debug_utils.SeverityError | ext_debug_utils.SeverityWarning,
 		CaptureTypes:      ext_debug_utils.TypeAll,
 		Callback:          app.logDebug,
@@ -291,13 +291,9 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		return err
 	}
 
-	app.graphicsQueue, err = app.device.GetQueue(*indices.GraphicsFamily, 0)
-	if err != nil {
-		return err
-	}
-
-	app.presentQueue, err = app.device.GetQueue(*indices.PresentFamily, 0)
-	return err
+	app.graphicsQueue = app.device.GetQueue(*indices.GraphicsFamily, 0)
+	app.presentQueue = app.device.GetQueue(*indices.PresentFamily, 0)
+	return nil
 }
 
 func (app *HelloTriangleApplication) isDeviceSuitable(device core.PhysicalDevice) bool {
@@ -311,13 +307,10 @@ func (app *HelloTriangleApplication) isDeviceSuitable(device core.PhysicalDevice
 
 func (app *HelloTriangleApplication) findQueueFamilies(device core.PhysicalDevice) (QueueFamilyIndices, error) {
 	indices := QueueFamilyIndices{}
-	queueFamilies, err := device.QueueFamilyProperties()
-	if err != nil {
-		return indices, err
-	}
+	queueFamilies := device.QueueFamilyProperties()
 
 	for queueFamilyIdx, queueFamily := range queueFamilies {
-		if (queueFamily.Flags & common.Graphics) != 0 {
+		if (queueFamily.Flags & common.QueueGraphics) != 0 {
 			indices.GraphicsFamily = new(int)
 			*indices.GraphicsFamily = queueFamilyIdx
 		}

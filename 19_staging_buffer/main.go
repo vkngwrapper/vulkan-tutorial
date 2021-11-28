@@ -51,7 +51,7 @@ func getVertexBindingDescription() []core.VertexBindingDescription {
 	return []core.VertexBindingDescription{
 		{
 			Binding:   0,
-			Stride:    unsafe.Sizeof(v),
+			Stride:    int(unsafe.Sizeof(v)),
 			InputRate: core.RateVertex,
 		},
 	}
@@ -64,13 +64,13 @@ func getVertexAttributeDescriptions() []core.VertexAttributeDescription {
 			Binding:  0,
 			Location: 0,
 			Format:   common.FormatR32G32SignedFloat,
-			Offset:   unsafe.Offsetof(v.X),
+			Offset:   int(unsafe.Offsetof(v.X)),
 		},
 		{
 			Binding:  0,
 			Location: 1,
 			Format:   common.FormatR32G32B32SignedFloat,
-			Offset:   unsafe.Offsetof(v.R),
+			Offset:   int(unsafe.Offsetof(v.R)),
 		},
 	}
 }
@@ -456,8 +456,8 @@ func (app *HelloTriangleApplication) createInstance() error {
 	return nil
 }
 
-func (app *HelloTriangleApplication) debugMessengerOptions() *ext_debug_utils.Options {
-	return &ext_debug_utils.Options{
+func (app *HelloTriangleApplication) debugMessengerOptions() *ext_debug_utils.CreationOptions {
+	return &ext_debug_utils.CreationOptions{
 		CaptureSeverities: ext_debug_utils.SeverityError | ext_debug_utils.SeverityWarning,
 		CaptureTypes:      ext_debug_utils.TypeAll,
 		Callback:          app.logDebug,
@@ -559,13 +559,9 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		return err
 	}
 
-	app.graphicsQueue, err = app.device.GetQueue(*indices.GraphicsFamily, 0)
-	if err != nil {
-		return err
-	}
-
-	app.presentQueue, err = app.device.GetQueue(*indices.PresentFamily, 0)
-	return err
+	app.graphicsQueue = app.device.GetQueue(*indices.GraphicsFamily, 0)
+	app.presentQueue = app.device.GetQueue(*indices.PresentFamily, 0)
+	return nil
 }
 
 func (app *HelloTriangleApplication) createSwapchain() error {
@@ -612,7 +608,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 		QueueFamilyIndices: queueFamilyIndices,
 
 		PreTransform:   swapchainSupport.Capabilities.CurrentTransform,
-		CompositeAlpha: khr_surface.Opaque,
+		CompositeAlpha: khr_surface.AlphaModeOpaque,
 		PresentMode:    presentMode,
 		Clipped:        true,
 	})
@@ -801,7 +797,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 
 		PolygonMode: core.ModeFill,
 		CullMode:    common.CullBack,
-		FrontFace:   common.Clockwise,
+		FrontFace:   common.FrontFaceClockwise,
 
 		DepthBias: false,
 
@@ -957,7 +953,7 @@ func (app *HelloTriangleApplication) createBuffer(size int, usage common.BufferU
 		return nil, nil, err
 	}
 
-	memRequirements, err := buffer.MemoryRequirements()
+	memRequirements := buffer.MemoryRequirements()
 
 	memoryTypeIndex, err := app.findMemoryType(memRequirements.MemoryType, properties)
 	if err != nil {
@@ -1021,11 +1017,7 @@ func (app *HelloTriangleApplication) copyBuffer(srcBuffer core.Buffer, dstBuffer
 }
 
 func (app *HelloTriangleApplication) findMemoryType(typeFilter uint32, properties core.MemoryPropertyFlags) (int, error) {
-	memProperties, err := app.physicalDevice.MemoryProperties()
-	if err != nil {
-		return 0, err
-	}
-
+	memProperties := app.physicalDevice.MemoryProperties()
 	for i, memoryType := range memProperties.MemoryTypes {
 		typeBit := uint32(1 << i)
 
@@ -1175,7 +1167,7 @@ func (app *HelloTriangleApplication) drawFrame() error {
 
 func (app *HelloTriangleApplication) chooseSwapSurfaceFormat(availableFormats []khr_surface.Format) khr_surface.Format {
 	for _, format := range availableFormats {
-		if format.Format == common.FormatB8G8R8A8SRGB && format.ColorSpace == khr_surface.SRGBNonlinear {
+		if format.Format == common.FormatB8G8R8A8SRGB && format.ColorSpace == khr_surface.ColorSpaceSRGBNonlinear {
 			return format
 		}
 	}
@@ -1185,12 +1177,12 @@ func (app *HelloTriangleApplication) chooseSwapSurfaceFormat(availableFormats []
 
 func (app *HelloTriangleApplication) chooseSwapPresentMode(availablePresentModes []khr_surface.PresentMode) khr_surface.PresentMode {
 	for _, presentMode := range availablePresentModes {
-		if presentMode == khr_surface.Mailbox {
+		if presentMode == khr_surface.PresentMailbox {
 			return presentMode
 		}
 	}
 
-	return khr_surface.FIFO
+	return khr_surface.PresentFIFO
 }
 
 func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *khr_surface.Capabilities) common.Extent2D {
@@ -1275,13 +1267,10 @@ func (app *HelloTriangleApplication) checkDeviceExtensionSupport(device core.Phy
 
 func (app *HelloTriangleApplication) findQueueFamilies(device core.PhysicalDevice) (QueueFamilyIndices, error) {
 	indices := QueueFamilyIndices{}
-	queueFamilies, err := device.QueueFamilyProperties()
-	if err != nil {
-		return indices, err
-	}
+	queueFamilies := device.QueueFamilyProperties()
 
 	for queueFamilyIdx, queueFamily := range queueFamilies {
-		if (queueFamily.Flags & common.Graphics) != 0 {
+		if (queueFamily.Flags & common.QueueGraphics) != 0 {
 			indices.GraphicsFamily = new(int)
 			*indices.GraphicsFamily = queueFamilyIdx
 		}

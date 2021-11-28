@@ -148,8 +148,8 @@ func (app *HelloTriangleApplication) createInstance() error {
 	return nil
 }
 
-func (app *HelloTriangleApplication) debugMessengerOptions() *ext_debug_utils.Options {
-	return &ext_debug_utils.Options{
+func (app *HelloTriangleApplication) debugMessengerOptions() *ext_debug_utils.CreationOptions {
+	return &ext_debug_utils.CreationOptions{
 		CaptureSeverities: ext_debug_utils.SeverityError | ext_debug_utils.SeverityWarning,
 		CaptureTypes:      ext_debug_utils.TypeAll,
 		Callback:          app.logDebug,
