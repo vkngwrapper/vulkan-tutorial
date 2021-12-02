@@ -534,11 +534,11 @@ func (app *HelloTriangleApplication) createRenderPass() error {
 				SrcSubPassIndex: core.SubpassExternal,
 				DstSubPassIndex: 0,
 
-				SrcStageMask: common.PipelineStageColorAttachmentOutput,
-				SrcAccess:    0,
+				SrcStageMask:  common.PipelineStageColorAttachmentOutput,
+				SrcAccessMask: 0,
 
-				DstStageMask: common.PipelineStageColorAttachmentOutput,
-				DstAccess:    common.AccessColorAttachmentWrite,
+				DstStageMask:  common.PipelineStageColorAttachmentOutput,
+				DstAccessMask: common.AccessColorAttachmentWrite,
 			},
 		},
 	})
@@ -636,7 +636,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		DepthClamp:        false,
 		RasterizerDiscard: false,
 
-		PolygonMode: core.ModeFill,
+		PolygonMode: core.PolygonModeFill,
 		CullMode:    common.CullBack,
 		FrontFace:   common.FrontFaceClockwise,
 
@@ -669,7 +669,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		return err
 	}
 
-	pipelines, _, err := app.loader.CreateGraphicsPipelines(app.device, []*core.GraphicsPipelineOptions{
+	pipelines, _, err := app.loader.CreateGraphicsPipelines(app.device, nil, []*core.GraphicsPipelineOptions{
 		{
 			ShaderStages: []*core.ShaderStage{
 				vertStage,

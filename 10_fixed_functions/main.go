@@ -517,7 +517,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		DepthClamp:        false,
 		RasterizerDiscard: false,
 
-		PolygonMode: core.ModeFill,
+		PolygonMode: core.PolygonModeFill,
 		CullMode:    common.CullBack,
 		FrontFace:   common.FrontFaceClockwise,
 

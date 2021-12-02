@@ -852,11 +852,11 @@ func (app *HelloTriangleApplication) createRenderPass() error {
 				SrcSubPassIndex: core.SubpassExternal,
 				DstSubPassIndex: 0,
 
-				SrcStageMask: common.PipelineStageColorAttachmentOutput | common.PipelineStageEarlyFragmentTests,
-				SrcAccess:    0,
+				SrcStageMask:  common.PipelineStageColorAttachmentOutput | common.PipelineStageEarlyFragmentTests,
+				SrcAccessMask: 0,
 
-				DstStageMask: common.PipelineStageColorAttachmentOutput | common.PipelineStageEarlyFragmentTests,
-				DstAccess:    common.AccessColorAttachmentWrite | common.AccessDepthStencilAttachmentWrite,
+				DstStageMask:  common.PipelineStageColorAttachmentOutput | common.PipelineStageEarlyFragmentTests,
+				DstAccessMask: common.AccessColorAttachmentWrite | common.AccessDepthStencilAttachmentWrite,
 			},
 		},
 	})
@@ -984,7 +984,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		DepthClamp:        false,
 		RasterizerDiscard: false,
 
-		PolygonMode: core.ModeFill,
+		PolygonMode: core.PolygonModeFill,
 		CullMode:    common.CullBack,
 		FrontFace:   common.FrontFaceCounterClockwise,
 
@@ -1024,7 +1024,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		},
 	})
 
-	pipelines, _, err := app.loader.CreateGraphicsPipelines(app.device, []*core.GraphicsPipelineOptions{
+	pipelines, _, err := app.loader.CreateGraphicsPipelines(app.device, nil, []*core.GraphicsPipelineOptions{
 		{
 			ShaderStages: []*core.ShaderStage{
 				vertStage,
