@@ -970,7 +970,7 @@ func (app *HelloTriangleApplication) drawFrame() error {
 	}
 
 	if app.imagesInFlight[imageIndex] != nil {
-		_, err := app.device.WaitForFences(true, common.NoTimeout, []core.Fence{app.imagesInFlight[imageIndex]})
+		_, err := app.imagesInFlight[imageIndex].Wait(common.NoTimeout)
 		if err != nil {
 			return err
 		}
