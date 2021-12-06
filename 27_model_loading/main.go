@@ -1302,11 +1302,11 @@ func (app *HelloTriangleApplication) transitionImageLayout(image core.Image, for
 
 	err = buffer.CmdPipelineBarrier(sourceStage, destStage, 0, nil, nil, []*core.ImageMemoryBarrierOptions{
 		{
-			OldLayout:            oldLayout,
-			NewLayout:            newLayout,
-			SrcQueueFamilyIndex:  -1,
-			DestQueueFamilyIndex: -1,
-			Image:                image,
+			OldLayout:           oldLayout,
+			NewLayout:           newLayout,
+			SrcQueueFamilyIndex: -1,
+			DstQueueFamilyIndex: -1,
+			Image:               image,
 			SubresourceRange: common.ImageSubresourceRange{
 				AspectMask:     common.AspectColor,
 				BaseMipLevel:   0,
@@ -1314,8 +1314,8 @@ func (app *HelloTriangleApplication) transitionImageLayout(image core.Image, for
 				BaseArrayLayer: 0,
 				LayerCount:     1,
 			},
-			SrcAccessMask:  sourceAccess,
-			DestAccessMask: destAccess,
+			SrcAccessMask: sourceAccess,
+			DstAccessMask: destAccess,
 		},
 	})
 	if err != nil {

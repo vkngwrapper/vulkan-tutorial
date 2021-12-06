@@ -1289,9 +1289,9 @@ func (app *HelloTriangleApplication) generateMipmaps(image core.Image, imageForm
 	}
 
 	barrier := &core.ImageMemoryBarrierOptions{
-		Image:                image,
-		SrcQueueFamilyIndex:  -1,
-		DestQueueFamilyIndex: -1,
+		Image:               image,
+		SrcQueueFamilyIndex: -1,
+		DstQueueFamilyIndex: -1,
 		SubresourceRange: common.ImageSubresourceRange{
 			AspectMask:     common.AspectColor,
 			BaseArrayLayer: 0,
@@ -1307,7 +1307,7 @@ func (app *HelloTriangleApplication) generateMipmaps(image core.Image, imageForm
 		barrier.OldLayout = common.LayoutTransferDstOptimal
 		barrier.NewLayout = common.LayoutTransferSrcOptimal
 		barrier.SrcAccessMask = common.AccessTransferWrite
-		barrier.DestAccessMask = common.AccessTransferRead
+		barrier.DstAccessMask = common.AccessTransferRead
 
 		err = commandBuffer.CmdPipelineBarrier(common.PipelineStageTransfer, common.PipelineStageTransfer, 0, nil, nil, []*core.ImageMemoryBarrierOptions{barrier})
 		if err != nil {
@@ -1355,7 +1355,7 @@ func (app *HelloTriangleApplication) generateMipmaps(image core.Image, imageForm
 		barrier.OldLayout = common.LayoutTransferSrcOptimal
 		barrier.NewLayout = common.LayoutShaderReadOnlyOptimal
 		barrier.SrcAccessMask = common.AccessTransferRead
-		barrier.DestAccessMask = common.AccessShaderRead
+		barrier.DstAccessMask = common.AccessShaderRead
 		err = commandBuffer.CmdPipelineBarrier(common.PipelineStageTransfer, common.PipelineStageFragmentShader, 0, nil, nil, []*core.ImageMemoryBarrierOptions{barrier})
 		if err != nil {
 			return err
@@ -1369,7 +1369,7 @@ func (app *HelloTriangleApplication) generateMipmaps(image core.Image, imageForm
 	barrier.OldLayout = common.LayoutTransferDstOptimal
 	barrier.NewLayout = common.LayoutShaderReadOnlyOptimal
 	barrier.SrcAccessMask = common.AccessTransferWrite
-	barrier.DestAccessMask = common.AccessShaderRead
+	barrier.DstAccessMask = common.AccessShaderRead
 
 	err = commandBuffer.CmdPipelineBarrier(
 		common.PipelineStageTransfer,
@@ -1520,11 +1520,11 @@ func (app *HelloTriangleApplication) transitionImageLayout(image core.Image, for
 
 	err = buffer.CmdPipelineBarrier(sourceStage, destStage, 0, nil, nil, []*core.ImageMemoryBarrierOptions{
 		{
-			OldLayout:            oldLayout,
-			NewLayout:            newLayout,
-			SrcQueueFamilyIndex:  -1,
-			DestQueueFamilyIndex: -1,
-			Image:                image,
+			OldLayout:           oldLayout,
+			NewLayout:           newLayout,
+			SrcQueueFamilyIndex: -1,
+			DstQueueFamilyIndex: -1,
+			Image:               image,
 			SubresourceRange: common.ImageSubresourceRange{
 				AspectMask:     common.AspectColor,
 				BaseMipLevel:   0,
@@ -1532,8 +1532,8 @@ func (app *HelloTriangleApplication) transitionImageLayout(image core.Image, for
 				BaseArrayLayer: 0,
 				LayerCount:     1,
 			},
-			SrcAccessMask:  sourceAccess,
-			DestAccessMask: destAccess,
+			SrcAccessMask: sourceAccess,
+			DstAccessMask: destAccess,
 		},
 	})
 	if err != nil {
