@@ -734,7 +734,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 		ImageColorSpace:  surfaceFormat.ColorSpace,
 		ImageExtent:      extent,
 		ImageArrayLayers: 1,
-		ImageUsage:       common.ImageColorAttachment,
+		ImageUsage:       common.ImageUsageColorAttachment,
 
 		SharingMode:        sharingMode,
 		QueueFamilyIndices: queueFamilyIndices,
@@ -827,18 +827,18 @@ func (app *HelloTriangleApplication) createDescriptorSetLayout() error {
 	app.descriptorSetLayout, _, err = app.loader.CreateDescriptorSetLayout(app.device, &core.DescriptorSetLayoutOptions{
 		Bindings: []*core.DescriptorLayoutBinding{
 			{
-				Binding: 0,
-				Type:    common.DescriptorUniformBuffer,
-				Count:   1,
+				Binding:         0,
+				DescriptorType:  common.DescriptorUniformBuffer,
+				DescriptorCount: 1,
 
-				ShaderStages: common.StageVertex,
+				StageFlags: common.StageVertex,
 			},
 			{
-				Binding: 1,
-				Type:    common.DescriptorCombinedImageSampler,
-				Count:   1,
+				Binding:         1,
+				DescriptorType:  common.DescriptorCombinedImageSampler,
+				DescriptorCount: 1,
 
-				ShaderStages: common.StageFragment,
+				StageFlags: common.StageFragment,
 			},
 		},
 	})
@@ -1071,7 +1071,7 @@ func (app *HelloTriangleApplication) createTextureImage() error {
 	}
 
 	//Create final image
-	app.textureImage, app.textureImageMemory, err = app.createImage(imageDims.X, imageDims.Y, common.FormatR8G8B8A8SRGB, common.ImageTilingOptimal, common.ImageTransferDest|common.ImageSampled, core.MemoryDeviceLocal)
+	app.textureImage, app.textureImageMemory, err = app.createImage(imageDims.X, imageDims.Y, common.FormatR8G8B8A8SRGB, common.ImageTilingOptimal, common.ImageUsageTransferDst|common.ImageUsageSampled, core.MemoryDeviceLocal)
 	if err != nil {
 		return err
 	}
@@ -1127,7 +1127,7 @@ func (app *HelloTriangleApplication) createSampler() error {
 func (app *HelloTriangleApplication) createImageView(image core.Image, format common.DataFormat) (core.ImageView, error) {
 	imageView, _, err := app.loader.CreateImageView(app.device, &core.ImageViewOptions{
 		Image:    image,
-		ViewType: common.View2D,
+		ViewType: common.ViewType2D,
 		Format:   format,
 		SubresourceRange: common.ImageSubresourceRange{
 			AspectMask:     common.AspectColor,
@@ -1142,7 +1142,7 @@ func (app *HelloTriangleApplication) createImageView(image core.Image, format co
 
 func (app *HelloTriangleApplication) createImage(width, height int, format common.DataFormat, tiling common.ImageTiling, usage common.ImageUsages, memoryProperties core.MemoryPropertyFlags) (core.Image, core.DeviceMemory, error) {
 	image, _, err := app.loader.CreateImage(app.device, &core.ImageOptions{
-		Type: common.ImageType2D,
+		ImageType: common.ImageType2D,
 		Extent: common.Extent3D{
 			Width:  width,
 			Height: height,
@@ -1357,12 +1357,12 @@ func (app *HelloTriangleApplication) createDescriptorPool() error {
 		MaxSets: len(app.swapchainImages),
 		PoolSizes: []core.PoolSize{
 			{
-				Type:  common.DescriptorUniformBuffer,
-				Count: len(app.swapchainImages),
+				Type:            common.DescriptorUniformBuffer,
+				DescriptorCount: len(app.swapchainImages),
 			},
 			{
-				Type:  common.DescriptorCombinedImageSampler,
-				Count: len(app.swapchainImages),
+				Type:            common.DescriptorCombinedImageSampler,
+				DescriptorCount: len(app.swapchainImages),
 			},
 		},
 	})
@@ -1386,9 +1386,9 @@ func (app *HelloTriangleApplication) createDescriptorSets() error {
 	for i := 0; i < len(app.swapchainImages); i++ {
 		err = app.device.UpdateDescriptorSets([]core.WriteDescriptorSetOptions{
 			{
-				Destination:             app.descriptorSets[i],
-				DestinationBinding:      0,
-				DestinationArrayElement: 0,
+				DstSet:          app.descriptorSets[i],
+				DstBinding:      0,
+				DstArrayElement: 0,
 
 				DescriptorType: common.DescriptorUniformBuffer,
 
@@ -1401,9 +1401,9 @@ func (app *HelloTriangleApplication) createDescriptorSets() error {
 				},
 			},
 			{
-				Destination:             app.descriptorSets[i],
-				DestinationBinding:      1,
-				DestinationArrayElement: 0,
+				DstSet:          app.descriptorSets[i],
+				DstBinding:      1,
+				DstArrayElement: 0,
 
 				DescriptorType: common.DescriptorCombinedImageSampler,
 

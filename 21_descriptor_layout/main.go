@@ -663,7 +663,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 		ImageColorSpace:  surfaceFormat.ColorSpace,
 		ImageExtent:      extent,
 		ImageArrayLayers: 1,
-		ImageUsage:       common.ImageColorAttachment,
+		ImageUsage:       common.ImageUsageColorAttachment,
 
 		SharingMode:        sharingMode,
 		QueueFamilyIndices: queueFamilyIndices,
@@ -693,7 +693,7 @@ func (app *HelloTriangleApplication) createImageViews() error {
 	var imageViews []core.ImageView
 	for _, image := range images {
 		view, _, err := app.loader.CreateImageView(app.device, &core.ImageViewOptions{
-			ViewType: common.View2D,
+			ViewType: common.ViewType2D,
 			Image:    image,
 			Format:   app.swapchainImageFormat,
 			Components: common.ComponentMapping{
@@ -773,11 +773,11 @@ func (app *HelloTriangleApplication) createDescriptorSetLayout() error {
 	app.descriptorSetLayout, _, err = app.loader.CreateDescriptorSetLayout(app.device, &core.DescriptorSetLayoutOptions{
 		Bindings: []*core.DescriptorLayoutBinding{
 			{
-				Binding: 0,
-				Type:    common.DescriptorUniformBuffer,
-				Count:   1,
+				Binding:         0,
+				DescriptorType:  common.DescriptorUniformBuffer,
+				DescriptorCount: 1,
 
-				ShaderStages: common.StageVertex,
+				StageFlags: common.StageVertex,
 			},
 		},
 	})

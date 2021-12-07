@@ -584,7 +584,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 		ImageColorSpace:  surfaceFormat.ColorSpace,
 		ImageExtent:      extent,
 		ImageArrayLayers: 1,
-		ImageUsage:       common.ImageColorAttachment,
+		ImageUsage:       common.ImageUsageColorAttachment,
 
 		SharingMode:        sharingMode,
 		QueueFamilyIndices: queueFamilyIndices,
@@ -614,7 +614,7 @@ func (app *HelloTriangleApplication) createImageViews() error {
 	var imageViews []core.ImageView
 	for _, image := range images {
 		view, _, err := app.loader.CreateImageView(app.device, &core.ImageViewOptions{
-			ViewType: common.View2D,
+			ViewType: common.ViewType2D,
 			Image:    image,
 			Format:   app.swapchainImageFormat,
 			Components: common.ComponentMapping{

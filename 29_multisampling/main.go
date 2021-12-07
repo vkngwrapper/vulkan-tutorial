@@ -143,7 +143,7 @@ type HelloTriangleApplication struct {
 	uniformBuffers       []core.Buffer
 	uniformBuffersMemory []core.DeviceMemory
 
-	mipLevels          uint32
+	mipLevels          int
 	textureImage       core.Image
 	textureImageMemory core.DeviceMemory
 	textureImageView   core.ImageView
@@ -796,7 +796,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 		ImageColorSpace:  surfaceFormat.ColorSpace,
 		ImageExtent:      extent,
 		ImageArrayLayers: 1,
-		ImageUsage:       common.ImageColorAttachment,
+		ImageUsage:       common.ImageUsageColorAttachment,
 
 		SharingMode:        sharingMode,
 		QueueFamilyIndices: queueFamilyIndices,
@@ -924,18 +924,18 @@ func (app *HelloTriangleApplication) createDescriptorSetLayout() error {
 	app.descriptorSetLayout, _, err = app.loader.CreateDescriptorSetLayout(app.device, &core.DescriptorSetLayoutOptions{
 		Bindings: []*core.DescriptorLayoutBinding{
 			{
-				Binding: 0,
-				Type:    common.DescriptorUniformBuffer,
-				Count:   1,
+				Binding:         0,
+				DescriptorType:  common.DescriptorUniformBuffer,
+				DescriptorCount: 1,
 
-				ShaderStages: common.StageVertex,
+				StageFlags: common.StageVertex,
 			},
 			{
-				Binding: 1,
-				Type:    common.DescriptorCombinedImageSampler,
-				Count:   1,
+				Binding:         1,
+				DescriptorType:  common.DescriptorCombinedImageSampler,
+				DescriptorCount: 1,
 
-				ShaderStages: common.StageFragment,
+				StageFlags: common.StageFragment,
 			},
 		},
 	})
@@ -1151,7 +1151,7 @@ func (app *HelloTriangleApplication) createColorResources() error {
 		app.msaaSamples,
 		app.swapchainImageFormat,
 		common.ImageTilingOptimal,
-		common.ImageTransientAttachment|common.ImageColorAttachment,
+		common.ImageUsageTransientAttachment|common.ImageUsageColorAttachment,
 		core.MemoryDeviceLocal)
 	if err != nil {
 		return err
@@ -1177,7 +1177,7 @@ func (app *HelloTriangleApplication) createDepthResources() error {
 		app.msaaSamples,
 		depthFormat,
 		common.ImageTilingOptimal,
-		common.ImageDepthStencilAttachment,
+		common.ImageUsageDepthStencilAttachment,
 		core.MemoryDeviceLocal)
 	if err != nil {
 		return err
@@ -1225,7 +1225,7 @@ func (app *HelloTriangleApplication) createTextureImage() error {
 	imageDims := imageBounds.Size()
 	imageSize := imageDims.X * imageDims.Y * 4
 
-	app.mipLevels = uint32(math.Log2(math.Max(float64(imageDims.X), float64(imageDims.Y))))
+	app.mipLevels = int(math.Log2(math.Max(float64(imageDims.X), float64(imageDims.Y))))
 
 	stagingBuffer, stagingMemory, err := app.createBuffer(imageSize, common.UsageTransferSrc, core.MemoryHostVisible|core.MemoryHostCoherent)
 	if err != nil {
@@ -1256,7 +1256,7 @@ func (app *HelloTriangleApplication) createTextureImage() error {
 		common.Samples1,
 		common.FormatR8G8B8A8SRGB,
 		common.ImageTilingOptimal,
-		common.ImageTransferSrc|common.ImageTransferDest|common.ImageSampled,
+		common.ImageUsageTransferSrc|common.ImageUsageTransferDst|common.ImageUsageSampled,
 		core.MemoryDeviceLocal)
 	if err != nil {
 		return err
@@ -1275,7 +1275,7 @@ func (app *HelloTriangleApplication) createTextureImage() error {
 	return app.generateMipmaps(app.textureImage, common.FormatR8G8B8A8SRGB, imageDims.X, imageDims.Y, app.mipLevels)
 }
 
-func (app *HelloTriangleApplication) generateMipmaps(image core.Image, imageFormat common.DataFormat, width, height int, mipLevels uint32) error {
+func (app *HelloTriangleApplication) generateMipmaps(image core.Image, imageFormat common.DataFormat, width, height int, mipLevels int) error {
 
 	properties := app.physicalDevice.FormatProperties(imageFormat)
 
@@ -1302,7 +1302,7 @@ func (app *HelloTriangleApplication) generateMipmaps(image core.Image, imageForm
 
 	mipWidth := width
 	mipHeight := height
-	for i := uint32(1); i < mipLevels; i++ {
+	for i := 1; i < mipLevels; i++ {
 		barrier.SubresourceRange.BaseMipLevel = i - 1
 		barrier.OldLayout = common.LayoutTransferDstOptimal
 		barrier.NewLayout = common.LayoutTransferSrcOptimal
@@ -1439,10 +1439,10 @@ func (app *HelloTriangleApplication) createSampler() error {
 	return err
 }
 
-func (app *HelloTriangleApplication) createImageView(image core.Image, format common.DataFormat, aspect common.ImageAspectFlags, mipLevels uint32) (core.ImageView, error) {
+func (app *HelloTriangleApplication) createImageView(image core.Image, format common.DataFormat, aspect common.ImageAspectFlags, mipLevels int) (core.ImageView, error) {
 	imageView, _, err := app.loader.CreateImageView(app.device, &core.ImageViewOptions{
 		Image:    image,
-		ViewType: common.View2D,
+		ViewType: common.ViewType2D,
 		Format:   format,
 		SubresourceRange: common.ImageSubresourceRange{
 			AspectMask:     aspect,
@@ -1455,9 +1455,9 @@ func (app *HelloTriangleApplication) createImageView(image core.Image, format co
 	return imageView, err
 }
 
-func (app *HelloTriangleApplication) createImage(width, height int, mipLevels uint32, numSamples common.SampleCounts, format common.DataFormat, tiling common.ImageTiling, usage common.ImageUsages, memoryProperties core.MemoryPropertyFlags) (core.Image, core.DeviceMemory, error) {
+func (app *HelloTriangleApplication) createImage(width, height int, mipLevels int, numSamples common.SampleCounts, format common.DataFormat, tiling common.ImageTiling, usage common.ImageUsages, memoryProperties core.MemoryPropertyFlags) (core.Image, core.DeviceMemory, error) {
 	image, _, err := app.loader.CreateImage(app.device, &core.ImageOptions{
-		Type: common.ImageType2D,
+		ImageType: common.ImageType2D,
 		Extent: common.Extent3D{
 			Width:  width,
 			Height: height,
@@ -1495,7 +1495,7 @@ func (app *HelloTriangleApplication) createImage(width, height int, mipLevels ui
 	return image, imageMemory, nil
 }
 
-func (app *HelloTriangleApplication) transitionImageLayout(image core.Image, format common.DataFormat, oldLayout common.ImageLayout, newLayout common.ImageLayout, mipLevels uint32) error {
+func (app *HelloTriangleApplication) transitionImageLayout(image core.Image, format common.DataFormat, oldLayout common.ImageLayout, newLayout common.ImageLayout, mipLevels int) error {
 	buffer, err := app.beginSingleTimeCommands()
 	if err != nil {
 		return err
@@ -1731,12 +1731,12 @@ func (app *HelloTriangleApplication) createDescriptorPool() error {
 		MaxSets: len(app.swapchainImages),
 		PoolSizes: []core.PoolSize{
 			{
-				Type:  common.DescriptorUniformBuffer,
-				Count: len(app.swapchainImages),
+				Type:            common.DescriptorUniformBuffer,
+				DescriptorCount: len(app.swapchainImages),
 			},
 			{
-				Type:  common.DescriptorCombinedImageSampler,
-				Count: len(app.swapchainImages),
+				Type:            common.DescriptorCombinedImageSampler,
+				DescriptorCount: len(app.swapchainImages),
 			},
 		},
 	})
@@ -1760,9 +1760,9 @@ func (app *HelloTriangleApplication) createDescriptorSets() error {
 	for i := 0; i < len(app.swapchainImages); i++ {
 		err = app.device.UpdateDescriptorSets([]core.WriteDescriptorSetOptions{
 			{
-				Destination:             app.descriptorSets[i],
-				DestinationBinding:      0,
-				DestinationArrayElement: 0,
+				DstSet:          app.descriptorSets[i],
+				DstBinding:      0,
+				DstArrayElement: 0,
 
 				DescriptorType: common.DescriptorUniformBuffer,
 
@@ -1775,9 +1775,9 @@ func (app *HelloTriangleApplication) createDescriptorSets() error {
 				},
 			},
 			{
-				Destination:             app.descriptorSets[i],
-				DestinationBinding:      1,
-				DestinationArrayElement: 0,
+				DstSet:          app.descriptorSets[i],
+				DstBinding:      1,
+				DstArrayElement: 0,
 
 				DescriptorType: common.DescriptorCombinedImageSampler,
 
