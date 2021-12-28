@@ -898,7 +898,7 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
 	bufferSize := binary.Size(vertices)
 	app.vertexBuffer, _, err = app.loader.CreateBuffer(app.device, &core.BufferOptions{
 		BufferSize:  bufferSize,
-		Usages:      common.UsageVertexBuffer,
+		Usage:       common.UsageVertexBuffer,
 		SharingMode: common.SharingExclusive,
 	})
 	if err != nil {
@@ -990,7 +990,7 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
 		}
 
 		buffer.CmdBindPipeline(common.BindGraphics, app.graphicsPipeline)
-		buffer.CmdBindVertexBuffers(0, []core.Buffer{app.vertexBuffer}, []int{0})
+		buffer.CmdBindVertexBuffers([]core.Buffer{app.vertexBuffer}, []int{0})
 		buffer.CmdDraw(len(vertices), 1, 0, 0)
 		buffer.CmdEndRenderPass()
 

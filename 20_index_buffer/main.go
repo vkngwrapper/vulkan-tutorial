@@ -992,7 +992,7 @@ func (app *HelloTriangleApplication) createIndexBuffer() error {
 func (app *HelloTriangleApplication) createBuffer(size int, usage common.BufferUsages, properties core.MemoryPropertyFlags) (core.Buffer, core.DeviceMemory, error) {
 	buffer, _, err := app.loader.CreateBuffer(app.device, &core.BufferOptions{
 		BufferSize:  size,
-		Usages:      usage,
+		Usage:       usage,
 		SharingMode: common.SharingExclusive,
 	})
 	if err != nil {
@@ -1108,7 +1108,7 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
 		}
 
 		buffer.CmdBindPipeline(common.BindGraphics, app.graphicsPipeline)
-		buffer.CmdBindVertexBuffers(0, []core.Buffer{app.vertexBuffer}, []int{0})
+		buffer.CmdBindVertexBuffers([]core.Buffer{app.vertexBuffer}, []int{0})
 		buffer.CmdBindIndexBuffer(app.indexBuffer, 0, common.IndexUInt16)
 		buffer.CmdDrawIndexed(len(indices), 1, 0, 0, 0)
 		buffer.CmdEndRenderPass()
