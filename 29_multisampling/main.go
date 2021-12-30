@@ -1356,6 +1356,8 @@ func (app *HelloTriangleApplication) generateMipmaps(image core.Image, imageForm
 		barrier.NewLayout = common.LayoutShaderReadOnlyOptimal
 		barrier.SrcAccessMask = common.AccessTransferRead
 		barrier.DstAccessMask = common.AccessShaderRead
+		barrier.SrcQueueFamilyIndex = -1
+		barrier.DstQueueFamilyIndex = -1
 		err = commandBuffer.CmdPipelineBarrier(common.PipelineStageTransfer, common.PipelineStageFragmentShader, 0, nil, nil, []*core.ImageMemoryBarrierOptions{barrier})
 		if err != nil {
 			return err
