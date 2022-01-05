@@ -1529,7 +1529,7 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
 		buffer.CmdBindPipeline(common.BindGraphics, app.graphicsPipeline)
 		buffer.CmdBindVertexBuffers([]core.Buffer{app.vertexBuffer}, []int{0})
 		buffer.CmdBindIndexBuffer(app.indexBuffer, 0, common.IndexUInt16)
-		buffer.CmdBindDescriptorSets(common.BindGraphics, app.pipelineLayout, 0, []core.DescriptorSet{
+		buffer.CmdBindDescriptorSets(common.BindGraphics, app.pipelineLayout, []core.DescriptorSet{
 			app.descriptorSets[bufferIdx],
 		}, nil)
 		buffer.CmdDrawIndexed(len(indices), 1, 0, 0, 0)
