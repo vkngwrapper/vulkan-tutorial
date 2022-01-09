@@ -1073,7 +1073,7 @@ func (app *HelloTriangleApplication) createUniformBuffers() error {
 }
 
 func (app *HelloTriangleApplication) createBuffer(size int, usage common.BufferUsages, properties core.MemoryPropertyFlags) (core.Buffer, core.DeviceMemory, error) {
-	buffer, _, err := app.loader.CreateBuffer(app.device, &core.BufferOptions{
+	buffer, _, err := app.loader.CreateBuffer(app.device, nil, &core.BufferOptions{
 		BufferSize:  size,
 		Usage:       usage,
 		SharingMode: common.SharingExclusive,

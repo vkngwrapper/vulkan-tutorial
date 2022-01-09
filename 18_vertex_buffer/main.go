@@ -896,7 +896,7 @@ func (app *HelloTriangleApplication) createCommandPool() error {
 func (app *HelloTriangleApplication) createVertexBuffer() error {
 	var err error
 	bufferSize := binary.Size(vertices)
-	app.vertexBuffer, _, err = app.loader.CreateBuffer(app.device, &core.BufferOptions{
+	app.vertexBuffer, _, err = app.loader.CreateBuffer(app.device, nil, &core.BufferOptions{
 		BufferSize:  bufferSize,
 		Usage:       common.UsageVertexBuffer,
 		SharingMode: common.SharingExclusive,
