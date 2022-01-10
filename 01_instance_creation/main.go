@@ -102,7 +102,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		instanceOptions.ExtensionNames = append(instanceOptions.ExtensionNames, ext)
 	}
 
-	app.instance, _, err = app.loader.CreateInstance(instanceOptions)
+	app.instance, _, err = app.loader.CreateInstance(nil, instanceOptions)
 	if err != nil {
 		return err
 	}

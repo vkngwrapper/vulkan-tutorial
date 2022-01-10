@@ -204,7 +204,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		instanceOptions.Next = app.debugMessengerOptions()
 	}
 
-	app.instance, _, err = app.loader.CreateInstance(instanceOptions)
+	app.instance, _, err = app.loader.CreateInstance(nil, instanceOptions)
 	if err != nil {
 		return err
 	}
@@ -227,7 +227,7 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 
 	var err error
 	debugLoader := ext_debug_utils.CreateLoaderFromInstance(app.instance)
-	app.debugMessenger, _, err = debugLoader.CreateMessenger(app.instance, app.debugMessengerOptions())
+	app.debugMessenger, _, err = debugLoader.CreateMessenger(app.instance, nil, app.debugMessengerOptions())
 	if err != nil {
 		return err
 	}
@@ -305,7 +305,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		layerNames = append(layerNames, validationLayers...)
 	}
 
-	app.device, _, err = app.loader.CreateDevice(app.physicalDevice, &core.DeviceOptions{
+	app.device, _, err = app.loader.CreateDevice(app.physicalDevice, nil, &core.DeviceOptions{
 		QueueFamilies:   queueFamilyOptions,
 		EnabledFeatures: &common.PhysicalDeviceFeatures{},
 		ExtensionNames:  extensionNames,
@@ -350,7 +350,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 		queueFamilyIndices = append(queueFamilyIndices, *indices.GraphicsFamily, *indices.PresentFamily)
 	}
 
-	swapchain, _, err := app.swapchainLoader.CreateSwapchain(app.device, &khr_swapchain.CreationOptions{
+	swapchain, _, err := app.swapchainLoader.CreateSwapchain(app.device, nil, &khr_swapchain.CreationOptions{
 		Surface: app.surface,
 
 		MinImageCount:    imageCount,
