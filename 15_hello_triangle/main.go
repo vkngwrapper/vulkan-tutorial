@@ -188,59 +188,59 @@ appLoop:
 
 func (app *HelloTriangleApplication) cleanup() {
 	for _, fence := range app.inFlightFence {
-		fence.Destroy()
+		fence.Destroy(nil)
 	}
 
 	for _, semaphore := range app.renderFinishedSemaphore {
-		semaphore.Destroy()
+		semaphore.Destroy(nil)
 	}
 
 	for _, semaphore := range app.imageAvailableSemaphore {
-		semaphore.Destroy()
+		semaphore.Destroy(nil)
 	}
 
 	if app.commandPool != nil {
-		app.commandPool.Destroy()
+		app.commandPool.Destroy(nil)
 	}
 
 	for _, framebuffer := range app.swapchainFramebuffers {
-		framebuffer.Destroy()
+		framebuffer.Destroy(nil)
 	}
 
 	if app.graphicsPipeline != nil {
-		app.graphicsPipeline.Destroy()
+		app.graphicsPipeline.Destroy(nil)
 	}
 
 	if app.pipelineLayout != nil {
-		app.pipelineLayout.Destroy()
+		app.pipelineLayout.Destroy(nil)
 	}
 
 	if app.renderPass != nil {
-		app.renderPass.Destroy()
+		app.renderPass.Destroy(nil)
 	}
 
 	for _, imageView := range app.swapchainImageViews {
-		imageView.Destroy()
+		imageView.Destroy(nil)
 	}
 
 	if app.swapchain != nil {
-		app.swapchain.Destroy()
+		app.swapchain.Destroy(nil)
 	}
 
 	if app.device != nil {
-		app.device.Destroy()
+		app.device.Destroy(nil)
 	}
 
 	if app.debugMessenger != nil {
-		app.debugMessenger.Destroy()
+		app.debugMessenger.Destroy(nil)
 	}
 
 	if app.surface != nil {
-		app.surface.Destroy()
+		app.surface.Destroy(nil)
 	}
 
 	if app.instance != nil {
-		app.instance.Destroy()
+		app.instance.Destroy(nil)
 	}
 
 	if app.window != nil {
@@ -578,7 +578,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 	if err != nil {
 		return err
 	}
-	defer vertShader.Destroy()
+	defer vertShader.Destroy(nil)
 
 	// Load fragment shader
 	fragShaderBytes, err := shaders.ReadFile("shaders/frag.spv")
@@ -592,7 +592,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 	if err != nil {
 		return err
 	}
-	defer fragShader.Destroy()
+	defer fragShader.Destroy(nil)
 
 	vertexInput := &core.VertexInputOptions{}
 

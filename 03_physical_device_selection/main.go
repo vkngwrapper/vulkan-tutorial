@@ -95,11 +95,11 @@ appLoop:
 
 func (app *HelloTriangleApplication) cleanup() {
 	if app.debugMessenger != nil {
-		app.debugMessenger.Destroy()
+		app.debugMessenger.Destroy(nil)
 	}
 
 	if app.instance != nil {
-		app.instance.Destroy()
+		app.instance.Destroy(nil)
 	}
 
 	if app.window != nil {

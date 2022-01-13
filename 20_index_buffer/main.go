@@ -273,7 +273,7 @@ appLoop:
 
 func (app *HelloTriangleApplication) cleanupSwapChain() {
 	for _, framebuffer := range app.swapchainFramebuffers {
-		framebuffer.Destroy()
+		framebuffer.Destroy(nil)
 	}
 	app.swapchainFramebuffers = []core.Framebuffer{}
 
@@ -283,27 +283,27 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
 	}
 
 	if app.graphicsPipeline != nil {
-		app.graphicsPipeline.Destroy()
+		app.graphicsPipeline.Destroy(nil)
 		app.graphicsPipeline = nil
 	}
 
 	if app.pipelineLayout != nil {
-		app.pipelineLayout.Destroy()
+		app.pipelineLayout.Destroy(nil)
 		app.pipelineLayout = nil
 	}
 
 	if app.renderPass != nil {
-		app.renderPass.Destroy()
+		app.renderPass.Destroy(nil)
 		app.renderPass = nil
 	}
 
 	for _, imageView := range app.swapchainImageViews {
-		imageView.Destroy()
+		imageView.Destroy(nil)
 	}
 	app.swapchainImageViews = []core.ImageView{}
 
 	if app.swapchain != nil {
-		app.swapchain.Destroy()
+		app.swapchain.Destroy(nil)
 		app.swapchain = nil
 	}
 }
@@ -312,51 +312,51 @@ func (app *HelloTriangleApplication) cleanup() {
 	app.cleanupSwapChain()
 
 	if app.indexBuffer != nil {
-		app.indexBuffer.Destroy()
+		app.indexBuffer.Destroy(nil)
 	}
 
 	if app.indexBufferMemory != nil {
-		app.device.FreeMemory(app.indexBufferMemory)
+		app.indexBufferMemory.Free(nil)
 	}
 
 	if app.vertexBuffer != nil {
-		app.vertexBuffer.Destroy()
+		app.vertexBuffer.Destroy(nil)
 	}
 
 	if app.vertexBufferMemory != nil {
-		app.device.FreeMemory(app.vertexBufferMemory)
+		app.vertexBufferMemory.Free(nil)
 	}
 
 	for _, fence := range app.inFlightFence {
-		fence.Destroy()
+		fence.Destroy(nil)
 	}
 
 	for _, semaphore := range app.renderFinishedSemaphore {
-		semaphore.Destroy()
+		semaphore.Destroy(nil)
 	}
 
 	for _, semaphore := range app.imageAvailableSemaphore {
-		semaphore.Destroy()
+		semaphore.Destroy(nil)
 	}
 
 	if app.commandPool != nil {
-		app.commandPool.Destroy()
+		app.commandPool.Destroy(nil)
 	}
 
 	if app.device != nil {
-		app.device.Destroy()
+		app.device.Destroy(nil)
 	}
 
 	if app.debugMessenger != nil {
-		app.debugMessenger.Destroy()
+		app.debugMessenger.Destroy(nil)
 	}
 
 	if app.surface != nil {
-		app.surface.Destroy()
+		app.surface.Destroy(nil)
 	}
 
 	if app.instance != nil {
-		app.instance.Destroy()
+		app.instance.Destroy(nil)
 	}
 
 	if app.window != nil {
@@ -752,7 +752,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 	if err != nil {
 		return err
 	}
-	defer vertShader.Destroy()
+	defer vertShader.Destroy(nil)
 
 	// Load fragment shader
 	fragShaderBytes, err := shaders.ReadFile("shaders/frag.spv")
@@ -766,7 +766,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 	if err != nil {
 		return err
 	}
-	defer fragShader.Destroy()
+	defer fragShader.Destroy(nil)
 
 	vertexInput := &core.VertexInputOptions{
 		VertexBindingDescriptions:   getVertexBindingDescription(),
@@ -938,10 +938,10 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
 
 	stagingBuffer, stagingBufferMemory, err := app.createBuffer(bufferSize, common.UsageTransferSrc, core.MemoryHostVisible|core.MemoryHostCoherent)
 	if stagingBuffer != nil {
-		defer stagingBuffer.Destroy()
+		defer stagingBuffer.Destroy(nil)
 	}
 	if stagingBufferMemory != nil {
-		defer app.device.FreeMemory(stagingBufferMemory)
+		defer stagingBufferMemory.Free(nil)
 	}
 
 	if err != nil {
@@ -966,10 +966,10 @@ func (app *HelloTriangleApplication) createIndexBuffer() error {
 
 	stagingBuffer, stagingBufferMemory, err := app.createBuffer(bufferSize, common.UsageTransferSrc, core.MemoryHostVisible|core.MemoryHostCoherent)
 	if stagingBuffer != nil {
-		defer stagingBuffer.Destroy()
+		defer stagingBuffer.Destroy(nil)
 	}
 	if stagingBufferMemory != nil {
-		defer app.device.FreeMemory(stagingBufferMemory)
+		defer stagingBufferMemory.Free(nil)
 	}
 
 	if err != nil {

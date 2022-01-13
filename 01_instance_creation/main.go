@@ -69,7 +69,7 @@ appLoop:
 
 func (app *HelloTriangleApplication) cleanup() {
 	if app.instance != nil {
-		app.instance.Destroy()
+		app.instance.Destroy(nil)
 	}
 
 	if app.window != nil {

@@ -143,27 +143,27 @@ appLoop:
 
 func (app *HelloTriangleApplication) cleanup() {
 	for _, imageView := range app.swapchainImageViews {
-		imageView.Destroy()
+		imageView.Destroy(nil)
 	}
 
 	if app.swapchain != nil {
-		app.swapchain.Destroy()
+		app.swapchain.Destroy(nil)
 	}
 
 	if app.device != nil {
-		app.device.Destroy()
+		app.device.Destroy(nil)
 	}
 
 	if app.debugMessenger != nil {
-		app.debugMessenger.Destroy()
+		app.debugMessenger.Destroy(nil)
 	}
 
 	if app.surface != nil {
-		app.surface.Destroy()
+		app.surface.Destroy(nil)
 	}
 
 	if app.instance != nil {
-		app.instance.Destroy()
+		app.instance.Destroy(nil)
 	}
 
 	if app.window != nil {
@@ -454,7 +454,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 	if err != nil {
 		return err
 	}
-	defer vertShader.Destroy()
+	defer vertShader.Destroy(nil)
 
 	// Load fragment shader
 	fragShaderBytes, err := shaders.ReadFile("shaders/frag.spv")
@@ -468,7 +468,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 	if err != nil {
 		return err
 	}
-	defer fragShader.Destroy()
+	defer fragShader.Destroy(nil)
 
 	_ = &core.ShaderStage{
 		Stage:  common.StageVertex,
