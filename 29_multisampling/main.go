@@ -1996,7 +1996,7 @@ func (app *HelloTriangleApplication) drawFrame() error {
 	}
 
 	imageIndex, res, err := app.swapchain.AcquireNextImage(common.NoTimeout, app.imageAvailableSemaphore[app.currentFrame], nil)
-	if res == core.VKErrorOutOfDateKHR {
+	if res == common.VKErrorOutOfDateKHR {
 		return app.recreateSwapChain()
 	} else if err != nil {
 		return err
@@ -2037,7 +2037,7 @@ func (app *HelloTriangleApplication) drawFrame() error {
 		Swapchains:     []khr_swapchain.Swapchain{app.swapchain},
 		ImageIndices:   []int{imageIndex},
 	})
-	if res == core.VKErrorOutOfDateKHR || res == core.VKSuboptimalKHR {
+	if res == common.VKErrorOutOfDateKHR || res == common.VKSuboptimalKHR {
 		return app.recreateSwapChain()
 	} else if err != nil {
 		return err
