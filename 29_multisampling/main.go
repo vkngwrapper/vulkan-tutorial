@@ -6,6 +6,10 @@ import (
 	"encoding/binary"
 	"github.com/CannibalVox/VKng/core"
 	"github.com/CannibalVox/VKng/core/common"
+	"github.com/CannibalVox/VKng/core/core1_0"
+	"github.com/CannibalVox/VKng/core/core1_0/loader"
+	"github.com/CannibalVox/VKng/core/core1_0/options"
+	"github.com/CannibalVox/VKng/core/iface"
 	"github.com/CannibalVox/VKng/extensions/ext_debug_utils"
 	"github.com/CannibalVox/VKng/extensions/khr_surface"
 	"github.com/CannibalVox/VKng/extensions/khr_surface_sdl2"
@@ -59,20 +63,20 @@ type UniformBufferObject struct {
 	Proj  mgl32.Mat4
 }
 
-func getVertexBindingDescription() []core.VertexBindingDescription {
+func getVertexBindingDescription() []options.VertexBindingDescription {
 	v := Vertex{}
-	return []core.VertexBindingDescription{
+	return []options.VertexBindingDescription{
 		{
 			Binding:   0,
 			Stride:    int(unsafe.Sizeof(v)),
-			InputRate: core.RateVertex,
+			InputRate: options.RateVertex,
 		},
 	}
 }
 
-func getVertexAttributeDescriptions() []core.VertexAttributeDescription {
+func getVertexAttributeDescriptions() []options.VertexAttributeDescription {
 	v := Vertex{}
-	return []core.VertexAttributeDescription{
+	return []options.VertexAttributeDescription{
 		{
 			Binding:  0,
 			Location: 0,
@@ -96,67 +100,67 @@ func getVertexAttributeDescriptions() []core.VertexAttributeDescription {
 
 type HelloTriangleApplication struct {
 	window *sdl.Window
-	loader core.Loader1_0
+	loader loader.Loader
 
-	instance       core.Instance
-	debugMessenger ext_debug_utils.Messenger
+	instance       core1_0.Instance
+	debugMessenger *ext_debug_utils.Messenger
 	surface        khr_surface.Surface
 
-	physicalDevice core.PhysicalDevice
-	device         core.Device
+	physicalDevice core1_0.PhysicalDevice
+	device         core1_0.Device
 
-	graphicsQueue core.Queue
-	presentQueue  core.Queue
+	graphicsQueue core1_0.Queue
+	presentQueue  core1_0.Queue
 
-	swapchainLoader       khr_swapchain.Loader
-	swapchain             khr_swapchain.Swapchain
-	swapchainImages       []core.Image
+	swapchainLoader       khr_swapchain.Extension[core1_0.Image]
+	swapchain             khr_swapchain.Swapchain[core1_0.Image]
+	swapchainImages       []core1_0.Image
 	swapchainImageFormat  common.DataFormat
 	swapchainExtent       common.Extent2D
-	swapchainImageViews   []core.ImageView
-	swapchainFramebuffers []core.Framebuffer
+	swapchainImageViews   []core1_0.ImageView
+	swapchainFramebuffers []core1_0.Framebuffer
 
-	renderPass          core.RenderPass
-	descriptorPool      core.DescriptorPool
-	descriptorSets      []core.DescriptorSet
-	descriptorSetLayout core.DescriptorSetLayout
-	pipelineLayout      core.PipelineLayout
-	graphicsPipeline    core.Pipeline
+	renderPass          core1_0.RenderPass
+	descriptorPool      core1_0.DescriptorPool
+	descriptorSets      []core1_0.DescriptorSet
+	descriptorSetLayout core1_0.DescriptorSetLayout
+	pipelineLayout      core1_0.PipelineLayout
+	graphicsPipeline    core1_0.Pipeline
 
-	commandPool    core.CommandPool
-	commandBuffers []core.CommandBuffer
+	commandPool    core1_0.CommandPool
+	commandBuffers []core1_0.CommandBuffer
 
-	imageAvailableSemaphore []core.Semaphore
-	renderFinishedSemaphore []core.Semaphore
-	inFlightFence           []core.Fence
-	imagesInFlight          []core.Fence
+	imageAvailableSemaphore []core1_0.Semaphore
+	renderFinishedSemaphore []core1_0.Semaphore
+	inFlightFence           []core1_0.Fence
+	imagesInFlight          []core1_0.Fence
 	currentFrame            int
 	frameStart              float64
 
 	vertices           []Vertex
 	indices            []uint32
-	vertexBuffer       core.Buffer
-	vertexBufferMemory core.DeviceMemory
-	indexBuffer        core.Buffer
-	indexBufferMemory  core.DeviceMemory
+	vertexBuffer       core1_0.Buffer
+	vertexBufferMemory core1_0.DeviceMemory
+	indexBuffer        core1_0.Buffer
+	indexBufferMemory  core1_0.DeviceMemory
 
-	uniformBuffers       []core.Buffer
-	uniformBuffersMemory []core.DeviceMemory
+	uniformBuffers       []core1_0.Buffer
+	uniformBuffersMemory []core1_0.DeviceMemory
 
 	mipLevels          int
-	textureImage       core.Image
-	textureImageMemory core.DeviceMemory
-	textureImageView   core.ImageView
-	textureSampler     core.Sampler
+	textureImage       core1_0.Image
+	textureImageMemory core1_0.DeviceMemory
+	textureImageView   core1_0.ImageView
+	textureSampler     core1_0.Sampler
 
-	depthImage       core.Image
-	depthImageMemory core.DeviceMemory
-	depthImageView   core.ImageView
+	depthImage       core1_0.Image
+	depthImageMemory core1_0.DeviceMemory
+	depthImageView   core1_0.ImageView
 
 	msaaSamples      common.SampleCounts
-	colorImage       core.Image
-	colorImageMemory core.DeviceMemory
-	colorImageView   core.ImageView
+	colorImage       core1_0.Image
+	colorImageMemory core1_0.DeviceMemory
+	colorImageView   core1_0.ImageView
 }
 
 func (app *HelloTriangleApplication) Run() error {
@@ -185,7 +189,7 @@ func (app *HelloTriangleApplication) initWindow() error {
 	}
 	app.window = window
 
-	app.loader, err = core.CreateLoaderFromProcAddr(sdl.VulkanGetVkGetInstanceProcAddr())
+	app.loader, err = loader.CreateLoaderFromProcAddr(sdl.VulkanGetVkGetInstanceProcAddr())
 	if err != nil {
 		return err
 	}
@@ -388,11 +392,11 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
 	for _, framebuffer := range app.swapchainFramebuffers {
 		framebuffer.Destroy(nil)
 	}
-	app.swapchainFramebuffers = []core.Framebuffer{}
+	app.swapchainFramebuffers = []core1_0.Framebuffer{}
 
 	if len(app.commandBuffers) > 0 {
-		app.commandPool.FreeCommandBuffers(app.commandBuffers)
-		app.commandBuffers = []core.CommandBuffer{}
+		app.loader.FreeCommandBuffers(iface.CommonCommandBuffers(app.commandBuffers))
+		app.commandBuffers = []core1_0.CommandBuffer{}
 	}
 
 	if app.graphicsPipeline != nil {
@@ -413,7 +417,7 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
 	for _, imageView := range app.swapchainImageViews {
 		imageView.Destroy(nil)
 	}
-	app.swapchainImageViews = []core.ImageView{}
+	app.swapchainImageViews = []core1_0.ImageView{}
 
 	if app.swapchain != nil {
 		app.swapchain.Destroy(nil)
@@ -581,7 +585,7 @@ func (app *HelloTriangleApplication) recreateSwapChain() error {
 		return err
 	}
 
-	app.imagesInFlight = []core.Fence{}
+	app.imagesInFlight = []core1_0.Fence{}
 	for i := 0; i < len(app.swapchainImages); i++ {
 		app.imagesInFlight = append(app.imagesInFlight, nil)
 	}
@@ -590,7 +594,7 @@ func (app *HelloTriangleApplication) recreateSwapChain() error {
 }
 
 func (app *HelloTriangleApplication) createInstance() error {
-	instanceOptions := &core.InstanceOptions{
+	instanceOptions := &options.InstanceOptions{
 		ApplicationName:    "Hello Triangle",
 		ApplicationVersion: common.CreateVersion(1, 0, 0),
 		EngineName:         "No Engine",
@@ -658,7 +662,7 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 	}
 
 	var err error
-	debugLoader := ext_debug_utils.CreateLoaderFromInstance(app.instance)
+	debugLoader := ext_debug_utils.CreateExtensionFromInstance(app.instance)
 	app.debugMessenger, _, err = debugLoader.CreateMessenger(app.instance, nil, app.debugMessengerOptions())
 	if err != nil {
 		return err
@@ -679,7 +683,7 @@ func (app *HelloTriangleApplication) createSurface() error {
 }
 
 func (app *HelloTriangleApplication) pickPhysicalDevice() error {
-	physicalDevices, _, err := app.instance.PhysicalDevices()
+	physicalDevices, _, err := app.loader.PhysicalDevices(app.instance)
 	if err != nil {
 		return err
 	}
@@ -713,10 +717,10 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		uniqueQueueFamilies = append(uniqueQueueFamilies, *indices.PresentFamily)
 	}
 
-	var queueFamilyOptions []*core.QueueFamilyOptions
+	var queueFamilyOptions []*options.QueueFamilyOptions
 	queuePriority := float32(1.0)
 	for _, queueFamily := range uniqueQueueFamilies {
-		queueFamilyOptions = append(queueFamilyOptions, &core.QueueFamilyOptions{
+		queueFamilyOptions = append(queueFamilyOptions, &options.QueueFamilyOptions{
 			QueueFamilyIndex: queueFamily,
 			QueuePriorities:  []float32{queuePriority},
 		})
@@ -741,9 +745,9 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		layerNames = append(layerNames, validationLayers...)
 	}
 
-	app.device, _, err = app.loader.CreateDevice(app.physicalDevice, nil, &core.DeviceOptions{
+	app.device, _, err = app.loader.CreateDevice(app.physicalDevice, nil, &options.DeviceOptions{
 		QueueFamilies: queueFamilyOptions,
-		EnabledFeatures: &common.PhysicalDeviceFeatures{
+		EnabledFeatures: &options.PhysicalDeviceFeatures{
 			SamplerAnisotropy: true,
 		},
 		ExtensionNames: extensionNames,
@@ -753,13 +757,13 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		return err
 	}
 
-	app.graphicsQueue = app.device.GetQueue(*indices.GraphicsFamily, 0)
-	app.presentQueue = app.device.GetQueue(*indices.PresentFamily, 0)
+	app.graphicsQueue = app.loader.DeviceQueue(app.device, *indices.GraphicsFamily, 0)
+	app.presentQueue = app.loader.DeviceQueue(app.device, *indices.PresentFamily, 0)
 	return nil
 }
 
 func (app *HelloTriangleApplication) createSwapchain() error {
-	app.swapchainLoader = khr_swapchain.CreateLoaderFromDevice(app.device)
+	app.swapchainLoader = khr_swapchain.CreateExtensionFromDevice[core1_0.Image](app.device)
 
 	swapchainSupport, err := app.querySwapChainSupport(app.physicalDevice)
 	if err != nil {
@@ -823,7 +827,7 @@ func (app *HelloTriangleApplication) createImageViews() error {
 	}
 	app.swapchainImages = images
 
-	var imageViews []core.ImageView
+	var imageViews []core1_0.ImageView
 	for _, image := range images {
 		view, err := app.createImageView(image, app.swapchainImageFormat, common.AspectColor, 1)
 		if err != nil {
@@ -843,8 +847,8 @@ func (app *HelloTriangleApplication) createRenderPass() error {
 		return err
 	}
 
-	renderPass, _, err := app.loader.CreateRenderPass(app.device, nil, &core.RenderPassOptions{
-		Attachments: []core.AttachmentDescription{
+	renderPass, _, err := app.loader.CreateRenderPass(app.device, nil, &options.RenderPassOptions{
+		Attachments: []options.AttachmentDescription{
 			{
 				Format:         app.swapchainImageFormat,
 				Samples:        app.msaaSamples,
@@ -876,7 +880,7 @@ func (app *HelloTriangleApplication) createRenderPass() error {
 				FinalLayout:    common.LayoutPresentSrcKHR,
 			},
 		},
-		SubPasses: []core.SubPass{
+		SubPasses: []options.SubPass{
 			{
 				BindPoint: common.BindGraphics,
 				ColorAttachments: []common.AttachmentReference{
@@ -897,9 +901,9 @@ func (app *HelloTriangleApplication) createRenderPass() error {
 				},
 			},
 		},
-		SubPassDependencies: []core.SubPassDependency{
+		SubPassDependencies: []options.SubPassDependency{
 			{
-				SrcSubPassIndex: core.SubpassExternal,
+				SrcSubPassIndex: options.SubpassExternal,
 				DstSubPassIndex: 0,
 
 				SrcStageMask:  common.PipelineStageColorAttachmentOutput | common.PipelineStageEarlyFragmentTests,
@@ -921,8 +925,8 @@ func (app *HelloTriangleApplication) createRenderPass() error {
 
 func (app *HelloTriangleApplication) createDescriptorSetLayout() error {
 	var err error
-	app.descriptorSetLayout, _, err = app.loader.CreateDescriptorSetLayout(app.device, nil, &core.DescriptorSetLayoutOptions{
-		Bindings: []*core.DescriptorLayoutBinding{
+	app.descriptorSetLayout, _, err = app.loader.CreateDescriptorSetLayout(app.device, nil, &options.DescriptorSetLayoutOptions{
+		Bindings: []*options.DescriptorLayoutBinding{
 			{
 				Binding:         0,
 				DescriptorType:  common.DescriptorUniformBuffer,
@@ -967,7 +971,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		return err
 	}
 
-	vertShader, _, err := app.loader.CreateShaderModule(app.device, nil, &core.ShaderModuleOptions{
+	vertShader, _, err := app.loader.CreateShaderModule(app.device, nil, &options.ShaderModuleOptions{
 		SpirVByteCode: bytesToBytecode(vertShaderBytes),
 	})
 	if err != nil {
@@ -981,7 +985,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		return err
 	}
 
-	fragShader, _, err := app.loader.CreateShaderModule(app.device, nil, &core.ShaderModuleOptions{
+	fragShader, _, err := app.loader.CreateShaderModule(app.device, nil, &options.ShaderModuleOptions{
 		SpirVByteCode: bytesToBytecode(fragShaderBytes),
 	})
 	if err != nil {
@@ -989,29 +993,29 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 	}
 	defer fragShader.Destroy(nil)
 
-	vertexInput := &core.VertexInputOptions{
+	vertexInput := &options.VertexInputOptions{
 		VertexBindingDescriptions:   getVertexBindingDescription(),
 		VertexAttributeDescriptions: getVertexAttributeDescriptions(),
 	}
 
-	inputAssembly := &core.InputAssemblyOptions{
+	inputAssembly := &options.InputAssemblyOptions{
 		Topology:               common.TopologyTriangleList,
 		EnablePrimitiveRestart: false,
 	}
 
-	vertStage := &core.ShaderStage{
+	vertStage := options.ShaderStage{
 		Stage:  common.StageVertex,
 		Shader: vertShader,
 		Name:   "main",
 	}
 
-	fragStage := &core.ShaderStage{
+	fragStage := options.ShaderStage{
 		Stage:  common.StageFragment,
 		Shader: fragShader,
 		Name:   "main",
 	}
 
-	viewport := &core.ViewportOptions{
+	viewport := &options.ViewportOptions{
 		Viewports: []common.Viewport{
 			{
 				X:        0,
@@ -1030,11 +1034,11 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		},
 	}
 
-	rasterization := &core.RasterizationOptions{
+	rasterization := &options.RasterizationOptions{
 		DepthClamp:        false,
 		RasterizerDiscard: false,
 
-		PolygonMode: core.PolygonModeFill,
+		PolygonMode: options.PolygonModeFill,
 		CullMode:    common.CullBack,
 		FrontFace:   common.FrontFaceCounterClockwise,
 
@@ -1043,24 +1047,24 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		LineWidth: 1.0,
 	}
 
-	multisample := &core.MultisampleOptions{
+	multisample := &options.MultisampleOptions{
 		SampleShading:        false,
 		RasterizationSamples: app.msaaSamples,
 		MinSampleShading:     1.0,
 	}
 
-	depthStencil := &core.DepthStencilOptions{
+	depthStencil := &options.DepthStencilOptions{
 		DepthTestEnable:  true,
 		DepthWriteEnable: true,
 		DepthCompareOp:   common.CompareLess,
 	}
 
-	colorBlend := &core.ColorBlendOptions{
+	colorBlend := &options.ColorBlendOptions{
 		LogicOpEnabled: false,
 		LogicOp:        common.LogicOpCopy,
 
 		BlendConstants: [4]float32{0, 0, 0, 0},
-		Attachments: []core.ColorBlendAttachment{
+		Attachments: []options.ColorBlendAttachment{
 			{
 				BlendEnabled: false,
 				WriteMask:    common.ComponentRed | common.ComponentGreen | common.ComponentBlue | common.ComponentAlpha,
@@ -1068,15 +1072,15 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		},
 	}
 
-	app.pipelineLayout, _, err = app.loader.CreatePipelineLayout(app.device, nil, &core.PipelineLayoutOptions{
-		SetLayouts: []core.DescriptorSetLayout{
+	app.pipelineLayout, _, err = app.loader.CreatePipelineLayout(app.device, nil, &options.PipelineLayoutOptions{
+		SetLayouts: []iface.DescriptorSetLayout{
 			app.descriptorSetLayout,
 		},
 	})
 
-	pipelines, _, err := app.loader.CreateGraphicsPipelines(app.device, nil, nil, []*core.GraphicsPipelineOptions{
+	pipelines, _, err := app.loader.CreateGraphicsPipelines(app.device, nil, nil, []options.GraphicsPipelineOptions{
 		{
-			ShaderStages: []*core.ShaderStage{
+			ShaderStages: []options.ShaderStage{
 				vertStage,
 				fragStage,
 			},
@@ -1103,10 +1107,10 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 
 func (app *HelloTriangleApplication) createFramebuffers() error {
 	for _, imageView := range app.swapchainImageViews {
-		framebuffer, _, err := app.loader.CreateFrameBuffer(app.device, nil, &core.FramebufferOptions{
+		framebuffer, _, err := app.loader.CreateFrameBuffer(app.device, nil, &options.FramebufferOptions{
 			RenderPass: app.renderPass,
 			Layers:     1,
-			Attachments: []core.ImageView{
+			Attachments: []iface.ImageView{
 				app.colorImageView,
 				app.depthImageView,
 				imageView,
@@ -1130,7 +1134,7 @@ func (app *HelloTriangleApplication) createCommandPool() error {
 		return err
 	}
 
-	pool, _, err := app.loader.CreateCommandPool(app.device, nil, &core.CommandPoolOptions{
+	pool, _, err := app.loader.CreateCommandPool(app.device, nil, &options.CommandPoolOptions{
 		GraphicsQueueFamily: indices.GraphicsFamily,
 	})
 
@@ -1152,7 +1156,7 @@ func (app *HelloTriangleApplication) createColorResources() error {
 		app.swapchainImageFormat,
 		common.ImageTilingOptimal,
 		common.ImageUsageTransientAttachment|common.ImageUsageColorAttachment,
-		core.MemoryDeviceLocal)
+		core1_0.MemoryDeviceLocal)
 	if err != nil {
 		return err
 	}
@@ -1178,7 +1182,7 @@ func (app *HelloTriangleApplication) createDepthResources() error {
 		depthFormat,
 		common.ImageTilingOptimal,
 		common.ImageUsageDepthStencilAttachment,
-		core.MemoryDeviceLocal)
+		core1_0.MemoryDeviceLocal)
 	if err != nil {
 		return err
 	}
@@ -1186,7 +1190,7 @@ func (app *HelloTriangleApplication) createDepthResources() error {
 	return err
 }
 
-func (app *HelloTriangleApplication) findSupportedFormat(formats []common.DataFormat, tiling common.ImageTiling, features common.FormatFeatures) (common.DataFormat, error) {
+func (app *HelloTriangleApplication) findSupportedFormat(formats []common.DataFormat, tiling common.ImageTiling, features core1_0.FormatFeatures) (common.DataFormat, error) {
 	for _, format := range formats {
 		props := app.physicalDevice.FormatProperties(format)
 
@@ -1203,7 +1207,7 @@ func (app *HelloTriangleApplication) findSupportedFormat(formats []common.DataFo
 func (app *HelloTriangleApplication) findDepthFormat() (common.DataFormat, error) {
 	return app.findSupportedFormat([]common.DataFormat{common.FormatD32SignedFloat, common.FormatD32SignedFloatS8UnsignedInt, common.FormatD24UnsignedNormalizedS8UnsignedInt},
 		common.ImageTilingOptimal,
-		common.FormatFeatureDepthStencilAttachment)
+		core1_0.FormatFeatureDepthStencilAttachment)
 }
 
 func hasStencilComponent(format common.DataFormat) bool {
@@ -1227,7 +1231,7 @@ func (app *HelloTriangleApplication) createTextureImage() error {
 
 	app.mipLevels = int(math.Log2(math.Max(float64(imageDims.X), float64(imageDims.Y))))
 
-	stagingBuffer, stagingMemory, err := app.createBuffer(imageSize, common.UsageTransferSrc, core.MemoryHostVisible|core.MemoryHostCoherent)
+	stagingBuffer, stagingMemory, err := app.createBuffer(imageSize, common.UsageTransferSrc, core1_0.MemoryHostVisible|core1_0.MemoryHostCoherent)
 	if err != nil {
 		return err
 	}
@@ -1257,7 +1261,7 @@ func (app *HelloTriangleApplication) createTextureImage() error {
 		common.FormatR8G8B8A8SRGB,
 		common.ImageTilingOptimal,
 		common.ImageUsageTransferSrc|common.ImageUsageTransferDst|common.ImageUsageSampled,
-		core.MemoryDeviceLocal)
+		core1_0.MemoryDeviceLocal)
 	if err != nil {
 		return err
 	}
@@ -1275,11 +1279,11 @@ func (app *HelloTriangleApplication) createTextureImage() error {
 	return app.generateMipmaps(app.textureImage, common.FormatR8G8B8A8SRGB, imageDims.X, imageDims.Y, app.mipLevels)
 }
 
-func (app *HelloTriangleApplication) generateMipmaps(image core.Image, imageFormat common.DataFormat, width, height int, mipLevels int) error {
+func (app *HelloTriangleApplication) generateMipmaps(image core1_0.Image, imageFormat common.DataFormat, width, height int, mipLevels int) error {
 
 	properties := app.physicalDevice.FormatProperties(imageFormat)
 
-	if (properties.OptimalTilingFeatures & common.FormatFeatureSampledImageFilterLinear) == 0 {
+	if (properties.OptimalTilingFeatures & core1_0.FormatFeatureSampledImageFilterLinear) == 0 {
 		return errors.Newf("texture image format %s does not support linear blitting", imageFormat)
 	}
 
@@ -1288,7 +1292,7 @@ func (app *HelloTriangleApplication) generateMipmaps(image core.Image, imageForm
 		return err
 	}
 
-	barrier := &core.ImageMemoryBarrierOptions{
+	barrier := options.ImageMemoryBarrierOptions{
 		Image:               image,
 		SrcQueueFamilyIndex: -1,
 		DstQueueFamilyIndex: -1,
@@ -1309,7 +1313,7 @@ func (app *HelloTriangleApplication) generateMipmaps(image core.Image, imageForm
 		barrier.SrcAccessMask = common.AccessTransferWrite
 		barrier.DstAccessMask = common.AccessTransferRead
 
-		err = commandBuffer.CmdPipelineBarrier(common.PipelineStageTransfer, common.PipelineStageTransfer, 0, nil, nil, []*core.ImageMemoryBarrierOptions{barrier})
+		err = commandBuffer.CmdPipelineBarrier(common.PipelineStageTransfer, common.PipelineStageTransfer, 0, nil, nil, []options.ImageMemoryBarrierOptions{barrier})
 		if err != nil {
 			return err
 		}
@@ -1323,7 +1327,7 @@ func (app *HelloTriangleApplication) generateMipmaps(image core.Image, imageForm
 		if nextMipHeight > 1 {
 			nextMipHeight /= 2
 		}
-		err = commandBuffer.CmdBlitImage(image, common.LayoutTransferSrcOptimal, image, common.LayoutTransferDstOptimal, []*core.ImageBlit{
+		err = commandBuffer.CmdBlitImage(image, common.LayoutTransferSrcOptimal, image, common.LayoutTransferDstOptimal, []core1_0.ImageBlit{
 			{
 				SourceSubresource: common.ImageSubresourceLayers{
 					AspectMask:     common.AspectColor,
@@ -1358,7 +1362,7 @@ func (app *HelloTriangleApplication) generateMipmaps(image core.Image, imageForm
 		barrier.DstAccessMask = common.AccessShaderRead
 		barrier.SrcQueueFamilyIndex = -1
 		barrier.DstQueueFamilyIndex = -1
-		err = commandBuffer.CmdPipelineBarrier(common.PipelineStageTransfer, common.PipelineStageFragmentShader, 0, nil, nil, []*core.ImageMemoryBarrierOptions{barrier})
+		err = commandBuffer.CmdPipelineBarrier(common.PipelineStageTransfer, common.PipelineStageFragmentShader, 0, nil, nil, []options.ImageMemoryBarrierOptions{barrier})
 		if err != nil {
 			return err
 		}
@@ -1377,7 +1381,7 @@ func (app *HelloTriangleApplication) generateMipmaps(image core.Image, imageForm
 		common.PipelineStageTransfer,
 		common.PipelineStageFragmentShader,
 		0, nil, nil,
-		[]*core.ImageMemoryBarrierOptions{barrier})
+		[]options.ImageMemoryBarrierOptions{barrier})
 	if err != nil {
 		return err
 	}
@@ -1421,7 +1425,7 @@ func (app *HelloTriangleApplication) createSampler() error {
 	properties := app.physicalDevice.Properties()
 
 	var err error
-	app.textureSampler, _, err = app.loader.CreateSampler(app.device, nil, &core.SamplerOptions{
+	app.textureSampler, _, err = app.loader.CreateSampler(app.device, nil, &options.SamplerOptions{
 		MagFilter:    common.FilterLinear,
 		MinFilter:    common.FilterLinear,
 		AddressModeU: common.AddressModeRepeat,
@@ -1441,8 +1445,8 @@ func (app *HelloTriangleApplication) createSampler() error {
 	return err
 }
 
-func (app *HelloTriangleApplication) createImageView(image core.Image, format common.DataFormat, aspect common.ImageAspectFlags, mipLevels int) (core.ImageView, error) {
-	imageView, _, err := app.loader.CreateImageView(app.device, nil, &core.ImageViewOptions{
+func (app *HelloTriangleApplication) createImageView(image core1_0.Image, format common.DataFormat, aspect common.ImageAspectFlags, mipLevels int) (core1_0.ImageView, error) {
+	imageView, _, err := app.loader.CreateImageView(app.device, nil, &options.ImageViewOptions{
 		Image:    image,
 		ViewType: common.ViewType2D,
 		Format:   format,
@@ -1457,8 +1461,8 @@ func (app *HelloTriangleApplication) createImageView(image core.Image, format co
 	return imageView, err
 }
 
-func (app *HelloTriangleApplication) createImage(width, height int, mipLevels int, numSamples common.SampleCounts, format common.DataFormat, tiling common.ImageTiling, usage common.ImageUsages, memoryProperties core.MemoryPropertyFlags) (core.Image, core.DeviceMemory, error) {
-	image, _, err := app.loader.CreateImage(app.device, nil, &core.ImageOptions{
+func (app *HelloTriangleApplication) createImage(width, height int, mipLevels int, numSamples common.SampleCounts, format common.DataFormat, tiling common.ImageTiling, usage common.ImageUsages, memoryProperties core1_0.MemoryPropertyFlags) (core1_0.Image, core1_0.DeviceMemory, error) {
+	image, _, err := app.loader.CreateImage(app.device, nil, &options.ImageOptions{
 		ImageType: common.ImageType2D,
 		Extent: common.Extent3D{
 			Width:  width,
@@ -1484,7 +1488,7 @@ func (app *HelloTriangleApplication) createImage(width, height int, mipLevels in
 		return nil, nil, err
 	}
 
-	imageMemory, _, err := app.device.AllocateMemory(nil, &core.DeviceMemoryOptions{
+	imageMemory, _, err := app.loader.AllocateMemory(app.device, nil, &options.DeviceMemoryOptions{
 		AllocationSize:  memReqs.Size,
 		MemoryTypeIndex: memoryIndex,
 	})
@@ -1497,7 +1501,7 @@ func (app *HelloTriangleApplication) createImage(width, height int, mipLevels in
 	return image, imageMemory, nil
 }
 
-func (app *HelloTriangleApplication) transitionImageLayout(image core.Image, format common.DataFormat, oldLayout common.ImageLayout, newLayout common.ImageLayout, mipLevels int) error {
+func (app *HelloTriangleApplication) transitionImageLayout(image core1_0.Image, format common.DataFormat, oldLayout common.ImageLayout, newLayout common.ImageLayout, mipLevels int) error {
 	buffer, err := app.beginSingleTimeCommands()
 	if err != nil {
 		return err
@@ -1520,7 +1524,7 @@ func (app *HelloTriangleApplication) transitionImageLayout(image core.Image, for
 		return errors.Newf("unexpected layout transition: %s -> %s", oldLayout, newLayout)
 	}
 
-	err = buffer.CmdPipelineBarrier(sourceStage, destStage, 0, nil, nil, []*core.ImageMemoryBarrierOptions{
+	err = buffer.CmdPipelineBarrier(sourceStage, destStage, 0, nil, nil, []options.ImageMemoryBarrierOptions{
 		{
 			OldLayout:           oldLayout,
 			NewLayout:           newLayout,
@@ -1545,13 +1549,13 @@ func (app *HelloTriangleApplication) transitionImageLayout(image core.Image, for
 	return app.endSingleTimeCommands(buffer)
 }
 
-func (app *HelloTriangleApplication) copyBufferToImage(buffer core.Buffer, image core.Image, width, height int) error {
+func (app *HelloTriangleApplication) copyBufferToImage(buffer core1_0.Buffer, image core1_0.Image, width, height int) error {
 	cmdBuffer, err := app.beginSingleTimeCommands()
 	if err != nil {
 		return err
 	}
 
-	err = cmdBuffer.CmdCopyBufferToImage(buffer, image, common.LayoutTransferDstOptimal, []*core.BufferImageCopy{
+	err = cmdBuffer.CmdCopyBufferToImage(buffer, image, common.LayoutTransferDstOptimal, []core1_0.BufferImageCopy{
 		{
 			BufferOffset:      0,
 			BufferRowLength:   0,
@@ -1574,7 +1578,7 @@ func (app *HelloTriangleApplication) copyBufferToImage(buffer core.Buffer, image
 	return app.endSingleTimeCommands(cmdBuffer)
 }
 
-func writeData(memory core.DeviceMemory, offset int, data interface{}) error {
+func writeData(memory core1_0.DeviceMemory, offset int, data interface{}) error {
 	bufferSize := binary.Size(data)
 
 	memoryPtr, _, err := memory.MapMemory(offset, bufferSize, 0)
@@ -1658,7 +1662,7 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
 	var err error
 	bufferSize := binary.Size(app.vertices)
 
-	stagingBuffer, stagingBufferMemory, err := app.createBuffer(bufferSize, common.UsageTransferSrc, core.MemoryHostVisible|core.MemoryHostCoherent)
+	stagingBuffer, stagingBufferMemory, err := app.createBuffer(bufferSize, common.UsageTransferSrc, core1_0.MemoryHostVisible|core1_0.MemoryHostCoherent)
 	if stagingBuffer != nil {
 		defer stagingBuffer.Destroy(nil)
 	}
@@ -1675,7 +1679,7 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
 		return err
 	}
 
-	app.vertexBuffer, app.vertexBufferMemory, err = app.createBuffer(bufferSize, common.UsageTransferDst|common.UsageVertexBuffer, core.MemoryDeviceLocal)
+	app.vertexBuffer, app.vertexBufferMemory, err = app.createBuffer(bufferSize, common.UsageTransferDst|common.UsageVertexBuffer, core1_0.MemoryDeviceLocal)
 	if err != nil {
 		return err
 	}
@@ -1686,7 +1690,7 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
 func (app *HelloTriangleApplication) createIndexBuffer() error {
 	bufferSize := binary.Size(app.indices)
 
-	stagingBuffer, stagingBufferMemory, err := app.createBuffer(bufferSize, common.UsageTransferSrc, core.MemoryHostVisible|core.MemoryHostCoherent)
+	stagingBuffer, stagingBufferMemory, err := app.createBuffer(bufferSize, common.UsageTransferSrc, core1_0.MemoryHostVisible|core1_0.MemoryHostCoherent)
 	if stagingBuffer != nil {
 		defer stagingBuffer.Destroy(nil)
 	}
@@ -1703,7 +1707,7 @@ func (app *HelloTriangleApplication) createIndexBuffer() error {
 		return err
 	}
 
-	app.indexBuffer, app.indexBufferMemory, err = app.createBuffer(bufferSize, common.UsageTransferDst|common.UsageIndexBuffer, core.MemoryDeviceLocal)
+	app.indexBuffer, app.indexBufferMemory, err = app.createBuffer(bufferSize, common.UsageTransferDst|common.UsageIndexBuffer, core1_0.MemoryDeviceLocal)
 	if err != nil {
 		return err
 	}
@@ -1715,7 +1719,7 @@ func (app *HelloTriangleApplication) createUniformBuffers() error {
 	bufferSize := int(unsafe.Sizeof(UniformBufferObject{}))
 
 	for i := 0; i < len(app.swapchainImages); i++ {
-		buffer, memory, err := app.createBuffer(bufferSize, common.UsageUniformBuffer, core.MemoryHostVisible|core.MemoryHostCoherent)
+		buffer, memory, err := app.createBuffer(bufferSize, common.UsageUniformBuffer, core1_0.MemoryHostVisible|core1_0.MemoryHostCoherent)
 		if err != nil {
 			return err
 		}
@@ -1729,9 +1733,9 @@ func (app *HelloTriangleApplication) createUniformBuffers() error {
 
 func (app *HelloTriangleApplication) createDescriptorPool() error {
 	var err error
-	app.descriptorPool, _, err = app.loader.CreateDescriptorPool(app.device, nil, &core.DescriptorPoolOptions{
+	app.descriptorPool, _, err = app.loader.CreateDescriptorPool(app.device, nil, &options.DescriptorPoolOptions{
 		MaxSets: len(app.swapchainImages),
-		PoolSizes: []core.PoolSize{
+		PoolSizes: []options.PoolSize{
 			{
 				Type:            common.DescriptorUniformBuffer,
 				DescriptorCount: len(app.swapchainImages),
@@ -1746,13 +1750,14 @@ func (app *HelloTriangleApplication) createDescriptorPool() error {
 }
 
 func (app *HelloTriangleApplication) createDescriptorSets() error {
-	var allocLayouts []core.DescriptorSetLayout
+	var allocLayouts []iface.DescriptorSetLayout
 	for i := 0; i < len(app.swapchainImages); i++ {
 		allocLayouts = append(allocLayouts, app.descriptorSetLayout)
 	}
 
 	var err error
-	app.descriptorSets, _, err = app.descriptorPool.AllocateDescriptorSets(&core.DescriptorSetOptions{
+	app.descriptorSets, _, err = app.loader.AllocateDescriptorSets(&options.DescriptorSetOptions{
+		DescriptorPool:    app.descriptorPool,
 		AllocationLayouts: allocLayouts,
 	})
 	if err != nil {
@@ -1760,7 +1765,7 @@ func (app *HelloTriangleApplication) createDescriptorSets() error {
 	}
 
 	for i := 0; i < len(app.swapchainImages); i++ {
-		err = app.device.UpdateDescriptorSets([]core.WriteDescriptorSetOptions{
+		err = app.device.UpdateDescriptorSets([]options.WriteDescriptorSetOptions{
 			{
 				DstSet:          app.descriptorSets[i],
 				DstBinding:      0,
@@ -1768,7 +1773,7 @@ func (app *HelloTriangleApplication) createDescriptorSets() error {
 
 				DescriptorType: common.DescriptorUniformBuffer,
 
-				BufferInfo: []core.DescriptorBufferInfo{
+				BufferInfo: []options.DescriptorBufferInfo{
 					{
 						Buffer: app.uniformBuffers[i],
 						Offset: 0,
@@ -1783,7 +1788,7 @@ func (app *HelloTriangleApplication) createDescriptorSets() error {
 
 				DescriptorType: common.DescriptorCombinedImageSampler,
 
-				ImageInfo: []core.DescriptorImageInfo{
+				ImageInfo: []options.DescriptorImageInfo{
 					{
 						ImageView:   app.textureImageView,
 						Sampler:     app.textureSampler,
@@ -1800,8 +1805,8 @@ func (app *HelloTriangleApplication) createDescriptorSets() error {
 	return nil
 }
 
-func (app *HelloTriangleApplication) createBuffer(size int, usage common.BufferUsages, properties core.MemoryPropertyFlags) (core.Buffer, core.DeviceMemory, error) {
-	buffer, _, err := app.loader.CreateBuffer(app.device, nil, &core.BufferOptions{
+func (app *HelloTriangleApplication) createBuffer(size int, usage common.BufferUsages, properties core1_0.MemoryPropertyFlags) (core1_0.Buffer, core1_0.DeviceMemory, error) {
+	buffer, _, err := app.loader.CreateBuffer(app.device, nil, &options.BufferOptions{
 		BufferSize:  size,
 		Usage:       usage,
 		SharingMode: common.SharingExclusive,
@@ -1816,7 +1821,7 @@ func (app *HelloTriangleApplication) createBuffer(size int, usage common.BufferU
 		return buffer, nil, err
 	}
 
-	memory, _, err := app.device.AllocateMemory(nil, &core.DeviceMemoryOptions{
+	memory, _, err := app.loader.AllocateMemory(app.device, nil, &options.DeviceMemoryOptions{
 		AllocationSize:  memRequirements.Size,
 		MemoryTypeIndex: memoryTypeIndex,
 	})
@@ -1828,8 +1833,9 @@ func (app *HelloTriangleApplication) createBuffer(size int, usage common.BufferU
 	return buffer, memory, err
 }
 
-func (app *HelloTriangleApplication) beginSingleTimeCommands() (core.CommandBuffer, error) {
-	buffers, _, err := app.commandPool.AllocateCommandBuffers(&core.CommandBufferOptions{
+func (app *HelloTriangleApplication) beginSingleTimeCommands() (core1_0.CommandBuffer, error) {
+	buffers, _, err := app.loader.AllocateCommandBuffers(&options.CommandBufferOptions{
+		CommandPool: app.commandPool,
 		Level:       common.LevelPrimary,
 		BufferCount: 1,
 	})
@@ -1838,21 +1844,21 @@ func (app *HelloTriangleApplication) beginSingleTimeCommands() (core.CommandBuff
 	}
 
 	buffer := buffers[0]
-	_, err = buffer.Begin(&core.BeginOptions{
-		Flags: core.BeginInfoOneTimeSubmit,
+	_, err = buffer.Begin(&options.BeginOptions{
+		Flags: options.BeginInfoOneTimeSubmit,
 	})
 	return buffer, err
 }
 
-func (app *HelloTriangleApplication) endSingleTimeCommands(buffer core.CommandBuffer) error {
+func (app *HelloTriangleApplication) endSingleTimeCommands(buffer core1_0.CommandBuffer) error {
 	_, err := buffer.End()
 	if err != nil {
 		return err
 	}
 
-	_, err = app.graphicsQueue.SubmitToQueue(nil, []*core.SubmitOptions{
+	_, err = app.graphicsQueue.SubmitToQueue(nil, []options.SubmitOptions{
 		{
-			CommandBuffers: []core.CommandBuffer{buffer},
+			CommandBuffers: []iface.CommandBuffer{buffer},
 		},
 	})
 
@@ -1865,17 +1871,17 @@ func (app *HelloTriangleApplication) endSingleTimeCommands(buffer core.CommandBu
 		return err
 	}
 
-	app.commandPool.FreeCommandBuffers([]core.CommandBuffer{buffer})
+	app.loader.FreeCommandBuffers([]iface.CommandBuffer{buffer})
 	return nil
 }
 
-func (app *HelloTriangleApplication) copyBuffer(srcBuffer core.Buffer, dstBuffer core.Buffer, size int) error {
+func (app *HelloTriangleApplication) copyBuffer(srcBuffer core1_0.Buffer, dstBuffer core1_0.Buffer, size int) error {
 	buffer, err := app.beginSingleTimeCommands()
 	if err != nil {
 		return err
 	}
 
-	err = buffer.CmdCopyBuffer(srcBuffer, dstBuffer, []core.BufferCopy{
+	err = buffer.CmdCopyBuffer(srcBuffer, dstBuffer, []core1_0.BufferCopy{
 		{
 			SrcOffset: 0,
 			DstOffset: 0,
@@ -1889,7 +1895,7 @@ func (app *HelloTriangleApplication) copyBuffer(srcBuffer core.Buffer, dstBuffer
 	return app.endSingleTimeCommands(buffer)
 }
 
-func (app *HelloTriangleApplication) findMemoryType(typeFilter uint32, properties core.MemoryPropertyFlags) (int, error) {
+func (app *HelloTriangleApplication) findMemoryType(typeFilter uint32, properties core1_0.MemoryPropertyFlags) (int, error) {
 	memProperties := app.physicalDevice.MemoryProperties()
 	for i, memoryType := range memProperties.MemoryTypes {
 		typeBit := uint32(1 << i)
@@ -1904,7 +1910,8 @@ func (app *HelloTriangleApplication) findMemoryType(typeFilter uint32, propertie
 
 func (app *HelloTriangleApplication) createCommandBuffers() error {
 
-	buffers, _, err := app.commandPool.AllocateCommandBuffers(&core.CommandBufferOptions{
+	buffers, _, err := app.loader.AllocateCommandBuffers(&options.CommandBufferOptions{
+		CommandPool: app.commandPool,
 		Level:       common.LevelPrimary,
 		BufferCount: len(app.swapchainImages),
 	})
@@ -1914,13 +1921,13 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
 	app.commandBuffers = buffers
 
 	for bufferIdx, buffer := range buffers {
-		_, err = buffer.Begin(&core.BeginOptions{})
+		_, err = buffer.Begin(&options.BeginOptions{})
 		if err != nil {
 			return err
 		}
 
 		err = buffer.CmdBeginRenderPass(core.ContentsInline,
-			&core.RenderPassBeginOptions{
+			&options.RenderPassBeginOptions{
 				RenderPass:  app.renderPass,
 				Framebuffer: app.swapchainFramebuffers[bufferIdx],
 				RenderArea: common.Rect2D{
@@ -1937,9 +1944,9 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
 		}
 
 		buffer.CmdBindPipeline(common.BindGraphics, app.graphicsPipeline)
-		buffer.CmdBindVertexBuffers([]core.Buffer{app.vertexBuffer}, []int{0})
+		buffer.CmdBindVertexBuffers([]iface.Buffer{app.vertexBuffer}, []int{0})
 		buffer.CmdBindIndexBuffer(app.indexBuffer, 0, common.IndexUInt32)
-		buffer.CmdBindDescriptorSets(common.BindGraphics, app.pipelineLayout, []core.DescriptorSet{
+		buffer.CmdBindDescriptorSets(common.BindGraphics, app.pipelineLayout, []iface.DescriptorSet{
 			app.descriptorSets[bufferIdx],
 		}, nil)
 		buffer.CmdDrawIndexed(len(app.indices), 1, 0, 0, 0)
@@ -1956,22 +1963,22 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
 
 func (app *HelloTriangleApplication) createSyncObjects() error {
 	for i := 0; i < MaxFramesInFlight; i++ {
-		semaphore, _, err := app.loader.CreateSemaphore(app.device, nil, &core.SemaphoreOptions{})
+		semaphore, _, err := app.loader.CreateSemaphore(app.device, nil, &options.SemaphoreOptions{})
 		if err != nil {
 			return err
 		}
 
 		app.imageAvailableSemaphore = append(app.imageAvailableSemaphore, semaphore)
 
-		semaphore, _, err = app.loader.CreateSemaphore(app.device, nil, &core.SemaphoreOptions{})
+		semaphore, _, err = app.loader.CreateSemaphore(app.device, nil, &options.SemaphoreOptions{})
 		if err != nil {
 			return err
 		}
 
 		app.renderFinishedSemaphore = append(app.renderFinishedSemaphore, semaphore)
 
-		fence, _, err := app.loader.CreateFence(app.device, nil, &core.FenceOptions{
-			Flags: core.FenceSignaled,
+		fence, _, err := app.loader.CreateFence(app.device, nil, &options.FenceOptions{
+			Flags: options.FenceSignaled,
 		})
 		if err != nil {
 			return err
@@ -1988,7 +1995,7 @@ func (app *HelloTriangleApplication) createSyncObjects() error {
 }
 
 func (app *HelloTriangleApplication) drawFrame() error {
-	fences := []core.Fence{app.inFlightFence[app.currentFrame]}
+	fences := []iface.Fence{app.inFlightFence[app.currentFrame]}
 
 	_, err := app.device.WaitForFences(true, common.NoTimeout, fences)
 	if err != nil {
@@ -2020,12 +2027,12 @@ func (app *HelloTriangleApplication) drawFrame() error {
 		return err
 	}
 
-	_, err = app.graphicsQueue.SubmitToQueue(app.inFlightFence[app.currentFrame], []*core.SubmitOptions{
+	_, err = app.graphicsQueue.SubmitToQueue(app.inFlightFence[app.currentFrame], []options.SubmitOptions{
 		{
-			WaitSemaphores:   []core.Semaphore{app.imageAvailableSemaphore[app.currentFrame]},
+			WaitSemaphores:   []iface.Semaphore{app.imageAvailableSemaphore[app.currentFrame]},
 			WaitDstStages:    []common.PipelineStages{common.PipelineStageColorAttachmentOutput},
-			CommandBuffers:   []core.CommandBuffer{app.commandBuffers[imageIndex]},
-			SignalSemaphores: []core.Semaphore{app.renderFinishedSemaphore[app.currentFrame]},
+			CommandBuffers:   []iface.CommandBuffer{app.commandBuffers[imageIndex]},
+			SignalSemaphores: []iface.Semaphore{app.renderFinishedSemaphore[app.currentFrame]},
 		},
 	})
 	if err != nil {
@@ -2033,8 +2040,8 @@ func (app *HelloTriangleApplication) drawFrame() error {
 	}
 
 	_, res, err = app.swapchain.PresentToQueue(app.presentQueue, &khr_swapchain.PresentOptions{
-		WaitSemaphores: []core.Semaphore{app.renderFinishedSemaphore[app.currentFrame]},
-		Swapchains:     []khr_swapchain.Swapchain{app.swapchain},
+		WaitSemaphores: []iface.Semaphore{app.renderFinishedSemaphore[app.currentFrame]},
+		Swapchains:     []khr_swapchain.CommonSwapchain{app.swapchain},
 		ImageIndices:   []int{imageIndex},
 	})
 	if res == common.VKErrorOutOfDateKHR || res == common.VKSuboptimalKHR {
@@ -2113,7 +2120,7 @@ func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *khr_surface.
 	return common.Extent2D{Width: width, Height: height}
 }
 
-func (app *HelloTriangleApplication) querySwapChainSupport(device core.PhysicalDevice) (SwapChainSupportDetails, error) {
+func (app *HelloTriangleApplication) querySwapChainSupport(device core1_0.PhysicalDevice) (SwapChainSupportDetails, error) {
 	var details SwapChainSupportDetails
 	var err error
 
@@ -2131,7 +2138,7 @@ func (app *HelloTriangleApplication) querySwapChainSupport(device core.PhysicalD
 	return details, err
 }
 
-func (app *HelloTriangleApplication) isDeviceSuitable(device core.PhysicalDevice) bool {
+func (app *HelloTriangleApplication) isDeviceSuitable(device core1_0.PhysicalDevice) bool {
 	indices, err := app.findQueueFamilies(device)
 	if err != nil {
 		return false
@@ -2153,7 +2160,7 @@ func (app *HelloTriangleApplication) isDeviceSuitable(device core.PhysicalDevice
 	return indices.IsComplete() && extensionsSupported && swapChainAdequate && features.SamplerAnisotropy
 }
 
-func (app *HelloTriangleApplication) checkDeviceExtensionSupport(device core.PhysicalDevice) bool {
+func (app *HelloTriangleApplication) checkDeviceExtensionSupport(device core1_0.PhysicalDevice) bool {
 	extensions, _, err := device.AvailableExtensions()
 	if err != nil {
 		return false
@@ -2169,7 +2176,7 @@ func (app *HelloTriangleApplication) checkDeviceExtensionSupport(device core.Phy
 	return true
 }
 
-func (app *HelloTriangleApplication) findQueueFamilies(device core.PhysicalDevice) (QueueFamilyIndices, error) {
+func (app *HelloTriangleApplication) findQueueFamilies(device core1_0.PhysicalDevice) (QueueFamilyIndices, error) {
 	indices := QueueFamilyIndices{}
 	queueFamilies := device.QueueFamilyProperties()
 

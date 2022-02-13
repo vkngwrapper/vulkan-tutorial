@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"github.com/CannibalVox/VKng/core"
 	"github.com/CannibalVox/VKng/core/common"
+	"github.com/CannibalVox/VKng/core/internal"
 	"github.com/CannibalVox/VKng/extensions/ext_debug_utils"
 	"github.com/CannibalVox/VKng/extensions/khr_surface"
 	"github.com/CannibalVox/VKng/extensions/khr_surface_sdl2"
@@ -124,7 +125,7 @@ type HelloTriangleApplication struct {
 	graphicsQueue core.Queue
 	presentQueue  core.Queue
 
-	swapchainLoader       khr_swapchain.Loader
+	swapchainLoader       khr_swapchain.Extension
 	swapchain             khr_swapchain.Swapchain
 	swapchainImages       []core.Image
 	swapchainImageFormat  common.DataFormat
@@ -637,7 +638,7 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 	}
 
 	var err error
-	debugLoader := ext_debug_utils.CreateLoaderFromInstance(app.instance)
+	debugLoader := ext_debug_utils.CreateExtensionFromInstance(app.instance)
 	app.debugMessenger, _, err = debugLoader.CreateMessenger(app.instance, nil, app.debugMessengerOptions())
 	if err != nil {
 		return err
@@ -1460,9 +1461,9 @@ func (app *HelloTriangleApplication) createUniformBuffers() error {
 
 func (app *HelloTriangleApplication) createDescriptorPool() error {
 	var err error
-	app.descriptorPool, _, err = app.loader.CreateDescriptorPool(app.device, nil, &core.DescriptorPoolOptions{
+	app.descriptorPool, _, err = app.loader.CreateDescriptorPool(app.device, nil, &internal.DescriptorPoolOptions{
 		MaxSets: len(app.swapchainImages),
-		PoolSizes: []core.PoolSize{
+		PoolSizes: []internal.PoolSize{
 			{
 				Type:            common.DescriptorUniformBuffer,
 				DescriptorCount: len(app.swapchainImages),
@@ -1560,7 +1561,7 @@ func (app *HelloTriangleApplication) createBuffer(size int, usage common.BufferU
 }
 
 func (app *HelloTriangleApplication) beginSingleTimeCommands() (core.CommandBuffer, error) {
-	buffers, _, err := app.commandPool.AllocateCommandBuffers(&core.CommandBufferOptions{
+	buffers, _, err := app.commandPool.AllocateCommandBuffers(&internal.CommandBufferOptions{
 		Level:       common.LevelPrimary,
 		BufferCount: 1,
 	})
@@ -1606,7 +1607,7 @@ func (app *HelloTriangleApplication) copyBuffer(srcBuffer core.Buffer, dstBuffer
 		return err
 	}
 
-	err = buffer.CmdCopyBuffer(srcBuffer, dstBuffer, []core.BufferCopy{
+	err = buffer.CmdCopyBuffer(srcBuffer, dstBuffer, []internal.BufferCopy{
 		{
 			SrcOffset: 0,
 			DstOffset: 0,
@@ -1635,7 +1636,7 @@ func (app *HelloTriangleApplication) findMemoryType(typeFilter uint32, propertie
 
 func (app *HelloTriangleApplication) createCommandBuffers() error {
 
-	buffers, _, err := app.commandPool.AllocateCommandBuffers(&core.CommandBufferOptions{
+	buffers, _, err := app.commandPool.AllocateCommandBuffers(&internal.CommandBufferOptions{
 		Level:       common.LevelPrimary,
 		BufferCount: len(app.swapchainImages),
 	})

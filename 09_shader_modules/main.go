@@ -51,7 +51,7 @@ type HelloTriangleApplication struct {
 	graphicsQueue core.Queue
 	presentQueue  core.Queue
 
-	swapchainLoader      khr_swapchain.Loader
+	swapchainLoader      khr_swapchain.Extension
 	swapchain            khr_swapchain.Swapchain
 	swapchainImages      []core.Image
 	swapchainImageFormat common.DataFormat
@@ -241,7 +241,7 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 	}
 
 	var err error
-	debugLoader := ext_debug_utils.CreateLoaderFromInstance(app.instance)
+	debugLoader := ext_debug_utils.CreateExtensionFromInstance(app.instance)
 	app.debugMessenger, _, err = debugLoader.CreateMessenger(app.instance, nil, app.debugMessengerOptions())
 	if err != nil {
 		return err
