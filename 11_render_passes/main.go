@@ -544,13 +544,13 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		EnablePrimitiveRestart: false,
 	}
 
-	_ = &core.ShaderStage{
+	_ = &core.ShaderStageOptions{
 		Stage:  common.StageVertex,
 		Shader: vertShader,
 		Name:   "main",
 	}
 
-	_ = &core.ShaderStage{
+	_ = &core.ShaderStageOptions{
 		Stage:  common.StageFragment,
 		Shader: fragShader,
 		Name:   "main",

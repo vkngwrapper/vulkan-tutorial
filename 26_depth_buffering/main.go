@@ -959,13 +959,13 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		EnablePrimitiveRestart: false,
 	}
 
-	vertStage := &core.ShaderStage{
+	vertStage := &core.ShaderStageOptions{
 		Stage:  common.StageVertex,
 		Shader: vertShader,
 		Name:   "main",
 	}
 
-	fragStage := &core.ShaderStage{
+	fragStage := &core.ShaderStageOptions{
 		Stage:  common.StageFragment,
 		Shader: fragShader,
 		Name:   "main",
@@ -1036,7 +1036,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 
 	pipelines, _, err := app.loader.CreateGraphicsPipelines(app.device, nil, nil, []*core.GraphicsPipelineOptions{
 		{
-			ShaderStages: []*core.ShaderStage{
+			ShaderStages: []*core.ShaderStageOptions{
 				vertStage,
 				fragStage,
 			},
@@ -1248,7 +1248,7 @@ func (app *HelloTriangleApplication) createImageView(image core.Image, format co
 	return imageView, err
 }
 
-func (app *HelloTriangleApplication) createImage(width, height int, format common.DataFormat, tiling common.ImageTiling, usage common.ImageUsages, memoryProperties core.MemoryPropertyFlags) (core.Image, core.DeviceMemory, error) {
+func (app *HelloTriangleApplication) createImage(width, height int, format common.DataFormat, tiling common.ImageTiling, usage common.ImageUsages, memoryProperties core.MemoryProperties) (core.Image, core.DeviceMemory, error) {
 	image, _, err := app.loader.CreateImage(app.device, nil, &core.ImageOptions{
 		ImageType: common.ImageType2D,
 		Extent: common.Extent3D{
@@ -1532,7 +1532,7 @@ func (app *HelloTriangleApplication) createDescriptorSets() error {
 	return nil
 }
 
-func (app *HelloTriangleApplication) createBuffer(size int, usage common.BufferUsages, properties core.MemoryPropertyFlags) (core.Buffer, core.DeviceMemory, error) {
+func (app *HelloTriangleApplication) createBuffer(size int, usage common.BufferUsages, properties core.MemoryProperties) (core.Buffer, core.DeviceMemory, error) {
 	buffer, _, err := app.loader.CreateBuffer(app.device, nil, &core.BufferOptions{
 		BufferSize:  size,
 		Usage:       usage,
@@ -1621,7 +1621,7 @@ func (app *HelloTriangleApplication) copyBuffer(srcBuffer core.Buffer, dstBuffer
 	return app.endSingleTimeCommands(buffer)
 }
 
-func (app *HelloTriangleApplication) findMemoryType(typeFilter uint32, properties core.MemoryPropertyFlags) (int, error) {
+func (app *HelloTriangleApplication) findMemoryType(typeFilter uint32, properties core.MemoryProperties) (int, error) {
 	memProperties := app.physicalDevice.MemoryProperties()
 	for i, memoryType := range memProperties.MemoryTypes {
 		typeBit := uint32(1 << i)

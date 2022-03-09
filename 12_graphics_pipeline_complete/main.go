@@ -544,13 +544,13 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		EnablePrimitiveRestart: false,
 	}
 
-	vertStage := &core.ShaderStage{
+	vertStage := &core.ShaderStageOptions{
 		Stage:  common.StageVertex,
 		Shader: vertShader,
 		Name:   "main",
 	}
 
-	fragStage := &core.ShaderStage{
+	fragStage := &core.ShaderStageOptions{
 		Stage:  common.StageFragment,
 		Shader: fragShader,
 		Name:   "main",
@@ -614,7 +614,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 
 	pipelines, _, err := app.loader.CreateGraphicsPipelines(app.device, nil, nil, []*core.GraphicsPipelineOptions{
 		{
-			ShaderStages: []*core.ShaderStage{
+			ShaderStages: []*core.ShaderStageOptions{
 				vertStage,
 				fragStage,
 			},
