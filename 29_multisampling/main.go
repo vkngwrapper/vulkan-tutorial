@@ -874,7 +874,7 @@ func (app *HelloTriangleApplication) createRenderPass() error {
 				StencilLoadOp:  core1_0.LoadOpDontCare,
 				StencilStoreOp: core1_0.StoreOpDontCare,
 				InitialLayout:  core1_0.ImageLayoutUndefined,
-				FinalLayout:    khr_surface.ImageLayoutPresentSrc,
+				FinalLayout:    khr_swapchain.ImageLayoutPresentSrc,
 			},
 		},
 		SubPasses: []core1_0.SubPass{
@@ -2038,7 +2038,7 @@ func (app *HelloTriangleApplication) drawFrame() error {
 
 	_, res, err = app.swapchain.PresentToQueue(app.presentQueue, &khr_swapchain.PresentOptions{
 		WaitSemaphores: []core1_0.Semaphore{app.renderFinishedSemaphore[app.currentFrame]},
-		Swapchains:     []khr_swapchain.CommonSwapchain{app.swapchain},
+		Swapchains:     []khr_swapchain.Swapchain{app.swapchain},
 		ImageIndices:   []int{imageIndex},
 	})
 	if res == khr_swapchain.VKErrorOutOfDate || res == khr_swapchain.VKSuboptimal {
