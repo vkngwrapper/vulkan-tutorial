@@ -714,10 +714,10 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		uniqueQueueFamilies = append(uniqueQueueFamilies, *indices.PresentFamily)
 	}
 
-	var queueFamilyOptions []*core1_0.QueueFamilyOptions
+	var queueFamilyOptions []core1_0.QueueFamilyOptions
 	queuePriority := float32(1.0)
 	for _, queueFamily := range uniqueQueueFamilies {
-		queueFamilyOptions = append(queueFamilyOptions, &core1_0.QueueFamilyOptions{
+		queueFamilyOptions = append(queueFamilyOptions, core1_0.QueueFamilyOptions{
 			QueueFamilyIndex: queueFamily,
 			QueuePriorities:  []float32{queuePriority},
 		})
@@ -923,7 +923,7 @@ func (app *HelloTriangleApplication) createRenderPass() error {
 func (app *HelloTriangleApplication) createDescriptorSetLayout() error {
 	var err error
 	app.descriptorSetLayout, _, err = app.loader.CreateDescriptorSetLayout(app.device, nil, &core1_0.DescriptorSetLayoutOptions{
-		Bindings: []*core1_0.DescriptorLayoutBinding{
+		Bindings: []core1_0.DescriptorLayoutBinding{
 			{
 				Binding:         0,
 				DescriptorType:  core1_0.DescriptorUniformBuffer,
