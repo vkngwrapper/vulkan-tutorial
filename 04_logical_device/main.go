@@ -5,7 +5,7 @@ import (
 	"github.com/CannibalVox/VKng/core/common"
 	"github.com/CannibalVox/VKng/core/core1_0"
 	"github.com/CannibalVox/VKng/extensions/ext_debug_utils"
-	"github.com/palantir/stacktrace"
+	"github.com/cockroachdb/errors"
 	"github.com/veandco/go-sdl2/sdl"
 	"log"
 )
@@ -140,7 +140,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 	for _, ext := range sdlExtensions {
 		_, hasExt := extensions[ext]
 		if !hasExt {
-			return stacktrace.NewError("createinstance: cannot initialize sdl: missing extension %s", ext)
+			return errors.Newf("createinstance: cannot initialize sdl: missing extension %s", ext)
 		}
 		instanceOptions.ExtensionNames = append(instanceOptions.ExtensionNames, ext)
 	}
@@ -159,7 +159,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		for _, layer := range validationLayers {
 			_, hasValidation := layers[layer]
 			if !hasValidation {
-				return stacktrace.NewError("createInstance: cannot add validation- layer %s not available- install LunarG Vulkan SDK", layer)
+				return errors.Newf("createInstance: cannot add validation- layer %s not available- install LunarG Vulkan SDK", layer)
 			}
 			instanceOptions.LayerNames = append(instanceOptions.LayerNames, layer)
 		}
@@ -213,7 +213,7 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
 	}
 
 	if app.physicalDevice == nil {
-		return stacktrace.NewError("failed to find a suitable GPU!")
+		return errors.Newf("failed to find a suitable GPU!")
 	}
 
 	return nil

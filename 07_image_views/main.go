@@ -9,7 +9,6 @@ import (
 	"github.com/CannibalVox/VKng/extensions/khr_surface_sdl2"
 	"github.com/CannibalVox/VKng/extensions/khr_swapchain"
 	"github.com/cockroachdb/errors"
-	"github.com/palantir/stacktrace"
 	"github.com/veandco/go-sdl2/sdl"
 	"log"
 )
@@ -267,7 +266,7 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
 	}
 
 	if app.physicalDevice == nil {
-		return stacktrace.NewError("failed to find a suitable GPU!")
+		return errors.Newf("failed to find a suitable GPU!")
 	}
 
 	return nil

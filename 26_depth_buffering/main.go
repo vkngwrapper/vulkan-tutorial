@@ -14,7 +14,6 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/loov/hrtime"
-	"github.com/palantir/stacktrace"
 	"github.com/veandco/go-sdl2/sdl"
 	"image/png"
 	"log"
@@ -588,7 +587,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 	for _, ext := range sdlExtensions {
 		_, hasExt := extensions[ext]
 		if !hasExt {
-			return stacktrace.NewError("createinstance: cannot initialize sdl: missing extension %s", ext)
+			return errors.Newf("createinstance: cannot initialize sdl: missing extension %s", ext)
 		}
 		instanceOptions.ExtensionNames = append(instanceOptions.ExtensionNames, ext)
 	}
@@ -607,7 +606,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		for _, layer := range validationLayers {
 			_, hasValidation := layers[layer]
 			if !hasValidation {
-				return stacktrace.NewError("createInstance: cannot add validation- layer %s not available- install LunarG Vulkan SDK", layer)
+				return errors.Newf("createInstance: cannot add validation- layer %s not available- install LunarG Vulkan SDK", layer)
 			}
 			instanceOptions.LayerNames = append(instanceOptions.LayerNames, layer)
 		}
@@ -672,7 +671,7 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
 	}
 
 	if app.physicalDevice == nil {
-		return stacktrace.NewError("failed to find a suitable GPU!")
+		return errors.Newf("failed to find a suitable GPU!")
 	}
 
 	return nil
@@ -1633,7 +1632,7 @@ func (app *HelloTriangleApplication) findMemoryType(typeFilter uint32, propertie
 		}
 	}
 
-	return 0, stacktrace.NewError("failed to find any suitable memory type!")
+	return 0, errors.Newf("failed to find any suitable memory type!")
 }
 
 func (app *HelloTriangleApplication) createCommandBuffers() error {
