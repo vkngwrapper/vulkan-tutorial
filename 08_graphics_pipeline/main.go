@@ -8,6 +8,7 @@ import (
 	"github.com/CannibalVox/VKng/extensions/khr_surface"
 	"github.com/CannibalVox/VKng/extensions/khr_surface_sdl2"
 	"github.com/CannibalVox/VKng/extensions/khr_swapchain"
+	"github.com/cockroachdb/errors"
 	"github.com/veandco/go-sdl2/sdl"
 	"log"
 )
