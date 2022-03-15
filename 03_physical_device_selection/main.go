@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/CannibalVox/VKng/core"
 	"github.com/CannibalVox/VKng/core/common"
+	"github.com/CannibalVox/VKng/core/core1_0"
 	"github.com/CannibalVox/VKng/extensions/ext_debug_utils"
 	"github.com/cockroachdb/errors"
 	"github.com/veandco/go-sdl2/sdl"
@@ -23,12 +24,12 @@ func (i *QueueFamilyIndices) IsComplete() bool {
 
 type HelloTriangleApplication struct {
 	window *sdl.Window
-	loader *core.VulkanLoader1_0
+	loader core.Loader
 
-	instance       core.Instance
-	debugMessenger ext_debug_utils.Messenger
+	instance       core1_0.Instance
+	debugMessenger *ext_debug_utils.Messenger
 
-	physicalDevice core.PhysicalDevice
+	physicalDevice core1_0.PhysicalDevice
 }
 
 func (app *HelloTriangleApplication) Run() error {
@@ -109,7 +110,7 @@ func (app *HelloTriangleApplication) cleanup() {
 }
 
 func (app *HelloTriangleApplication) createInstance() error {
-	instanceOptions := &core.InstanceOptions{
+	instanceOptions := &core1_0.InstanceOptions{
 		ApplicationName:    "Hello Triangle",
 		ApplicationVersion: common.CreateVersion(1, 0, 0),
 		EngineName:         "No Engine",
@@ -206,7 +207,7 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
 	return nil
 }
 
-func (app *HelloTriangleApplication) isDeviceSuitable(device core.PhysicalDevice) bool {
+func (app *HelloTriangleApplication) isDeviceSuitable(device core1_0.PhysicalDevice) bool {
 	indices, err := app.findQueueFamilies(device)
 	if err != nil {
 		return false
@@ -215,12 +216,12 @@ func (app *HelloTriangleApplication) isDeviceSuitable(device core.PhysicalDevice
 	return indices.IsComplete()
 }
 
-func (app *HelloTriangleApplication) findQueueFamilies(device core.PhysicalDevice) (QueueFamilyIndices, error) {
+func (app *HelloTriangleApplication) findQueueFamilies(device core1_0.PhysicalDevice) (QueueFamilyIndices, error) {
 	indices := QueueFamilyIndices{}
 	queueFamilies := device.QueueFamilyProperties()
 
 	for queueFamilyIdx, queueFamily := range queueFamilies {
-		if (queueFamily.Flags & common.QueueGraphics) != 0 {
+		if (queueFamily.Flags & core1_0.QueueGraphics) != 0 {
 			indices.GraphicsFamily = new(int)
 			*indices.GraphicsFamily = queueFamilyIdx
 		}

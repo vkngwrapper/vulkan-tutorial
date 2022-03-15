@@ -3,14 +3,14 @@ package main
 import (
 	"github.com/CannibalVox/VKng/core"
 	"github.com/CannibalVox/VKng/core/common"
-	"github.com/CannibalVox/VKng/core"
+	"github.com/CannibalVox/VKng/core/core1_0"
 	"github.com/cockroachdb/errors"
 	"github.com/veandco/go-sdl2/sdl"
 	"log"
 )
 
 type HelloTriangleApplication struct {
-	loader core1_0.Loader
+	loader core.Loader
 	window *sdl.Window
 
 	instance core1_0.Instance
@@ -42,7 +42,7 @@ func (app *HelloTriangleApplication) initWindow() error {
 	}
 	app.window = window
 
-	app.loader, err = core1_0.CreateStaticLinkedLoader()
+	app.loader, err = core.CreateStaticLinkedLoader()
 	if err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ func (app *HelloTriangleApplication) cleanup() {
 }
 
 func (app *HelloTriangleApplication) createInstance() error {
-	instanceOptions := &core.InstanceOptions{
+	instanceOptions := &core1_0.InstanceOptions{
 		ApplicationName:    "Hello Triangle",
 		ApplicationVersion: common.CreateVersion(1, 0, 0),
 		EngineName:         "No Engine",

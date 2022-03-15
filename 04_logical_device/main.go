@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/CannibalVox/VKng/core"
 	"github.com/CannibalVox/VKng/core/common"
+	"github.com/CannibalVox/VKng/core/core1_0"
 	"github.com/CannibalVox/VKng/extensions/ext_debug_utils"
 	"github.com/palantir/stacktrace"
 	"github.com/veandco/go-sdl2/sdl"
@@ -23,15 +24,15 @@ func (i *QueueFamilyIndices) IsComplete() bool {
 
 type HelloTriangleApplication struct {
 	window *sdl.Window
-	loader *core.VulkanLoader1_0
+	loader core.Loader
 
-	instance       core.Instance
-	debugMessenger ext_debug_utils.Messenger
+	instance       core1_0.Instance
+	debugMessenger *ext_debug_utils.Messenger
 
-	physicalDevice core.PhysicalDevice
-	device         core.Device
+	physicalDevice core1_0.PhysicalDevice
+	device         core1_0.Device
 
-	graphicsQueue core.Queue
+	graphicsQueue core1_0.Queue
 }
 
 func (app *HelloTriangleApplication) Run() error {
@@ -121,7 +122,7 @@ func (app *HelloTriangleApplication) cleanup() {
 }
 
 func (app *HelloTriangleApplication) createInstance() error {
-	instanceOptions := &core.InstanceOptions{
+	instanceOptions := &core1_0.InstanceOptions{
 		ApplicationName:    "Hello Triangle",
 		ApplicationVersion: common.CreateVersion(1, 0, 0),
 		EngineName:         "No Engine",
@@ -226,10 +227,10 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 
 	uniqueQueueFamilies := []int{*indices.GraphicsFamily}
 
-	var queueFamilyOptions []*core.QueueFamilyOptions
+	var queueFamilyOptions []core1_0.QueueFamilyOptions
 	queuePriority := float32(1.0)
 	for _, queueFamily := range uniqueQueueFamilies {
-		queueFamilyOptions = append(queueFamilyOptions, &core.QueueFamilyOptions{
+		queueFamilyOptions = append(queueFamilyOptions, core1_0.QueueFamilyOptions{
 			QueueFamilyIndex: queueFamily,
 			QueuePriorities:  []float32{queuePriority},
 		})
@@ -253,9 +254,9 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		layerNames = append(layerNames, validationLayers...)
 	}
 
-	app.device, _, err = app.loader.CreateDevice(app.physicalDevice, nil, &core.DeviceOptions{
+	app.device, _, err = app.loader.CreateDevice(app.physicalDevice, nil, &core1_0.DeviceOptions{
 		QueueFamilies:   queueFamilyOptions,
-		EnabledFeatures: &common.PhysicalDeviceFeatures{},
+		EnabledFeatures: &core1_0.PhysicalDeviceFeatures{},
 		ExtensionNames:  extensionNames,
 		LayerNames:      layerNames,
 	})
@@ -267,7 +268,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 	return nil
 }
 
-func (app *HelloTriangleApplication) isDeviceSuitable(device core.PhysicalDevice) bool {
+func (app *HelloTriangleApplication) isDeviceSuitable(device core1_0.PhysicalDevice) bool {
 	indices, err := app.findQueueFamilies(device)
 	if err != nil {
 		return false
@@ -276,12 +277,12 @@ func (app *HelloTriangleApplication) isDeviceSuitable(device core.PhysicalDevice
 	return indices.IsComplete()
 }
 
-func (app *HelloTriangleApplication) findQueueFamilies(device core.PhysicalDevice) (QueueFamilyIndices, error) {
+func (app *HelloTriangleApplication) findQueueFamilies(device core1_0.PhysicalDevice) (QueueFamilyIndices, error) {
 	indices := QueueFamilyIndices{}
 	queueFamilies := device.QueueFamilyProperties()
 
 	for queueFamilyIdx, queueFamily := range queueFamilies {
-		if (queueFamily.Flags & common.QueueGraphics) != 0 {
+		if (queueFamily.Flags & core1_0.QueueGraphics) != 0 {
 			indices.GraphicsFamily = new(int)
 			*indices.GraphicsFamily = queueFamilyIdx
 		}

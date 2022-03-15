@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/CannibalVox/VKng/core"
 	"github.com/CannibalVox/VKng/core/common"
+	"github.com/CannibalVox/VKng/core/core1_0"
 	"github.com/CannibalVox/VKng/extensions/ext_debug_utils"
 	"github.com/CannibalVox/VKng/extensions/khr_surface"
 	"github.com/CannibalVox/VKng/extensions/khr_surface_sdl2"
@@ -34,21 +35,21 @@ type SwapChainSupportDetails struct {
 
 type HelloTriangleApplication struct {
 	window *sdl.Window
-	loader *core.VulkanLoader1_0
+	loader core.Loader
 
-	instance       core.Instance
-	debugMessenger ext_debug_utils.Messenger
+	instance       core1_0.Instance
+	debugMessenger *ext_debug_utils.Messenger
 	surface        khr_surface.Surface
 
-	physicalDevice core.PhysicalDevice
-	device         core.Device
+	physicalDevice core1_0.PhysicalDevice
+	device         core1_0.Device
 
-	graphicsQueue core.Queue
-	presentQueue  core.Queue
+	graphicsQueue core1_0.Queue
+	presentQueue  core1_0.Queue
 
 	swapchainLoader      khr_swapchain.Extension
 	swapchain            khr_swapchain.Swapchain
-	swapchainImages      []core.Image
+	swapchainImages      []core1_0.Image
 	swapchainImageFormat common.DataFormat
 	swapchainExtent      common.Extent2D
 }
@@ -158,7 +159,7 @@ func (app *HelloTriangleApplication) cleanup() {
 }
 
 func (app *HelloTriangleApplication) createInstance() error {
-	instanceOptions := &core.InstanceOptions{
+	instanceOptions := &core1_0.InstanceOptions{
 		ApplicationName:    "Hello Triangle",
 		ApplicationVersion: common.CreateVersion(1, 0, 0),
 		EngineName:         "No Engine",
@@ -277,10 +278,10 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		uniqueQueueFamilies = append(uniqueQueueFamilies, *indices.PresentFamily)
 	}
 
-	var queueFamilyOptions []*core.QueueFamilyOptions
+	var queueFamilyOptions []core1_0.QueueFamilyOptions
 	queuePriority := float32(1.0)
 	for _, queueFamily := range uniqueQueueFamilies {
-		queueFamilyOptions = append(queueFamilyOptions, &core.QueueFamilyOptions{
+		queueFamilyOptions = append(queueFamilyOptions, core1_0.QueueFamilyOptions{
 			QueueFamilyIndex: queueFamily,
 			QueuePriorities:  []float32{queuePriority},
 		})
@@ -305,9 +306,9 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		layerNames = append(layerNames, validationLayers...)
 	}
 
-	app.device, _, err = app.loader.CreateDevice(app.physicalDevice, nil, &core.DeviceOptions{
+	app.device, _, err = app.loader.CreateDevice(app.physicalDevice, nil, &core1_0.DeviceOptions{
 		QueueFamilies:   queueFamilyOptions,
-		EnabledFeatures: &common.PhysicalDeviceFeatures{},
+		EnabledFeatures: &core1_0.PhysicalDeviceFeatures{},
 		ExtensionNames:  extensionNames,
 		LayerNames:      layerNames,
 	})
@@ -321,7 +322,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 }
 
 func (app *HelloTriangleApplication) createSwapchain() error {
-	app.swapchainLoader = khr_swapchain.CreateLoaderFromDevice(app.device)
+	app.swapchainLoader = khr_swapchain.CreateExtensionFromDevice(app.device)
 
 	swapchainSupport, err := app.querySwapChainSupport(app.physicalDevice)
 	if err != nil {
@@ -337,7 +338,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 		imageCount = swapchainSupport.Capabilities.MaxImageCount
 	}
 
-	sharingMode := common.SharingExclusive
+	sharingMode := core1_0.SharingExclusive
 	var queueFamilyIndices []int
 
 	indices, err := app.findQueueFamilies(app.physicalDevice)
@@ -346,7 +347,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 	}
 
 	if *indices.GraphicsFamily != *indices.PresentFamily {
-		sharingMode = common.SharingConcurrent
+		sharingMode = core1_0.SharingConcurrent
 		queueFamilyIndices = append(queueFamilyIndices, *indices.GraphicsFamily, *indices.PresentFamily)
 	}
 
@@ -358,7 +359,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 		ImageColorSpace:  surfaceFormat.ColorSpace,
 		ImageExtent:      extent,
 		ImageArrayLayers: 1,
-		ImageUsage:       common.ImageUsageColorAttachment,
+		ImageUsage:       core1_0.ImageUsageColorAttachment,
 
 		SharingMode:        sharingMode,
 		QueueFamilyIndices: queueFamilyIndices,
@@ -381,7 +382,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 
 func (app *HelloTriangleApplication) chooseSwapSurfaceFormat(availableFormats []khr_surface.Format) khr_surface.Format {
 	for _, format := range availableFormats {
-		if format.Format == common.FormatB8G8R8A8SRGB && format.ColorSpace == khr_surface.ColorSpaceSRGBNonlinear {
+		if format.Format == core1_0.DataFormatB8G8R8A8SRGB && format.ColorSpace == khr_surface.ColorSpaceSRGBNonlinear {
 			return format
 		}
 	}
@@ -424,7 +425,7 @@ func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *khr_surface.
 	return common.Extent2D{Width: width, Height: height}
 }
 
-func (app *HelloTriangleApplication) querySwapChainSupport(device core.PhysicalDevice) (SwapChainSupportDetails, error) {
+func (app *HelloTriangleApplication) querySwapChainSupport(device core1_0.PhysicalDevice) (SwapChainSupportDetails, error) {
 	var details SwapChainSupportDetails
 	var err error
 
@@ -442,7 +443,7 @@ func (app *HelloTriangleApplication) querySwapChainSupport(device core.PhysicalD
 	return details, err
 }
 
-func (app *HelloTriangleApplication) isDeviceSuitable(device core.PhysicalDevice) bool {
+func (app *HelloTriangleApplication) isDeviceSuitable(device core1_0.PhysicalDevice) bool {
 	indices, err := app.findQueueFamilies(device)
 	if err != nil {
 		return false
@@ -463,7 +464,7 @@ func (app *HelloTriangleApplication) isDeviceSuitable(device core.PhysicalDevice
 	return indices.IsComplete() && extensionsSupported && swapChainAdequate
 }
 
-func (app *HelloTriangleApplication) checkDeviceExtensionSupport(device core.PhysicalDevice) bool {
+func (app *HelloTriangleApplication) checkDeviceExtensionSupport(device core1_0.PhysicalDevice) bool {
 	extensions, _, err := device.AvailableExtensions()
 	if err != nil {
 		return false
@@ -479,12 +480,12 @@ func (app *HelloTriangleApplication) checkDeviceExtensionSupport(device core.Phy
 	return true
 }
 
-func (app *HelloTriangleApplication) findQueueFamilies(device core.PhysicalDevice) (QueueFamilyIndices, error) {
+func (app *HelloTriangleApplication) findQueueFamilies(device core1_0.PhysicalDevice) (QueueFamilyIndices, error) {
 	indices := QueueFamilyIndices{}
 	queueFamilies := device.QueueFamilyProperties()
 
 	for queueFamilyIdx, queueFamily := range queueFamilies {
-		if (queueFamily.Flags & common.QueueGraphics) != 0 {
+		if (queueFamily.Flags & core1_0.QueueGraphics) != 0 {
 			indices.GraphicsFamily = new(int)
 			*indices.GraphicsFamily = queueFamilyIdx
 		}
