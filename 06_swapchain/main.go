@@ -237,7 +237,7 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 }
 
 func (app *HelloTriangleApplication) createSurface() error {
-	surfaceLoader := khr_surface_sdl2.CreateLoaderFromInstance(app.instance)
+	surfaceLoader := khr_surface_sdl2.CreateExtensionFromInstance(app.instance)
 	surface, _, err := surfaceLoader.CreateSurface(app.instance, app.window)
 	if err != nil {
 		return err
