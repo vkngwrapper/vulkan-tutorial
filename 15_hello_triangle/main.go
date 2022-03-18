@@ -53,7 +53,7 @@ type HelloTriangleApplication struct {
 	graphicsQueue core1_0.Queue
 	presentQueue  core1_0.Queue
 
-	swapchainLoader       khr_swapchain.Extension
+	swapchainExtension    khr_swapchain.Extension
 	swapchain             khr_swapchain.Swapchain
 	swapchainImages       []core1_0.Image
 	swapchainImageFormat  common.DataFormat
@@ -414,7 +414,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 }
 
 func (app *HelloTriangleApplication) createSwapchain() error {
-	app.swapchainLoader = khr_swapchain.CreateExtensionFromDevice(app.device)
+	app.swapchainExtension = khr_swapchain.CreateExtensionFromDevice(app.device)
 
 	swapchainSupport, err := app.querySwapChainSupport(app.physicalDevice)
 	if err != nil {
@@ -443,7 +443,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 		queueFamilyIndices = append(queueFamilyIndices, *indices.GraphicsFamily, *indices.PresentFamily)
 	}
 
-	swapchain, _, err := app.swapchainLoader.CreateSwapchain(app.device, nil, &khr_swapchain.CreationOptions{
+	swapchain, _, err := app.swapchainExtension.CreateSwapchain(app.device, nil, &khr_swapchain.CreationOptions{
 		Surface: app.surface,
 
 		MinImageCount:    imageCount,
@@ -457,7 +457,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 		QueueFamilyIndices: queueFamilyIndices,
 
 		PreTransform:   swapchainSupport.Capabilities.CurrentTransform,
-		CompositeAlpha: khr_surface.AlphaModeOpaque,
+		CompositeAlpha: khr_surface.CompositeAlphaModeOpaque,
 		PresentMode:    presentMode,
 		Clipped:        true,
 	})
@@ -853,7 +853,7 @@ func (app *HelloTriangleApplication) drawFrame() error {
 		return err
 	}
 
-	_, _, err = app.swapchain.PresentToQueue(app.presentQueue, &khr_swapchain.PresentOptions{
+	_, err = app.swapchainExtension.PresentToQueue(app.presentQueue, &khr_swapchain.PresentOptions{
 		WaitSemaphores: []core1_0.Semaphore{app.renderFinishedSemaphore[app.currentFrame]},
 		Swapchains:     []khr_swapchain.Swapchain{app.swapchain},
 		ImageIndices:   []int{imageIndex},
