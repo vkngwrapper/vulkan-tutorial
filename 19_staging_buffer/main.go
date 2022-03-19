@@ -87,7 +87,7 @@ type HelloTriangleApplication struct {
 	loader core.Loader
 
 	instance       core1_0.Instance
-	debugMessenger *ext_debug_utils.Messenger
+	debugMessenger ext_debug_utils.Messenger
 	surface        khr_surface.Surface
 
 	physicalDevice core1_0.PhysicalDevice
@@ -460,7 +460,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 func (app *HelloTriangleApplication) debugMessengerOptions() *ext_debug_utils.CreationOptions {
 	return &ext_debug_utils.CreationOptions{
 		CaptureSeverities: ext_debug_utils.SeverityError | ext_debug_utils.SeverityWarning,
-		CaptureTypes:      ext_debug_utils.TypeAll,
+		CaptureTypes:      ext_debug_utils.TypeGeneral | ext_debug_utils.TypeValidation | ext_debug_utils.TypePerformance,
 		Callback:          app.logDebug,
 	}
 }
@@ -1296,7 +1296,7 @@ func (app *HelloTriangleApplication) findQueueFamilies(device core1_0.PhysicalDe
 	return indices, nil
 }
 
-func (app *HelloTriangleApplication) logDebug(msgType ext_debug_utils.MessageTypes, severity ext_debug_utils.MessageSeverities, data *ext_debug_utils.CallbackData) bool {
+func (app *HelloTriangleApplication) logDebug(msgType ext_debug_utils.MessageTypes, severity ext_debug_utils.MessageSeverities, data *ext_debug_utils.CallbackDataOptions) bool {
 	log.Printf("[%s %s] - %s", severity, msgType, data.Message)
 	return false
 }
