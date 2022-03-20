@@ -509,6 +509,8 @@ func (app *HelloTriangleApplication) cleanup() {
 		app.window.Destroy()
 	}
 	sdl.Quit()
+
+	app.loader.Driver().ObjectStore().PrintDebug()
 }
 
 func (app *HelloTriangleApplication) recreateSwapChain() error {
@@ -680,7 +682,7 @@ func (app *HelloTriangleApplication) createSurface() error {
 }
 
 func (app *HelloTriangleApplication) pickPhysicalDevice() error {
-	physicalDevices, _, err := app.instance.PhysicalDevices()
+	physicalDevices, _, err := app.loader.PhysicalDevices(app.instance)
 	if err != nil {
 		return err
 	}
@@ -754,8 +756,8 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		return err
 	}
 
-	app.graphicsQueue = app.device.GetQueue(*indices.GraphicsFamily, 0)
-	app.presentQueue = app.device.GetQueue(*indices.PresentFamily, 0)
+	app.graphicsQueue = app.loader.GetQueue(app.device, *indices.GraphicsFamily, 0)
+	app.presentQueue = app.loader.GetQueue(app.device, *indices.PresentFamily, 0)
 	return nil
 }
 
@@ -1485,7 +1487,7 @@ func (app *HelloTriangleApplication) createImage(width, height int, mipLevels in
 		return nil, nil, err
 	}
 
-	imageMemory, _, err := app.device.AllocateMemory(nil, &core1_0.DeviceMemoryOptions{
+	imageMemory, _, err := app.loader.AllocateMemory(app.device, nil, &core1_0.DeviceMemoryOptions{
 		AllocationSize:  memReqs.Size,
 		MemoryTypeIndex: memoryIndex,
 	})
@@ -1818,7 +1820,7 @@ func (app *HelloTriangleApplication) createBuffer(size int, usage common.BufferU
 		return buffer, nil, err
 	}
 
-	memory, _, err := app.device.AllocateMemory(nil, &core1_0.DeviceMemoryOptions{
+	memory, _, err := app.loader.AllocateMemory(app.device, nil, &core1_0.DeviceMemoryOptions{
 		AllocationSize:  memRequirements.Size,
 		MemoryTypeIndex: memoryTypeIndex,
 	})

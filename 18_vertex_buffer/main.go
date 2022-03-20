@@ -492,7 +492,7 @@ func (app *HelloTriangleApplication) createSurface() error {
 }
 
 func (app *HelloTriangleApplication) pickPhysicalDevice() error {
-	physicalDevices, _, err := app.instance.PhysicalDevices()
+	physicalDevices, _, err := app.loader.PhysicalDevices(app.instance)
 	if err != nil {
 		return err
 	}
@@ -560,8 +560,8 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		return err
 	}
 
-	app.graphicsQueue = app.device.GetQueue(*indices.GraphicsFamily, 0)
-	app.presentQueue = app.device.GetQueue(*indices.PresentFamily, 0)
+	app.graphicsQueue = app.loader.GetQueue(app.device, *indices.GraphicsFamily, 0)
+	app.presentQueue = app.loader.GetQueue(app.device, *indices.PresentFamily, 0)
 	return nil
 }
 
@@ -912,7 +912,7 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
 		return err
 	}
 
-	app.vertexBufferMemory, _, err = app.device.AllocateMemory(nil, &core1_0.DeviceMemoryOptions{
+	app.vertexBufferMemory, _, err = app.loader.AllocateMemory(app.device, nil, &core1_0.DeviceMemoryOptions{
 		AllocationSize:  memRequirements.Size,
 		MemoryTypeIndex: memoryTypeIndex,
 	})
