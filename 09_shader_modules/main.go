@@ -173,7 +173,7 @@ func (app *HelloTriangleApplication) cleanup() {
 }
 
 func (app *HelloTriangleApplication) createInstance() error {
-	instanceOptions := &core1_0.InstanceOptions{
+	instanceOptions := core1_0.InstanceOptions{
 		ApplicationName:    "Hello Triangle",
 		ApplicationVersion: common.CreateVersion(1, 0, 0),
 		EngineName:         "No Engine",
@@ -227,8 +227,8 @@ func (app *HelloTriangleApplication) createInstance() error {
 	return nil
 }
 
-func (app *HelloTriangleApplication) debugMessengerOptions() *ext_debug_utils.CreationOptions {
-	return &ext_debug_utils.CreationOptions{
+func (app *HelloTriangleApplication) debugMessengerOptions() ext_debug_utils.CreateOptions {
+	return ext_debug_utils.CreateOptions{
 		CaptureSeverities: ext_debug_utils.SeverityError | ext_debug_utils.SeverityWarning,
 		CaptureTypes:      ext_debug_utils.TypeGeneral | ext_debug_utils.TypeValidation | ext_debug_utils.TypePerformance,
 		Callback:          app.logDebug,
@@ -320,7 +320,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		layerNames = append(layerNames, validationLayers...)
 	}
 
-	app.device, _, err = app.loader.CreateDevice(app.physicalDevice, nil, &core1_0.DeviceOptions{
+	app.device, _, err = app.loader.CreateDevice(app.physicalDevice, nil, core1_0.DeviceOptions{
 		QueueFamilies:   queueFamilyOptions,
 		EnabledFeatures: &core1_0.PhysicalDeviceFeatures{},
 		ExtensionNames:  extensionNames,
@@ -365,7 +365,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 		queueFamilyIndices = append(queueFamilyIndices, *indices.GraphicsFamily, *indices.PresentFamily)
 	}
 
-	swapchain, _, err := app.swapchainExtension.CreateSwapchain(app.device, nil, &khr_swapchain.CreationOptions{
+	swapchain, _, err := app.swapchainExtension.CreateSwapchain(app.device, nil, khr_swapchain.CreateOptions{
 		Surface: app.surface,
 
 		MinImageCount:    imageCount,
@@ -397,7 +397,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 
 	var imageViews []core1_0.ImageView
 	for _, image := range images {
-		view, _, err := app.loader.CreateImageView(app.device, nil, &core1_0.ImageViewOptions{
+		view, _, err := app.loader.CreateImageView(app.device, nil, core1_0.ImageViewOptions{
 			ViewType: core1_0.ViewType2D,
 			Image:    image,
 			Format:   surfaceFormat.Format,
@@ -448,7 +448,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		return err
 	}
 
-	vertShader, _, err := app.loader.CreateShaderModule(app.device, nil, &core1_0.ShaderModuleOptions{
+	vertShader, _, err := app.loader.CreateShaderModule(app.device, nil, core1_0.ShaderModuleOptions{
 		SpirVByteCode: bytesToBytecode(vertShaderBytes),
 	})
 	if err != nil {
@@ -462,7 +462,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		return err
 	}
 
-	fragShader, _, err := app.loader.CreateShaderModule(app.device, nil, &core1_0.ShaderModuleOptions{
+	fragShader, _, err := app.loader.CreateShaderModule(app.device, nil, core1_0.ShaderModuleOptions{
 		SpirVByteCode: bytesToBytecode(fragShaderBytes),
 	})
 	if err != nil {

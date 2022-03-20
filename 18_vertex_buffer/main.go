@@ -403,7 +403,7 @@ func (app *HelloTriangleApplication) recreateSwapChain() error {
 }
 
 func (app *HelloTriangleApplication) createInstance() error {
-	instanceOptions := &core1_0.InstanceOptions{
+	instanceOptions := core1_0.InstanceOptions{
 		ApplicationName:    "Hello Triangle",
 		ApplicationVersion: common.CreateVersion(1, 0, 0),
 		EngineName:         "No Engine",
@@ -457,8 +457,8 @@ func (app *HelloTriangleApplication) createInstance() error {
 	return nil
 }
 
-func (app *HelloTriangleApplication) debugMessengerOptions() *ext_debug_utils.CreationOptions {
-	return &ext_debug_utils.CreationOptions{
+func (app *HelloTriangleApplication) debugMessengerOptions() ext_debug_utils.CreateOptions {
+	return ext_debug_utils.CreateOptions{
 		CaptureSeverities: ext_debug_utils.SeverityError | ext_debug_utils.SeverityWarning,
 		CaptureTypes:      ext_debug_utils.TypeGeneral | ext_debug_utils.TypeValidation | ext_debug_utils.TypePerformance,
 		Callback:          app.logDebug,
@@ -550,7 +550,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		layerNames = append(layerNames, validationLayers...)
 	}
 
-	app.device, _, err = app.loader.CreateDevice(app.physicalDevice, nil, &core1_0.DeviceOptions{
+	app.device, _, err = app.loader.CreateDevice(app.physicalDevice, nil, core1_0.DeviceOptions{
 		QueueFamilies:   queueFamilyOptions,
 		EnabledFeatures: &core1_0.PhysicalDeviceFeatures{},
 		ExtensionNames:  extensionNames,
@@ -595,7 +595,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 		queueFamilyIndices = append(queueFamilyIndices, *indices.GraphicsFamily, *indices.PresentFamily)
 	}
 
-	swapchain, _, err := app.swapchainExtension.CreateSwapchain(app.device, nil, &khr_swapchain.CreationOptions{
+	swapchain, _, err := app.swapchainExtension.CreateSwapchain(app.device, nil, khr_swapchain.CreateOptions{
 		Surface: app.surface,
 
 		MinImageCount:    imageCount,
@@ -632,7 +632,7 @@ func (app *HelloTriangleApplication) createImageViews() error {
 
 	var imageViews []core1_0.ImageView
 	for _, image := range images {
-		view, _, err := app.loader.CreateImageView(app.device, nil, &core1_0.ImageViewOptions{
+		view, _, err := app.loader.CreateImageView(app.device, nil, core1_0.ImageViewOptions{
 			ViewType: core1_0.ViewType2D,
 			Image:    image,
 			Format:   app.swapchainImageFormat,
@@ -662,7 +662,7 @@ func (app *HelloTriangleApplication) createImageViews() error {
 }
 
 func (app *HelloTriangleApplication) createRenderPass() error {
-	renderPass, _, err := app.loader.CreateRenderPass(app.device, nil, &core1_0.RenderPassOptions{
+	renderPass, _, err := app.loader.CreateRenderPass(app.device, nil, core1_0.RenderPassOptions{
 		Attachments: []core1_0.AttachmentDescription{
 			{
 				Format:         app.swapchainImageFormat,
@@ -729,7 +729,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		return err
 	}
 
-	vertShader, _, err := app.loader.CreateShaderModule(app.device, nil, &core1_0.ShaderModuleOptions{
+	vertShader, _, err := app.loader.CreateShaderModule(app.device, nil, core1_0.ShaderModuleOptions{
 		SpirVByteCode: bytesToBytecode(vertShaderBytes),
 	})
 	if err != nil {
@@ -743,7 +743,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		return err
 	}
 
-	fragShader, _, err := app.loader.CreateShaderModule(app.device, nil, &core1_0.ShaderModuleOptions{
+	fragShader, _, err := app.loader.CreateShaderModule(app.device, nil, core1_0.ShaderModuleOptions{
 		SpirVByteCode: bytesToBytecode(fragShaderBytes),
 	})
 	if err != nil {
@@ -824,7 +824,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		},
 	}
 
-	app.pipelineLayout, _, err = app.loader.CreatePipelineLayout(app.device, nil, &core1_0.PipelineLayoutOptions{})
+	app.pipelineLayout, _, err = app.loader.CreatePipelineLayout(app.device, nil, core1_0.PipelineLayoutOptions{})
 	if err != nil {
 		return err
 	}
@@ -857,7 +857,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 
 func (app *HelloTriangleApplication) createFramebuffers() error {
 	for _, imageView := range app.swapchainImageViews {
-		framebuffer, _, err := app.loader.CreateFrameBuffer(app.device, nil, &core1_0.FramebufferOptions{
+		framebuffer, _, err := app.loader.CreateFrameBuffer(app.device, nil, core1_0.FramebufferOptions{
 			RenderPass: app.renderPass,
 			Layers:     1,
 			Attachments: []core1_0.ImageView{
@@ -882,7 +882,7 @@ func (app *HelloTriangleApplication) createCommandPool() error {
 		return err
 	}
 
-	pool, _, err := app.loader.CreateCommandPool(app.device, nil, &core1_0.CommandPoolOptions{
+	pool, _, err := app.loader.CreateCommandPool(app.device, nil, core1_0.CommandPoolOptions{
 		GraphicsQueueFamily: indices.GraphicsFamily,
 	})
 
@@ -897,7 +897,7 @@ func (app *HelloTriangleApplication) createCommandPool() error {
 func (app *HelloTriangleApplication) createVertexBuffer() error {
 	var err error
 	bufferSize := binary.Size(vertices)
-	app.vertexBuffer, _, err = app.loader.CreateBuffer(app.device, nil, &core1_0.BufferOptions{
+	app.vertexBuffer, _, err = app.loader.CreateBuffer(app.device, nil, core1_0.BufferOptions{
 		BufferSize:  bufferSize,
 		Usage:       core1_0.UsageVertexBuffer,
 		SharingMode: core1_0.SharingExclusive,
@@ -912,7 +912,7 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
 		return err
 	}
 
-	app.vertexBufferMemory, _, err = app.loader.AllocateMemory(app.device, nil, &core1_0.DeviceMemoryOptions{
+	app.vertexBufferMemory, _, err = app.loader.AllocateMemory(app.device, nil, core1_0.DeviceMemoryOptions{
 		AllocationSize:  memRequirements.Size,
 		MemoryTypeIndex: memoryTypeIndex,
 	})
@@ -959,7 +959,7 @@ func (app *HelloTriangleApplication) findMemoryType(typeFilter uint32, propertie
 
 func (app *HelloTriangleApplication) createCommandBuffers() error {
 
-	buffers, _, err := app.loader.AllocateCommandBuffers(&core1_0.CommandBufferOptions{
+	buffers, _, err := app.loader.AllocateCommandBuffers(core1_0.CommandBufferOptions{
 		CommandPool: app.commandPool,
 		Level:       core1_0.LevelPrimary,
 		BufferCount: len(app.swapchainImages),
@@ -970,13 +970,13 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
 	app.commandBuffers = buffers
 
 	for bufferIdx, buffer := range buffers {
-		_, err = buffer.Begin(&core1_0.BeginOptions{})
+		_, err = buffer.Begin(core1_0.BeginOptions{})
 		if err != nil {
 			return err
 		}
 
 		err = buffer.CmdBeginRenderPass(core1_0.SubpassContentsInline,
-			&core1_0.RenderPassBeginOptions{
+			core1_0.RenderPassBeginOptions{
 				RenderPass:  app.renderPass,
 				Framebuffer: app.swapchainFramebuffers[bufferIdx],
 				RenderArea: common.Rect2D{
@@ -1007,21 +1007,21 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
 
 func (app *HelloTriangleApplication) createSyncObjects() error {
 	for i := 0; i < MaxFramesInFlight; i++ {
-		semaphore, _, err := app.loader.CreateSemaphore(app.device, nil, &core1_0.SemaphoreOptions{})
+		semaphore, _, err := app.loader.CreateSemaphore(app.device, nil, core1_0.SemaphoreOptions{})
 		if err != nil {
 			return err
 		}
 
 		app.imageAvailableSemaphore = append(app.imageAvailableSemaphore, semaphore)
 
-		semaphore, _, err = app.loader.CreateSemaphore(app.device, nil, &core1_0.SemaphoreOptions{})
+		semaphore, _, err = app.loader.CreateSemaphore(app.device, nil, core1_0.SemaphoreOptions{})
 		if err != nil {
 			return err
 		}
 
 		app.renderFinishedSemaphore = append(app.renderFinishedSemaphore, semaphore)
 
-		fence, _, err := app.loader.CreateFence(app.device, nil, &core1_0.FenceOptions{
+		fence, _, err := app.loader.CreateFence(app.device, nil, core1_0.FenceOptions{
 			Flags: core1_0.FenceCreateSignaled,
 		})
 		if err != nil {
@@ -1078,7 +1078,7 @@ func (app *HelloTriangleApplication) drawFrame() error {
 		return err
 	}
 
-	res, err = app.swapchainExtension.PresentToQueue(app.presentQueue, &khr_swapchain.PresentOptions{
+	res, err = app.swapchainExtension.PresentToQueue(app.presentQueue, khr_swapchain.PresentOptions{
 		WaitSemaphores: []core1_0.Semaphore{app.renderFinishedSemaphore[app.currentFrame]},
 		Swapchains:     []khr_swapchain.Swapchain{app.swapchain},
 		ImageIndices:   []int{imageIndex},
