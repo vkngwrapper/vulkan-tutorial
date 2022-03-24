@@ -907,7 +907,7 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
 	}
 
 	memRequirements := app.vertexBuffer.MemoryRequirements()
-	memoryTypeIndex, err := app.findMemoryType(memRequirements.MemoryType, core1_0.MemoryHostVisible|core1_0.MemoryHostCoherent)
+	memoryTypeIndex, err := app.findMemoryType(memRequirements.MemoryType, core1_0.MemoryPropertyHostVisible|core1_0.MemoryPropertyHostCoherent)
 	if err != nil {
 		return err
 	}

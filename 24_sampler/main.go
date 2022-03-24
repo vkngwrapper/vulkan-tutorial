@@ -1037,7 +1037,7 @@ func (app *HelloTriangleApplication) createTextureImage() error {
 	imageDims := imageBounds.Size()
 	imageSize := imageDims.X * imageDims.Y * 4
 
-	stagingBuffer, stagingMemory, err := app.createBuffer(imageSize, core1_0.UsageTransferSrc, core1_0.MemoryHostVisible|core1_0.MemoryHostCoherent)
+	stagingBuffer, stagingMemory, err := app.createBuffer(imageSize, core1_0.UsageTransferSrc, core1_0.MemoryPropertyHostVisible|core1_0.MemoryPropertyHostCoherent)
 	if err != nil {
 		return err
 	}
@@ -1057,7 +1057,7 @@ func (app *HelloTriangleApplication) createTextureImage() error {
 	}
 
 	//Create final image
-	app.textureImage, app.textureImageMemory, err = app.createImage(imageDims.X, imageDims.Y, core1_0.DataFormatR8G8B8A8SRGB, core1_0.ImageTilingOptimal, core1_0.ImageUsageTransferDst|core1_0.ImageUsageSampled, core1_0.MemoryDeviceLocal)
+	app.textureImage, app.textureImageMemory, err = app.createImage(imageDims.X, imageDims.Y, core1_0.DataFormatR8G8B8A8SRGB, core1_0.ImageTilingOptimal, core1_0.ImageUsageTransferDst|core1_0.ImageUsageSampled, core1_0.MemoryPropertyDeviceLocal)
 	if err != nil {
 		return err
 	}
@@ -1089,9 +1089,11 @@ func (app *HelloTriangleApplication) createTextureImageView() error {
 }
 
 func (app *HelloTriangleApplication) createSampler() error {
-	properties := app.physicalDevice.Properties()
+	properties, err := app.physicalDevice.Properties()
+	if err != nil {
+		return err
+	}
 
-	var err error
 	app.textureSampler, _, err = app.loader.CreateSampler(app.device, nil, core1_0.SamplerOptions{
 		MagFilter:    core1_0.FilterLinear,
 		MinFilter:    core1_0.FilterLinear,
@@ -1268,7 +1270,7 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
 	var err error
 	bufferSize := binary.Size(vertices)
 
-	stagingBuffer, stagingBufferMemory, err := app.createBuffer(bufferSize, core1_0.UsageTransferSrc, core1_0.MemoryHostVisible|core1_0.MemoryHostCoherent)
+	stagingBuffer, stagingBufferMemory, err := app.createBuffer(bufferSize, core1_0.UsageTransferSrc, core1_0.MemoryPropertyHostVisible|core1_0.MemoryPropertyHostCoherent)
 	if stagingBuffer != nil {
 		defer stagingBuffer.Destroy(nil)
 	}
@@ -1285,7 +1287,7 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
 		return err
 	}
 
-	app.vertexBuffer, app.vertexBufferMemory, err = app.createBuffer(bufferSize, core1_0.UsageTransferDst|core1_0.UsageVertexBuffer, core1_0.MemoryDeviceLocal)
+	app.vertexBuffer, app.vertexBufferMemory, err = app.createBuffer(bufferSize, core1_0.UsageTransferDst|core1_0.UsageVertexBuffer, core1_0.MemoryPropertyDeviceLocal)
 	if err != nil {
 		return err
 	}
@@ -1296,7 +1298,7 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
 func (app *HelloTriangleApplication) createIndexBuffer() error {
 	bufferSize := binary.Size(indices)
 
-	stagingBuffer, stagingBufferMemory, err := app.createBuffer(bufferSize, core1_0.UsageTransferSrc, core1_0.MemoryHostVisible|core1_0.MemoryHostCoherent)
+	stagingBuffer, stagingBufferMemory, err := app.createBuffer(bufferSize, core1_0.UsageTransferSrc, core1_0.MemoryPropertyHostVisible|core1_0.MemoryPropertyHostCoherent)
 	if stagingBuffer != nil {
 		defer stagingBuffer.Destroy(nil)
 	}
@@ -1313,7 +1315,7 @@ func (app *HelloTriangleApplication) createIndexBuffer() error {
 		return err
 	}
 
-	app.indexBuffer, app.indexBufferMemory, err = app.createBuffer(bufferSize, core1_0.UsageTransferDst|core1_0.UsageIndexBuffer, core1_0.MemoryDeviceLocal)
+	app.indexBuffer, app.indexBufferMemory, err = app.createBuffer(bufferSize, core1_0.UsageTransferDst|core1_0.UsageIndexBuffer, core1_0.MemoryPropertyDeviceLocal)
 	if err != nil {
 		return err
 	}
@@ -1325,7 +1327,7 @@ func (app *HelloTriangleApplication) createUniformBuffers() error {
 	bufferSize := int(unsafe.Sizeof(UniformBufferObject{}))
 
 	for i := 0; i < len(app.swapchainImages); i++ {
-		buffer, memory, err := app.createBuffer(bufferSize, core1_0.UsageUniformBuffer, core1_0.MemoryHostVisible|core1_0.MemoryHostCoherent)
+		buffer, memory, err := app.createBuffer(bufferSize, core1_0.UsageUniformBuffer, core1_0.MemoryPropertyHostVisible|core1_0.MemoryPropertyHostCoherent)
 		if err != nil {
 			return err
 		}
