@@ -7,8 +7,8 @@ import (
 	"github.com/CannibalVox/VKng/core/core1_0"
 	"github.com/CannibalVox/VKng/extensions/ext_debug_utils"
 	"github.com/CannibalVox/VKng/extensions/khr_surface"
-	"github.com/CannibalVox/VKng/extensions/khr_surface_sdl2"
 	"github.com/CannibalVox/VKng/extensions/khr_swapchain"
+	"github.com/CannibalVox/VKng/extensions/vkng_surface_sdl2"
 	"github.com/cockroachdb/errors"
 	"github.com/veandco/go-sdl2/sdl"
 	"log"
@@ -272,7 +272,7 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 }
 
 func (app *HelloTriangleApplication) createSurface() error {
-	surfaceLoader := khr_surface_sdl2.CreateExtensionFromInstance(app.instance)
+	surfaceLoader := vkng_surface_sdl2.CreateExtensionFromInstance(app.instance)
 	surface, _, err := surfaceLoader.CreateSurface(app.instance, app.window)
 	if err != nil {
 		return err
