@@ -370,12 +370,12 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		uniqueQueueFamilies = append(uniqueQueueFamilies, *indices.PresentFamily)
 	}
 
-	var queueFamilyOptions []core1_0.QueueFamilyOptions
+	var queueFamilyOptions []core1_0.DeviceQueueOptions
 	queuePriority := float32(1.0)
 	for _, queueFamily := range uniqueQueueFamilies {
-		queueFamilyOptions = append(queueFamilyOptions, core1_0.QueueFamilyOptions{
-			QueueFamilyIndex: queueFamily,
-			QueuePriorities:  []float32{queuePriority},
+		queueFamilyOptions = append(queueFamilyOptions, core1_0.DeviceQueueOptions{
+			QueueFamilyIndex:       queueFamily,
+			CreatedQueuePriorities: []float32{queuePriority},
 		})
 	}
 
