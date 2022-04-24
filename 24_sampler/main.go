@@ -1037,7 +1037,7 @@ func (app *HelloTriangleApplication) createTextureImage() error {
 	imageDims := imageBounds.Size()
 	imageSize := imageDims.X * imageDims.Y * 4
 
-	stagingBuffer, stagingMemory, err := app.createBuffer(imageSize, core1_0.UsageTransferSrc, core1_0.MemoryPropertyHostVisible|core1_0.MemoryPropertyHostCoherent)
+	stagingBuffer, stagingMemory, err := app.createBuffer(imageSize, core1_0.BufferUsageTransferSrc, core1_0.MemoryPropertyHostVisible|core1_0.MemoryPropertyHostCoherent)
 	if err != nil {
 		return err
 	}
@@ -1270,7 +1270,7 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
 	var err error
 	bufferSize := binary.Size(vertices)
 
-	stagingBuffer, stagingBufferMemory, err := app.createBuffer(bufferSize, core1_0.UsageTransferSrc, core1_0.MemoryPropertyHostVisible|core1_0.MemoryPropertyHostCoherent)
+	stagingBuffer, stagingBufferMemory, err := app.createBuffer(bufferSize, core1_0.BufferUsageTransferSrc, core1_0.MemoryPropertyHostVisible|core1_0.MemoryPropertyHostCoherent)
 	if stagingBuffer != nil {
 		defer stagingBuffer.Destroy(nil)
 	}
@@ -1287,7 +1287,7 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
 		return err
 	}
 
-	app.vertexBuffer, app.vertexBufferMemory, err = app.createBuffer(bufferSize, core1_0.UsageTransferDst|core1_0.UsageVertexBuffer, core1_0.MemoryPropertyDeviceLocal)
+	app.vertexBuffer, app.vertexBufferMemory, err = app.createBuffer(bufferSize, core1_0.BufferUsageTransferDst|core1_0.BufferUsageVertexBuffer, core1_0.MemoryPropertyDeviceLocal)
 	if err != nil {
 		return err
 	}
@@ -1298,7 +1298,7 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
 func (app *HelloTriangleApplication) createIndexBuffer() error {
 	bufferSize := binary.Size(indices)
 
-	stagingBuffer, stagingBufferMemory, err := app.createBuffer(bufferSize, core1_0.UsageTransferSrc, core1_0.MemoryPropertyHostVisible|core1_0.MemoryPropertyHostCoherent)
+	stagingBuffer, stagingBufferMemory, err := app.createBuffer(bufferSize, core1_0.BufferUsageTransferSrc, core1_0.MemoryPropertyHostVisible|core1_0.MemoryPropertyHostCoherent)
 	if stagingBuffer != nil {
 		defer stagingBuffer.Destroy(nil)
 	}
@@ -1315,7 +1315,7 @@ func (app *HelloTriangleApplication) createIndexBuffer() error {
 		return err
 	}
 
-	app.indexBuffer, app.indexBufferMemory, err = app.createBuffer(bufferSize, core1_0.UsageTransferDst|core1_0.UsageIndexBuffer, core1_0.MemoryPropertyDeviceLocal)
+	app.indexBuffer, app.indexBufferMemory, err = app.createBuffer(bufferSize, core1_0.BufferUsageTransferDst|core1_0.BufferUsageIndexBuffer, core1_0.MemoryPropertyDeviceLocal)
 	if err != nil {
 		return err
 	}
@@ -1327,7 +1327,7 @@ func (app *HelloTriangleApplication) createUniformBuffers() error {
 	bufferSize := int(unsafe.Sizeof(UniformBufferObject{}))
 
 	for i := 0; i < len(app.swapchainImages); i++ {
-		buffer, memory, err := app.createBuffer(bufferSize, core1_0.UsageUniformBuffer, core1_0.MemoryPropertyHostVisible|core1_0.MemoryPropertyHostCoherent)
+		buffer, memory, err := app.createBuffer(bufferSize, core1_0.BufferUsageUniformBuffer, core1_0.MemoryPropertyHostVisible|core1_0.MemoryPropertyHostCoherent)
 		if err != nil {
 			return err
 		}

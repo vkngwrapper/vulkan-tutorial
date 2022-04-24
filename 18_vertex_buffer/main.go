@@ -899,7 +899,7 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
 	bufferSize := binary.Size(vertices)
 	app.vertexBuffer, _, err = app.loader.CreateBuffer(app.device, nil, core1_0.BufferOptions{
 		BufferSize:  bufferSize,
-		Usage:       core1_0.UsageVertexBuffer,
+		Usage:       core1_0.BufferUsageVertexBuffer,
 		SharingMode: core1_0.SharingExclusive,
 	})
 	if err != nil {
