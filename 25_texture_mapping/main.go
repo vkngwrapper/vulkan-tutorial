@@ -1169,7 +1169,7 @@ func (app *HelloTriangleApplication) createImage(width, height int, format commo
 		return nil, nil, err
 	}
 
-	imageMemory, _, err := app.loader.AllocateMemory(app.device, nil, core1_0.DeviceMemoryOptions{
+	imageMemory, _, err := app.loader.AllocateMemory(app.device, nil, core1_0.MemoryAllocateOptions{
 		AllocationSize:  memReqs.Size,
 		MemoryTypeIndex: memoryIndex,
 	})
@@ -1443,7 +1443,7 @@ func (app *HelloTriangleApplication) createBuffer(size int, usage common.BufferU
 		return buffer, nil, err
 	}
 
-	memory, _, err := app.loader.AllocateMemory(app.device, nil, core1_0.DeviceMemoryOptions{
+	memory, _, err := app.loader.AllocateMemory(app.device, nil, core1_0.MemoryAllocateOptions{
 		AllocationSize:  memRequirements.Size,
 		MemoryTypeIndex: memoryTypeIndex,
 	})

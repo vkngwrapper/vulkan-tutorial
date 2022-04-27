@@ -912,7 +912,7 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
 		return err
 	}
 
-	app.vertexBufferMemory, _, err = app.loader.AllocateMemory(app.device, nil, core1_0.DeviceMemoryOptions{
+	app.vertexBufferMemory, _, err = app.loader.AllocateMemory(app.device, nil, core1_0.MemoryAllocateOptions{
 		AllocationSize:  memRequirements.Size,
 		MemoryTypeIndex: memoryTypeIndex,
 	})
