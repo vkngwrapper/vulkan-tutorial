@@ -37,22 +37,22 @@ type HelloTriangleApplication struct {
 	window *sdl.Window
 	loader core.Loader
 
-	instance       core1_0.Instance
+	instance       core.Instance
 	debugMessenger ext_debug_utils.Messenger
 	surface        khr_surface.Surface
 
-	physicalDevice core1_0.PhysicalDevice
-	device         core1_0.Device
+	physicalDevice core.PhysicalDevice
+	device         core.Device
 
-	graphicsQueue core1_0.Queue
-	presentQueue  core1_0.Queue
+	graphicsQueue core.Queue
+	presentQueue  core.Queue
 
 	swapchainExtension   khr_swapchain.Extension
 	swapchain            khr_swapchain.Swapchain
-	swapchainImages      []core1_0.Image
+	swapchainImages      []core.Image
 	swapchainImageFormat common.DataFormat
 	swapchainExtent      common.Extent2D
-	swapchainImageViews  []core1_0.ImageView
+	swapchainImageViews  []core.ImageView
 }
 
 func (app *HelloTriangleApplication) Run() error {
@@ -164,7 +164,7 @@ func (app *HelloTriangleApplication) cleanup() {
 }
 
 func (app *HelloTriangleApplication) createInstance() error {
-	instanceOptions := core1_0.InstanceOptions{
+	instanceOptions := core1_0.InstanceCreateOptions{
 		ApplicationName:    "Hello Triangle",
 		ApplicationVersion: common.CreateVersion(1, 0, 0),
 		EngineName:         "No Engine",
@@ -311,7 +311,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		layerNames = append(layerNames, validationLayers...)
 	}
 
-	app.device, _, err = app.loader.CreateDevice(app.physicalDevice, nil, core1_0.DeviceOptions{
+	app.device, _, err = app.loader.CreateDevice(app.physicalDevice, nil, core1_0.DeviceCreateOptions{
 		QueueFamilies:   queueFamilyOptions,
 		EnabledFeatures: &core1_0.PhysicalDeviceFeatures{},
 		ExtensionNames:  extensionNames,
@@ -386,9 +386,9 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 	}
 	app.swapchainImages = images
 
-	var imageViews []core1_0.ImageView
+	var imageViews []core.ImageView
 	for _, image := range images {
-		view, _, err := app.loader.CreateImageView(app.device, nil, core1_0.ImageViewOptions{
+		view, _, err := app.loader.CreateImageView(app.device, nil, core1_0.ImageViewCreateOptions{
 			ViewType: core1_0.ViewType2D,
 			Image:    image,
 			Format:   surfaceFormat.Format,

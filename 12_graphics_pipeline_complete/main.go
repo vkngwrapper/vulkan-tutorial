@@ -41,26 +41,26 @@ type HelloTriangleApplication struct {
 	window *sdl.Window
 	loader core.Loader
 
-	instance       core1_0.Instance
+	instance       core.Instance
 	debugMessenger ext_debug_utils.Messenger
 	surface        khr_surface.Surface
 
-	physicalDevice core1_0.PhysicalDevice
-	device         core1_0.Device
+	physicalDevice core.PhysicalDevice
+	device         core.Device
 
-	graphicsQueue core1_0.Queue
-	presentQueue  core1_0.Queue
+	graphicsQueue core.Queue
+	presentQueue  core.Queue
 
 	swapchainExtension   khr_swapchain.Extension
 	swapchain            khr_swapchain.Swapchain
-	swapchainImages      []core1_0.Image
+	swapchainImages      []core.Image
 	swapchainImageFormat common.DataFormat
 	swapchainExtent      common.Extent2D
-	swapchainImageViews  []core1_0.ImageView
+	swapchainImageViews  []core.ImageView
 
-	renderPass       core1_0.RenderPass
-	pipelineLayout   core1_0.PipelineLayout
-	graphicsPipeline core1_0.Pipeline
+	renderPass       core.RenderPass
+	pipelineLayout   core.PipelineLayout
+	graphicsPipeline core.Pipeline
 }
 
 func (app *HelloTriangleApplication) Run() error {
@@ -194,7 +194,7 @@ func (app *HelloTriangleApplication) cleanup() {
 }
 
 func (app *HelloTriangleApplication) createInstance() error {
-	instanceOptions := core1_0.InstanceOptions{
+	instanceOptions := core1_0.InstanceCreateOptions{
 		ApplicationName:    "Hello Triangle",
 		ApplicationVersion: common.CreateVersion(1, 0, 0),
 		EngineName:         "No Engine",
@@ -341,7 +341,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		layerNames = append(layerNames, validationLayers...)
 	}
 
-	app.device, _, err = app.loader.CreateDevice(app.physicalDevice, nil, core1_0.DeviceOptions{
+	app.device, _, err = app.loader.CreateDevice(app.physicalDevice, nil, core1_0.DeviceCreateOptions{
 		QueueFamilies:   queueFamilyOptions,
 		EnabledFeatures: &core1_0.PhysicalDeviceFeatures{},
 		ExtensionNames:  extensionNames,
@@ -416,9 +416,9 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 	}
 	app.swapchainImages = images
 
-	var imageViews []core1_0.ImageView
+	var imageViews []core.ImageView
 	for _, image := range images {
-		view, _, err := app.loader.CreateImageView(app.device, nil, core1_0.ImageViewOptions{
+		view, _, err := app.loader.CreateImageView(app.device, nil, core1_0.ImageViewCreateOptions{
 			ViewType: core1_0.ViewType2D,
 			Image:    image,
 			Format:   surfaceFormat.Format,
@@ -449,7 +449,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 }
 
 func (app *HelloTriangleApplication) createRenderPass() error {
-	renderPass, _, err := app.loader.CreateRenderPass(app.device, nil, core1_0.RenderPassOptions{
+	renderPass, _, err := app.loader.CreateRenderPass(app.device, nil, core1_0.RenderPassCreateOptions{
 		Attachments: []core1_0.AttachmentDescription{
 			{
 				Format:         app.swapchainImageFormat,
@@ -516,7 +516,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		return err
 	}
 
-	vertShader, _, err := app.loader.CreateShaderModule(app.device, nil, core1_0.ShaderModuleOptions{
+	vertShader, _, err := app.loader.CreateShaderModule(app.device, nil, core1_0.ShaderModuleCreateOptions{
 		SpirVByteCode: bytesToBytecode(vertShaderBytes),
 	})
 	if err != nil {
@@ -530,7 +530,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		return err
 	}
 
-	fragShader, _, err := app.loader.CreateShaderModule(app.device, nil, core1_0.ShaderModuleOptions{
+	fragShader, _, err := app.loader.CreateShaderModule(app.device, nil, core1_0.ShaderModuleCreateOptions{
 		SpirVByteCode: bytesToBytecode(fragShaderBytes),
 	})
 	if err != nil {
@@ -608,12 +608,12 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		},
 	}
 
-	app.pipelineLayout, _, err = app.loader.CreatePipelineLayout(app.device, nil, core1_0.PipelineLayoutOptions{})
+	app.pipelineLayout, _, err = app.loader.CreatePipelineLayout(app.device, nil, core1_0.PipelineLayoutCreateOptions{})
 	if err != nil {
 		return err
 	}
 
-	pipelines, _, err := app.loader.CreateGraphicsPipelines(app.device, nil, nil, []core1_0.GraphicsPipelineOptions{
+	pipelines, _, err := app.loader.CreateGraphicsPipelines(app.device, nil, nil, []core1_0.GraphicsPipelineCreateOptions{
 		{
 			ShaderStages: []core1_0.ShaderStageOptions{
 				vertStage,

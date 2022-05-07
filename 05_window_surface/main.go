@@ -29,15 +29,15 @@ type HelloTriangleApplication struct {
 	window *sdl.Window
 	loader core.Loader
 
-	instance       core1_0.Instance
+	instance       core.Instance
 	debugMessenger ext_debug_utils.Messenger
 	surface        khr_surface.Surface
 
-	physicalDevice core1_0.PhysicalDevice
-	device         core1_0.Device
+	physicalDevice core.PhysicalDevice
+	device         core.Device
 
-	graphicsQueue core1_0.Queue
-	presentQueue  core1_0.Queue
+	graphicsQueue core.Queue
+	presentQueue  core.Queue
 }
 
 func (app *HelloTriangleApplication) Run() error {
@@ -136,7 +136,7 @@ func (app *HelloTriangleApplication) cleanup() {
 }
 
 func (app *HelloTriangleApplication) createInstance() error {
-	instanceOptions := core1_0.InstanceOptions{
+	instanceOptions := core1_0.InstanceCreateOptions{
 		ApplicationName:    "Hello Triangle",
 		ApplicationVersion: common.CreateVersion(1, 0, 0),
 		EngineName:         "No Engine",
@@ -282,7 +282,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		layerNames = append(layerNames, validationLayers...)
 	}
 
-	app.device, _, err = app.loader.CreateDevice(app.physicalDevice, nil, core1_0.DeviceOptions{
+	app.device, _, err = app.loader.CreateDevice(app.physicalDevice, nil, core1_0.DeviceCreateOptions{
 		QueueFamilies:   queueFamilyOptions,
 		EnabledFeatures: &core1_0.PhysicalDeviceFeatures{},
 		ExtensionNames:  extensionNames,

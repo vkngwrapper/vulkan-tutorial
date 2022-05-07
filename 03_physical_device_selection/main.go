@@ -26,10 +26,10 @@ type HelloTriangleApplication struct {
 	window *sdl.Window
 	loader core.Loader
 
-	instance       core1_0.Instance
+	instance       core.Instance
 	debugMessenger ext_debug_utils.Messenger
 
-	physicalDevice core1_0.PhysicalDevice
+	physicalDevice core.PhysicalDevice
 }
 
 func (app *HelloTriangleApplication) Run() error {
@@ -110,7 +110,7 @@ func (app *HelloTriangleApplication) cleanup() {
 }
 
 func (app *HelloTriangleApplication) createInstance() error {
-	instanceOptions := core1_0.InstanceOptions{
+	instanceOptions := core1_0.InstanceCreateOptions{
 		ApplicationName:    "Hello Triangle",
 		ApplicationVersion: common.CreateVersion(1, 0, 0),
 		EngineName:         "No Engine",

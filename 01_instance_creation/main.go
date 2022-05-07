@@ -13,7 +13,7 @@ type HelloTriangleApplication struct {
 	loader core.Loader
 	window *sdl.Window
 
-	instance core1_0.Instance
+	instance core.Instance
 }
 
 func (app *HelloTriangleApplication) Run() error {
@@ -80,7 +80,7 @@ func (app *HelloTriangleApplication) cleanup() {
 }
 
 func (app *HelloTriangleApplication) createInstance() error {
-	instanceOptions := core1_0.InstanceOptions{
+	instanceOptions := core1_0.InstanceCreateOptions{
 		ApplicationName:    "Hello Triangle",
 		ApplicationVersion: common.CreateVersion(1, 0, 0),
 		EngineName:         "No Engine",
