@@ -308,10 +308,10 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		uniqueQueueFamilies = append(uniqueQueueFamilies, *indices.PresentFamily)
 	}
 
-	var queueFamilyOptions []core1_0.DeviceQueueOptions
+	var queueFamilyOptions []core1_0.DeviceQueueCreateOptions
 	queuePriority := float32(1.0)
 	for _, queueFamily := range uniqueQueueFamilies {
-		queueFamilyOptions = append(queueFamilyOptions, core1_0.DeviceQueueOptions{
+		queueFamilyOptions = append(queueFamilyOptions, core1_0.DeviceQueueCreateOptions{
 			QueueFamilyIndex:       queueFamily,
 			CreatedQueuePriorities: []float32{queuePriority},
 		})
@@ -533,9 +533,9 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 	}
 	defer fragShader.Destroy(nil)
 
-	_ = &core1_0.VertexInputOptions{}
+	_ = &core1_0.VertexInputStateOptions{}
 
-	_ = &core1_0.InputAssemblyOptions{
+	_ = &core1_0.InputAssemblyStateOptions{
 		Topology:               core1_0.TopologyTriangleList,
 		EnablePrimitiveRestart: false,
 	}
@@ -552,7 +552,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		Name:   "main",
 	}
 
-	_ = &core1_0.ViewportOptions{
+	_ = &core1_0.ViewportStateOptions{
 		Viewports: []common.Viewport{
 			{
 				X:        0,
@@ -571,7 +571,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		},
 	}
 
-	_ = &core1_0.RasterizationOptions{
+	_ = &core1_0.RasterizationStateOptions{
 		DepthClamp:        false,
 		RasterizerDiscard: false,
 
@@ -584,13 +584,13 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		LineWidth: 1.0,
 	}
 
-	_ = &core1_0.MultisampleOptions{
+	_ = &core1_0.MultisampleStateOptions{
 		SampleShading:        false,
 		RasterizationSamples: core1_0.Samples1,
 		MinSampleShading:     1.0,
 	}
 
-	_ = &core1_0.ColorBlendOptions{
+	_ = &core1_0.ColorBlendStateOptions{
 		LogicOpEnabled: false,
 		LogicOp:        core1_0.LogicOpCopy,
 

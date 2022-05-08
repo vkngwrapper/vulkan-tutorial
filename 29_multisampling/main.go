@@ -716,10 +716,10 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		uniqueQueueFamilies = append(uniqueQueueFamilies, *indices.PresentFamily)
 	}
 
-	var queueFamilyOptions []core1_0.DeviceQueueOptions
+	var queueFamilyOptions []core1_0.DeviceQueueCreateOptions
 	queuePriority := float32(1.0)
 	for _, queueFamily := range uniqueQueueFamilies {
-		queueFamilyOptions = append(queueFamilyOptions, core1_0.DeviceQueueOptions{
+		queueFamilyOptions = append(queueFamilyOptions, core1_0.DeviceQueueCreateOptions{
 			QueueFamilyIndex:       queueFamily,
 			CreatedQueuePriorities: []float32{queuePriority},
 		})
@@ -992,12 +992,12 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 	}
 	defer fragShader.Destroy(nil)
 
-	vertexInput := &core1_0.VertexInputOptions{
+	vertexInput := &core1_0.VertexInputStateOptions{
 		VertexBindingDescriptions:   getVertexBindingDescription(),
 		VertexAttributeDescriptions: getVertexAttributeDescriptions(),
 	}
 
-	inputAssembly := &core1_0.InputAssemblyOptions{
+	inputAssembly := &core1_0.InputAssemblyStateOptions{
 		Topology:               core1_0.TopologyTriangleList,
 		EnablePrimitiveRestart: false,
 	}
@@ -1014,7 +1014,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		Name:   "main",
 	}
 
-	viewport := &core1_0.ViewportOptions{
+	viewport := &core1_0.ViewportStateOptions{
 		Viewports: []common.Viewport{
 			{
 				X:        0,
@@ -1033,7 +1033,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		},
 	}
 
-	rasterization := &core1_0.RasterizationOptions{
+	rasterization := &core1_0.RasterizationStateOptions{
 		DepthClamp:        false,
 		RasterizerDiscard: false,
 
@@ -1046,19 +1046,19 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		LineWidth: 1.0,
 	}
 
-	multisample := &core1_0.MultisampleOptions{
+	multisample := &core1_0.MultisampleStateOptions{
 		SampleShading:        false,
 		RasterizationSamples: app.msaaSamples,
 		MinSampleShading:     1.0,
 	}
 
-	depthStencil := &core1_0.DepthStencilOptions{
+	depthStencil := &core1_0.DepthStencilStateOptions{
 		DepthTestEnable:  true,
 		DepthWriteEnable: true,
 		DepthCompareOp:   core1_0.CompareLess,
 	}
 
-	colorBlend := &core1_0.ColorBlendOptions{
+	colorBlend := &core1_0.ColorBlendStateOptions{
 		LogicOpEnabled: false,
 		LogicOp:        core1_0.LogicOpCopy,
 
@@ -1760,7 +1760,7 @@ func (app *HelloTriangleApplication) createDescriptorSets() error {
 	}
 
 	var err error
-	app.descriptorSets, _, err = app.loader.AllocateDescriptorSets(core1_0.DescriptorSetOptions{
+	app.descriptorSets, _, err = app.loader.AllocateDescriptorSets(core1_0.DescriptorSetAllocateOptions{
 		DescriptorPool:    app.descriptorPool,
 		AllocationLayouts: allocLayouts,
 	})
@@ -1838,7 +1838,7 @@ func (app *HelloTriangleApplication) createBuffer(size int, usage common.BufferU
 }
 
 func (app *HelloTriangleApplication) beginSingleTimeCommands() (core.CommandBuffer, error) {
-	buffers, _, err := app.loader.AllocateCommandBuffers(core1_0.CommandBufferOptions{
+	buffers, _, err := app.loader.AllocateCommandBuffers(core1_0.CommandBufferAllocateOptions{
 		CommandPool: app.commandPool,
 		Level:       core1_0.LevelPrimary,
 		BufferCount: 1,
@@ -1914,7 +1914,7 @@ func (app *HelloTriangleApplication) findMemoryType(typeFilter uint32, propertie
 
 func (app *HelloTriangleApplication) createCommandBuffers() error {
 
-	buffers, _, err := app.loader.AllocateCommandBuffers(core1_0.CommandBufferOptions{
+	buffers, _, err := app.loader.AllocateCommandBuffers(core1_0.CommandBufferAllocateOptions{
 		CommandPool: app.commandPool,
 		Level:       core1_0.LevelPrimary,
 		BufferCount: len(app.swapchainImages),
