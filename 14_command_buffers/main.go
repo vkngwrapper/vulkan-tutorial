@@ -41,30 +41,30 @@ type HelloTriangleApplication struct {
 	window *sdl.Window
 	loader core.Loader
 
-	instance       core.Instance
+	instance       core1_0.Instance
 	debugMessenger ext_debug_utils.Messenger
 	surface        khr_surface.Surface
 
-	physicalDevice core.PhysicalDevice
-	device         core.Device
+	physicalDevice core1_0.PhysicalDevice
+	device         core1_0.Device
 
-	graphicsQueue core.Queue
-	presentQueue  core.Queue
+	graphicsQueue core1_0.Queue
+	presentQueue  core1_0.Queue
 
 	swapchainExtension    khr_swapchain.Extension
 	swapchain             khr_swapchain.Swapchain
-	swapchainImages       []core.Image
+	swapchainImages       []core1_0.Image
 	swapchainImageFormat  common.DataFormat
 	swapchainExtent       common.Extent2D
-	swapchainImageViews   []core.ImageView
-	swapchainFramebuffers []core.Framebuffer
+	swapchainImageViews   []core1_0.ImageView
+	swapchainFramebuffers []core1_0.Framebuffer
 
-	renderPass       core.RenderPass
-	pipelineLayout   core.PipelineLayout
-	graphicsPipeline core.Pipeline
+	renderPass       core1_0.RenderPass
+	pipelineLayout   core1_0.PipelineLayout
+	graphicsPipeline core1_0.Pipeline
 
-	commandPool    core.CommandPool
-	commandBuffers []core.CommandBuffer
+	commandPool    core1_0.CommandPool
+	commandBuffers []core1_0.CommandBuffer
 }
 
 func (app *HelloTriangleApplication) Run() error {
@@ -443,7 +443,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 	}
 	app.swapchainImages = images
 
-	var imageViews []core.ImageView
+	var imageViews []core1_0.ImageView
 	for _, image := range images {
 		view, _, err := app.loader.CreateImageView(app.device, nil, core1_0.ImageViewCreateOptions{
 			ViewType: core1_0.ViewType2D,

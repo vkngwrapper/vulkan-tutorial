@@ -37,22 +37,22 @@ type HelloTriangleApplication struct {
 	window *sdl.Window
 	loader core.Loader
 
-	instance       core.Instance
+	instance       core1_0.Instance
 	debugMessenger ext_debug_utils.Messenger
 	surface        khr_surface.Surface
 
-	physicalDevice core.PhysicalDevice
-	device         core.Device
+	physicalDevice core1_0.PhysicalDevice
+	device         core1_0.Device
 
-	graphicsQueue core.Queue
-	presentQueue  core.Queue
+	graphicsQueue core1_0.Queue
+	presentQueue  core1_0.Queue
 
 	swapchainExtension   khr_swapchain.Extension
 	swapchain            khr_swapchain.Swapchain
-	swapchainImages      []core.Image
+	swapchainImages      []core1_0.Image
 	swapchainImageFormat common.DataFormat
 	swapchainExtent      common.Extent2D
-	swapchainImageViews  []core.ImageView
+	swapchainImageViews  []core1_0.ImageView
 }
 
 func (app *HelloTriangleApplication) Run() error {
@@ -391,7 +391,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 	}
 	app.swapchainImages = images
 
-	var imageViews []core.ImageView
+	var imageViews []core1_0.ImageView
 	for _, image := range images {
 		view, _, err := app.loader.CreateImageView(app.device, nil, core1_0.ImageViewCreateOptions{
 			ViewType: core1_0.ViewType2D,

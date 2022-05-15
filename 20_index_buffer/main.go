@@ -89,41 +89,41 @@ type HelloTriangleApplication struct {
 	window *sdl.Window
 	loader core.Loader
 
-	instance       core.Instance
+	instance       core1_0.Instance
 	debugMessenger ext_debug_utils.Messenger
 	surface        khr_surface.Surface
 
-	physicalDevice core.PhysicalDevice
-	device         core.Device
+	physicalDevice core1_0.PhysicalDevice
+	device         core1_0.Device
 
-	graphicsQueue core.Queue
-	presentQueue  core.Queue
+	graphicsQueue core1_0.Queue
+	presentQueue  core1_0.Queue
 
 	swapchainExtension    khr_swapchain.Extension
 	swapchain             khr_swapchain.Swapchain
-	swapchainImages       []core.Image
+	swapchainImages       []core1_0.Image
 	swapchainImageFormat  common.DataFormat
 	swapchainExtent       common.Extent2D
-	swapchainImageViews   []core.ImageView
-	swapchainFramebuffers []core.Framebuffer
+	swapchainImageViews   []core1_0.ImageView
+	swapchainFramebuffers []core1_0.Framebuffer
 
-	renderPass       core.RenderPass
-	pipelineLayout   core.PipelineLayout
-	graphicsPipeline core.Pipeline
+	renderPass       core1_0.RenderPass
+	pipelineLayout   core1_0.PipelineLayout
+	graphicsPipeline core1_0.Pipeline
 
-	commandPool    core.CommandPool
-	commandBuffers []core.CommandBuffer
+	commandPool    core1_0.CommandPool
+	commandBuffers []core1_0.CommandBuffer
 
-	imageAvailableSemaphore []core.Semaphore
-	renderFinishedSemaphore []core.Semaphore
-	inFlightFence           []core.Fence
-	imagesInFlight          []core.Fence
+	imageAvailableSemaphore []core1_0.Semaphore
+	renderFinishedSemaphore []core1_0.Semaphore
+	inFlightFence           []core1_0.Fence
+	imagesInFlight          []core1_0.Fence
 	currentFrame            int
 
-	vertexBuffer       core.Buffer
-	vertexBufferMemory core.DeviceMemory
-	indexBuffer        core.Buffer
-	indexBufferMemory  core.DeviceMemory
+	vertexBuffer       core1_0.Buffer
+	vertexBufferMemory core1_0.DeviceMemory
+	indexBuffer        core1_0.Buffer
+	indexBufferMemory  core1_0.DeviceMemory
 }
 
 func (app *HelloTriangleApplication) Run() error {
@@ -276,11 +276,11 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
 	for _, framebuffer := range app.swapchainFramebuffers {
 		framebuffer.Destroy(nil)
 	}
-	app.swapchainFramebuffers = []core.Framebuffer{}
+	app.swapchainFramebuffers = []core1_0.Framebuffer{}
 
 	if len(app.commandBuffers) > 0 {
 		app.loader.FreeCommandBuffers(app.commandBuffers)
-		app.commandBuffers = []core.CommandBuffer{}
+		app.commandBuffers = []core1_0.CommandBuffer{}
 	}
 
 	if app.graphicsPipeline != nil {
@@ -301,7 +301,7 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
 	for _, imageView := range app.swapchainImageViews {
 		imageView.Destroy(nil)
 	}
-	app.swapchainImageViews = []core.ImageView{}
+	app.swapchainImageViews = []core1_0.ImageView{}
 
 	if app.swapchain != nil {
 		app.swapchain.Destroy(nil)
@@ -412,7 +412,7 @@ func (app *HelloTriangleApplication) recreateSwapChain() error {
 		return err
 	}
 
-	app.imagesInFlight = []core.Fence{}
+	app.imagesInFlight = []core1_0.Fence{}
 	for i := 0; i < len(app.swapchainImages); i++ {
 		app.imagesInFlight = append(app.imagesInFlight, nil)
 	}
@@ -648,7 +648,7 @@ func (app *HelloTriangleApplication) createImageViews() error {
 	}
 	app.swapchainImages = images
 
-	var imageViews []core.ImageView
+	var imageViews []core1_0.ImageView
 	for _, image := range images {
 		view, _, err := app.loader.CreateImageView(app.device, nil, core1_0.ImageViewCreateOptions{
 			ViewType: core1_0.ViewType2D,
@@ -912,7 +912,7 @@ func (app *HelloTriangleApplication) createCommandPool() error {
 	return nil
 }
 
-func writeData(memory core1_0.DeviceMemory, offset int, data interface{}) error {
+func writeData(memory core1_0.DeviceMemory, offset int, data any) error {
 	bufferSize := binary.Size(data)
 
 	memoryPtr, _, err := memory.MapMemory(offset, bufferSize, 0)

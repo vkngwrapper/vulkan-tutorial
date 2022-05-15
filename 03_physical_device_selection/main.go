@@ -26,10 +26,10 @@ type HelloTriangleApplication struct {
 	window *sdl.Window
 	loader core.Loader
 
-	instance       core.Instance
+	instance       core1_0.Instance
 	debugMessenger ext_debug_utils.Messenger
 
-	physicalDevice core.PhysicalDevice
+	physicalDevice core1_0.PhysicalDevice
 }
 
 func (app *HelloTriangleApplication) Run() error {
@@ -239,7 +239,7 @@ func (app *HelloTriangleApplication) logDebug(msgType ext_debug_utils.MessageTyp
 	return false
 }
 
-func fail(val interface{}) {
+func fail(val any) {
 	log.Fatalf("%+v\n", val)
 }
 

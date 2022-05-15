@@ -26,13 +26,13 @@ type HelloTriangleApplication struct {
 	window *sdl.Window
 	loader core.Loader
 
-	instance       core.Instance
+	instance       core1_0.Instance
 	debugMessenger ext_debug_utils.Messenger
 
-	physicalDevice core.PhysicalDevice
-	device         core.Device
+	physicalDevice core1_0.PhysicalDevice
+	device         core1_0.Device
 
-	graphicsQueue core.Queue
+	graphicsQueue core1_0.Queue
 }
 
 func (app *HelloTriangleApplication) Run() error {

@@ -63,7 +63,7 @@ func (app *HelloTriangleApplication) cleanup() {
 	sdl.Quit()
 }
 
-func fail(val interface{}) {
+func fail(val any) {
 	log.Fatalf("%+v\n", val)
 }
 
