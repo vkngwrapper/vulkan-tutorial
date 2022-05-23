@@ -259,7 +259,7 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
 	app.swapchainFramebuffers = []core1_0.Framebuffer{}
 
 	if len(app.commandBuffers) > 0 {
-		app.loader.FreeCommandBuffers(app.commandBuffers)
+		app.device.FreeCommandBuffers(app.commandBuffers)
 		app.commandBuffers = []core1_0.CommandBuffer{}
 	}
 
@@ -474,7 +474,7 @@ func (app *HelloTriangleApplication) createSurface() error {
 }
 
 func (app *HelloTriangleApplication) pickPhysicalDevice() error {
-	physicalDevices, _, err := app.loader.PhysicalDevices(app.instance)
+	physicalDevices, _, err := app.instance.PhysicalDevices()
 	if err != nil {
 		return err
 	}
@@ -532,7 +532,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		layerNames = append(layerNames, validationLayers...)
 	}
 
-	app.device, _, err = app.loader.CreateDevice(app.physicalDevice, nil, core1_0.DeviceCreateOptions{
+	app.device, _, err = app.physicalDevice.CreateDevice(nil, core1_0.DeviceCreateOptions{
 		QueueFamilies:   queueFamilyOptions,
 		EnabledFeatures: &core1_0.PhysicalDeviceFeatures{},
 		ExtensionNames:  extensionNames,
@@ -542,8 +542,8 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		return err
 	}
 
-	app.graphicsQueue = app.loader.GetQueue(app.device, *indices.GraphicsFamily, 0)
-	app.presentQueue = app.loader.GetQueue(app.device, *indices.PresentFamily, 0)
+	app.graphicsQueue = app.device.GetQueue(*indices.GraphicsFamily, 0)
+	app.presentQueue = app.device.GetQueue(*indices.PresentFamily, 0)
 	return nil
 }
 
@@ -614,7 +614,7 @@ func (app *HelloTriangleApplication) createImageViews() error {
 
 	var imageViews []core1_0.ImageView
 	for _, image := range images {
-		view, _, err := app.loader.CreateImageView(app.device, nil, core1_0.ImageViewCreateOptions{
+		view, _, err := app.device.CreateImageView(nil, core1_0.ImageViewCreateOptions{
 			ViewType: core1_0.ViewType2D,
 			Image:    image,
 			Format:   app.swapchainImageFormat,
@@ -644,7 +644,7 @@ func (app *HelloTriangleApplication) createImageViews() error {
 }
 
 func (app *HelloTriangleApplication) createRenderPass() error {
-	renderPass, _, err := app.loader.CreateRenderPass(app.device, nil, core1_0.RenderPassCreateOptions{
+	renderPass, _, err := app.device.CreateRenderPass(nil, core1_0.RenderPassCreateOptions{
 		Attachments: []core1_0.AttachmentDescription{
 			{
 				Format:         app.swapchainImageFormat,
@@ -711,7 +711,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		return err
 	}
 
-	vertShader, _, err := app.loader.CreateShaderModule(app.device, nil, core1_0.ShaderModuleCreateOptions{
+	vertShader, _, err := app.device.CreateShaderModule(nil, core1_0.ShaderModuleCreateOptions{
 		SpirVByteCode: bytesToBytecode(vertShaderBytes),
 	})
 	if err != nil {
@@ -725,7 +725,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		return err
 	}
 
-	fragShader, _, err := app.loader.CreateShaderModule(app.device, nil, core1_0.ShaderModuleCreateOptions{
+	fragShader, _, err := app.device.CreateShaderModule(nil, core1_0.ShaderModuleCreateOptions{
 		SpirVByteCode: bytesToBytecode(fragShaderBytes),
 	})
 	if err != nil {
@@ -806,12 +806,12 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		},
 	}
 
-	app.pipelineLayout, _, err = app.loader.CreatePipelineLayout(app.device, nil, core1_0.PipelineLayoutCreateOptions{})
+	app.pipelineLayout, _, err = app.device.CreatePipelineLayout(nil, core1_0.PipelineLayoutCreateOptions{})
 	if err != nil {
 		return err
 	}
 
-	pipelines, _, err := app.loader.CreateGraphicsPipelines(app.device, nil, nil, []core1_0.GraphicsPipelineCreateOptions{
+	pipelines, _, err := app.device.CreateGraphicsPipelines(nil, nil, []core1_0.GraphicsPipelineCreateOptions{
 		{
 			ShaderStages: []core1_0.ShaderStageOptions{
 				vertStage,
@@ -839,7 +839,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 
 func (app *HelloTriangleApplication) createFramebuffers() error {
 	for _, imageView := range app.swapchainImageViews {
-		framebuffer, _, err := app.loader.CreateFrameBuffer(app.device, nil, core1_0.FramebufferCreateOptions{
+		framebuffer, _, err := app.device.CreateFrameBuffer(nil, core1_0.FramebufferCreateOptions{
 			RenderPass: app.renderPass,
 			Layers:     1,
 			Attachments: []core1_0.ImageView{
@@ -864,7 +864,7 @@ func (app *HelloTriangleApplication) createCommandPool() error {
 		return err
 	}
 
-	pool, _, err := app.loader.CreateCommandPool(app.device, nil, core1_0.CommandPoolCreateOptions{
+	pool, _, err := app.device.CreateCommandPool(nil, core1_0.CommandPoolCreateOptions{
 		GraphicsQueueFamily: indices.GraphicsFamily,
 	})
 
@@ -878,7 +878,7 @@ func (app *HelloTriangleApplication) createCommandPool() error {
 
 func (app *HelloTriangleApplication) createCommandBuffers() error {
 
-	buffers, _, err := app.loader.AllocateCommandBuffers(core1_0.CommandBufferAllocateOptions{
+	buffers, _, err := app.device.AllocateCommandBuffers(core1_0.CommandBufferAllocateOptions{
 		CommandPool: app.commandPool,
 		Level:       core1_0.LevelPrimary,
 		BufferCount: len(app.swapchainImages),
@@ -925,21 +925,21 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
 
 func (app *HelloTriangleApplication) createSyncObjects() error {
 	for i := 0; i < MaxFramesInFlight; i++ {
-		semaphore, _, err := app.loader.CreateSemaphore(app.device, nil, core1_0.SemaphoreCreateOptions{})
+		semaphore, _, err := app.device.CreateSemaphore(nil, core1_0.SemaphoreCreateOptions{})
 		if err != nil {
 			return err
 		}
 
 		app.imageAvailableSemaphore = append(app.imageAvailableSemaphore, semaphore)
 
-		semaphore, _, err = app.loader.CreateSemaphore(app.device, nil, core1_0.SemaphoreCreateOptions{})
+		semaphore, _, err = app.device.CreateSemaphore(nil, core1_0.SemaphoreCreateOptions{})
 		if err != nil {
 			return err
 		}
 
 		app.renderFinishedSemaphore = append(app.renderFinishedSemaphore, semaphore)
 
-		fence, _, err := app.loader.CreateFence(app.device, nil, core1_0.FenceCreateOptions{
+		fence, _, err := app.device.CreateFence(nil, core1_0.FenceCreateOptions{
 			Flags: core1_0.FenceCreateSignaled,
 		})
 		if err != nil {

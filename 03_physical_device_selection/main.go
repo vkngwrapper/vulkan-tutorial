@@ -188,7 +188,7 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 }
 
 func (app *HelloTriangleApplication) pickPhysicalDevice() error {
-	physicalDevices, _, err := app.loader.PhysicalDevices(app.instance)
+	physicalDevices, _, err := app.instance.PhysicalDevices()
 	if err != nil {
 		return err
 	}
