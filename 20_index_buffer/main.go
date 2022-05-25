@@ -693,7 +693,7 @@ func (app *HelloTriangleApplication) createRenderPass() error {
 				FinalLayout:    khr_swapchain.ImageLayoutPresentSrc,
 			},
 		},
-		SubPasses: []core1_0.SubPass{
+		SubPassDescriptions: []core1_0.SubPassDescription{
 			{
 				BindPoint: core1_0.BindGraphics,
 				ColorAttachments: []common.AttachmentReference{

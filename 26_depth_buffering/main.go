@@ -841,7 +841,7 @@ func (app *HelloTriangleApplication) createRenderPass() error {
 				FinalLayout:    core1_0.ImageLayoutDepthStencilAttachmentOptimal,
 			},
 		},
-		SubPasses: []core1_0.SubPass{
+		SubPassDescriptions: []core1_0.SubPassDescription{
 			{
 				BindPoint: core1_0.BindGraphics,
 				ColorAttachments: []common.AttachmentReference{
