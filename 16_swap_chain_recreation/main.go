@@ -795,7 +795,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 
 func (app *HelloTriangleApplication) createFramebuffers() error {
 	for _, imageView := range app.swapchainImageViews {
-		framebuffer, _, err := app.device.CreateFrameBuffer(nil, core1_0.FramebufferCreateOptions{
+		framebuffer, _, err := app.device.CreateFramebuffer(nil, core1_0.FramebufferCreateOptions{
 			RenderPass: app.renderPass,
 			Layers:     1,
 			Attachments: []core1_0.ImageView{
