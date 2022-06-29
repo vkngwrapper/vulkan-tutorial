@@ -99,8 +99,8 @@ type HelloTriangleApplication struct {
 	swapchainExtension    khr_swapchain.Extension
 	swapchain             khr_swapchain.Swapchain
 	swapchainImages       []core1_0.Image
-	swapchainImageFormat  common.DataFormat
-	swapchainExtent       common.Extent2D
+	swapchainImageFormat  core1_0.DataFormat
+	swapchainExtent       core1_0.Extent2D
 	swapchainImageViews   []core1_0.ImageView
 	swapchainFramebuffers []core1_0.Framebuffer
 
@@ -642,7 +642,7 @@ func (app *HelloTriangleApplication) createImageViews() error {
 				B: core1_0.SwizzleIdentity,
 				A: core1_0.SwizzleIdentity,
 			},
-			SubresourceRange: common.ImageSubresourceRange{
+			SubresourceRange: core1_0.ImageSubresourceRange{
 				AspectMask:     core1_0.AspectColor,
 				BaseMipLevel:   0,
 				LevelCount:     1,
@@ -678,7 +678,7 @@ func (app *HelloTriangleApplication) createRenderPass() error {
 		SubPassDescriptions: []core1_0.SubPassDescription{
 			{
 				BindPoint: core1_0.BindGraphics,
-				ColorAttachments: []common.AttachmentReference{
+				ColorAttachments: []core1_0.AttachmentReference{
 					{
 						AttachmentIndex: 0,
 						Layout:          core1_0.ImageLayoutColorAttachmentOptimal,
@@ -774,7 +774,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 	}
 
 	viewport := &core1_0.ViewportStateOptions{
-		Viewports: []common.Viewport{
+		Viewports: []core1_0.Viewport{
 			{
 				X:        0,
 				Y:        0,
@@ -784,9 +784,9 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 				MaxDepth: 1,
 			},
 		},
-		Scissors: []common.Rect2D{
+		Scissors: []core1_0.Rect2D{
 			{
-				Offset: common.Offset2D{X: 0, Y: 0},
+				Offset: core1_0.Offset2D{X: 0, Y: 0},
 				Extent: app.swapchainExtent,
 			},
 		},
@@ -819,7 +819,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		Attachments: []core1_0.ColorBlendAttachment{
 			{
 				BlendEnabled: false,
-				WriteMask:    common.ComponentRed | common.ComponentGreen | common.ComponentBlue | common.ComponentAlpha,
+				WriteMask:    core1_0.ComponentRed | core1_0.ComponentGreen | core1_0.ComponentBlue | core1_0.ComponentAlpha,
 			},
 		},
 	}
@@ -944,7 +944,7 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
 	return nil
 }
 
-func (app *HelloTriangleApplication) findMemoryType(typeFilter uint32, properties common.MemoryProperties) (int, error) {
+func (app *HelloTriangleApplication) findMemoryType(typeFilter uint32, properties core1_0.MemoryProperties) (int, error) {
 	memProperties := app.physicalDevice.MemoryProperties()
 	for i, memoryType := range memProperties.MemoryTypes {
 		typeBit := uint32(1 << i)
@@ -979,12 +979,12 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
 			core1_0.RenderPassBeginOptions{
 				RenderPass:  app.renderPass,
 				Framebuffer: app.swapchainFramebuffers[bufferIdx],
-				RenderArea: common.Rect2D{
-					Offset: common.Offset2D{X: 0, Y: 0},
+				RenderArea: core1_0.Rect2D{
+					Offset: core1_0.Offset2D{X: 0, Y: 0},
 					Extent: app.swapchainExtent,
 				},
-				ClearValues: []common.ClearValue{
-					common.ClearValueFloat{0, 0, 0, 1},
+				ClearValues: []core1_0.ClearValue{
+					core1_0.ClearValueFloat{0, 0, 0, 1},
 				},
 			})
 		if err != nil {
@@ -1069,7 +1069,7 @@ func (app *HelloTriangleApplication) drawFrame() error {
 	_, err = app.graphicsQueue.SubmitToQueue(app.inFlightFence[app.currentFrame], []core1_0.SubmitOptions{
 		{
 			WaitSemaphores:   []core1_0.Semaphore{app.imageAvailableSemaphore[app.currentFrame]},
-			WaitDstStages:    []common.PipelineStages{core1_0.PipelineStageColorAttachmentOutput},
+			WaitDstStages:    []core1_0.PipelineStages{core1_0.PipelineStageColorAttachmentOutput},
 			CommandBuffers:   []core1_0.CommandBuffer{app.commandBuffers[imageIndex]},
 			SignalSemaphores: []core1_0.Semaphore{app.renderFinishedSemaphore[app.currentFrame]},
 		},
@@ -1114,7 +1114,7 @@ func (app *HelloTriangleApplication) chooseSwapPresentMode(availablePresentModes
 	return khr_surface.PresentFIFO
 }
 
-func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *khr_surface.Capabilities) common.Extent2D {
+func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *khr_surface.Capabilities) core1_0.Extent2D {
 	if capabilities.CurrentExtent.Width != -1 {
 		return capabilities.CurrentExtent
 	}
@@ -1136,7 +1136,7 @@ func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *khr_surface.
 		height = capabilities.MaxImageExtent.Height
 	}
 
-	return common.Extent2D{Width: width, Height: height}
+	return core1_0.Extent2D{Width: width, Height: height}
 }
 
 func (app *HelloTriangleApplication) querySwapChainSupport(device core1_0.PhysicalDevice) (SwapChainSupportDetails, error) {

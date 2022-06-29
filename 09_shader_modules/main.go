@@ -54,8 +54,8 @@ type HelloTriangleApplication struct {
 	swapchainExtension   khr_swapchain.Extension
 	swapchain            khr_swapchain.Swapchain
 	swapchainImages      []core1_0.Image
-	swapchainImageFormat common.DataFormat
-	swapchainExtent      common.Extent2D
+	swapchainImageFormat core1_0.DataFormat
+	swapchainExtent      core1_0.Extent2D
 	swapchainImageViews  []core1_0.ImageView
 }
 
@@ -407,7 +407,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 				B: core1_0.SwizzleIdentity,
 				A: core1_0.SwizzleIdentity,
 			},
-			SubresourceRange: common.ImageSubresourceRange{
+			SubresourceRange: core1_0.ImageSubresourceRange{
 				AspectMask:     core1_0.AspectColor,
 				BaseMipLevel:   0,
 				LevelCount:     1,
@@ -505,7 +505,7 @@ func (app *HelloTriangleApplication) chooseSwapPresentMode(availablePresentModes
 	return khr_surface.PresentFIFO
 }
 
-func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *khr_surface.Capabilities) common.Extent2D {
+func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *khr_surface.Capabilities) core1_0.Extent2D {
 	if capabilities.CurrentExtent.Width != -1 {
 		return capabilities.CurrentExtent
 	}
@@ -527,7 +527,7 @@ func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *khr_surface.
 		height = capabilities.MaxImageExtent.Height
 	}
 
-	return common.Extent2D{Width: width, Height: height}
+	return core1_0.Extent2D{Width: width, Height: height}
 }
 
 func (app *HelloTriangleApplication) querySwapChainSupport(device core1_0.PhysicalDevice) (SwapChainSupportDetails, error) {

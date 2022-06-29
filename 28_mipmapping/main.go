@@ -111,8 +111,8 @@ type HelloTriangleApplication struct {
 	swapchainExtension    khr_swapchain.Extension
 	swapchain             khr_swapchain.Swapchain
 	swapchainImages       []core1_0.Image
-	swapchainImageFormat  common.DataFormat
-	swapchainExtent       common.Extent2D
+	swapchainImageFormat  core1_0.DataFormat
+	swapchainExtent       core1_0.Extent2D
 	swapchainImageViews   []core1_0.ImageView
 	swapchainFramebuffers []core1_0.Framebuffer
 
@@ -835,13 +835,13 @@ func (app *HelloTriangleApplication) createRenderPass() error {
 		SubPassDescriptions: []core1_0.SubPassDescription{
 			{
 				BindPoint: core1_0.BindGraphics,
-				ColorAttachments: []common.AttachmentReference{
+				ColorAttachments: []core1_0.AttachmentReference{
 					{
 						AttachmentIndex: 0,
 						Layout:          core1_0.ImageLayoutColorAttachmentOptimal,
 					},
 				},
-				DepthStencilAttachment: &common.AttachmentReference{
+				DepthStencilAttachment: &core1_0.AttachmentReference{
 					AttachmentIndex: 1,
 					Layout:          core1_0.ImageLayoutDepthStencilAttachmentOptimal,
 				},
@@ -962,7 +962,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 	}
 
 	viewport := &core1_0.ViewportStateOptions{
-		Viewports: []common.Viewport{
+		Viewports: []core1_0.Viewport{
 			{
 				X:        0,
 				Y:        0,
@@ -972,9 +972,9 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 				MaxDepth: 1,
 			},
 		},
-		Scissors: []common.Rect2D{
+		Scissors: []core1_0.Rect2D{
 			{
-				Offset: common.Offset2D{X: 0, Y: 0},
+				Offset: core1_0.Offset2D{X: 0, Y: 0},
 				Extent: app.swapchainExtent,
 			},
 		},
@@ -1013,7 +1013,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		Attachments: []core1_0.ColorBlendAttachment{
 			{
 				BlendEnabled: false,
-				WriteMask:    common.ComponentRed | common.ComponentGreen | common.ComponentBlue | common.ComponentAlpha,
+				WriteMask:    core1_0.ComponentRed | core1_0.ComponentGreen | core1_0.ComponentBlue | core1_0.ComponentAlpha,
 			},
 		},
 	}
@@ -1111,7 +1111,7 @@ func (app *HelloTriangleApplication) createDepthResources() error {
 	return err
 }
 
-func (app *HelloTriangleApplication) findSupportedFormat(formats []common.DataFormat, tiling common.ImageTiling, features common.FormatFeatures) (common.DataFormat, error) {
+func (app *HelloTriangleApplication) findSupportedFormat(formats []core1_0.DataFormat, tiling core1_0.ImageTiling, features core1_0.FormatFeatures) (core1_0.DataFormat, error) {
 	for _, format := range formats {
 		props := app.physicalDevice.FormatProperties(format)
 
@@ -1125,13 +1125,13 @@ func (app *HelloTriangleApplication) findSupportedFormat(formats []common.DataFo
 	return 0, errors.Newf("failed to find supported format for tiling %s, featureset %s", tiling, features)
 }
 
-func (app *HelloTriangleApplication) findDepthFormat() (common.DataFormat, error) {
-	return app.findSupportedFormat([]common.DataFormat{core1_0.DataFormatD32SignedFloat, core1_0.DataFormatD32SignedFloatS8UnsignedInt, core1_0.DataFormatD24UnsignedNormalizedS8UnsignedInt},
+func (app *HelloTriangleApplication) findDepthFormat() (core1_0.DataFormat, error) {
+	return app.findSupportedFormat([]core1_0.DataFormat{core1_0.DataFormatD32SignedFloat, core1_0.DataFormatD32SignedFloatS8UnsignedInt, core1_0.DataFormatD24UnsignedNormalizedS8UnsignedInt},
 		core1_0.ImageTilingOptimal,
 		core1_0.FormatFeatureDepthStencilAttachment)
 }
 
-func hasStencilComponent(format common.DataFormat) bool {
+func hasStencilComponent(format core1_0.DataFormat) bool {
 	return format == core1_0.DataFormatD32SignedFloatS8UnsignedInt || format == core1_0.DataFormatD24UnsignedNormalizedS8UnsignedInt
 }
 
@@ -1198,7 +1198,7 @@ func (app *HelloTriangleApplication) createTextureImage() error {
 	return nil
 }
 
-func (app *HelloTriangleApplication) generateMipmaps(image core1_0.Image, imageFormat common.DataFormat, width, height int, mipLevels int) error {
+func (app *HelloTriangleApplication) generateMipmaps(image core1_0.Image, imageFormat core1_0.DataFormat, width, height int, mipLevels int) error {
 
 	properties := app.physicalDevice.FormatProperties(imageFormat)
 
@@ -1215,7 +1215,7 @@ func (app *HelloTriangleApplication) generateMipmaps(image core1_0.Image, imageF
 		Image:               image,
 		SrcQueueFamilyIndex: -1,
 		DstQueueFamilyIndex: -1,
-		SubresourceRange: common.ImageSubresourceRange{
+		SubresourceRange: core1_0.ImageSubresourceRange{
 			AspectMask:     core1_0.AspectColor,
 			BaseArrayLayer: 0,
 			LayerCount:     1,
@@ -1248,24 +1248,24 @@ func (app *HelloTriangleApplication) generateMipmaps(image core1_0.Image, imageF
 		}
 		err = commandBuffer.CmdBlitImage(image, core1_0.ImageLayoutTransferSrcOptimal, image, core1_0.ImageLayoutTransferDstOptimal, []core1_0.ImageBlit{
 			{
-				SourceSubresource: common.ImageSubresourceLayers{
+				SourceSubresource: core1_0.ImageSubresourceLayers{
 					AspectMask:     core1_0.AspectColor,
 					MipLevel:       i - 1,
 					BaseArrayLayer: 0,
 					LayerCount:     1,
 				},
-				SourceOffsets: [2]common.Offset3D{
+				SourceOffsets: [2]core1_0.Offset3D{
 					{X: 0, Y: 0, Z: 0},
 					{X: mipWidth, Y: mipHeight, Z: 1},
 				},
 
-				DestinationSubresource: common.ImageSubresourceLayers{
+				DestinationSubresource: core1_0.ImageSubresourceLayers{
 					AspectMask:     core1_0.AspectColor,
 					MipLevel:       i,
 					BaseArrayLayer: 0,
 					LayerCount:     1,
 				},
-				DestinationOffsets: [2]common.Offset3D{
+				DestinationOffsets: [2]core1_0.Offset3D{
 					{X: 0, Y: 0, Z: 0},
 					{X: nextMipWidth, Y: nextMipHeight, Z: 1},
 				},
@@ -1338,12 +1338,12 @@ func (app *HelloTriangleApplication) createSampler() error {
 	return err
 }
 
-func (app *HelloTriangleApplication) createImageView(image core1_0.Image, format common.DataFormat, aspect common.ImageAspectFlags, mipLevels int) (core1_0.ImageView, error) {
+func (app *HelloTriangleApplication) createImageView(image core1_0.Image, format core1_0.DataFormat, aspect core1_0.ImageAspectFlags, mipLevels int) (core1_0.ImageView, error) {
 	imageView, _, err := app.device.CreateImageView(nil, core1_0.ImageViewCreateOptions{
 		Image:    image,
 		ViewType: core1_0.ViewType2D,
 		Format:   format,
-		SubresourceRange: common.ImageSubresourceRange{
+		SubresourceRange: core1_0.ImageSubresourceRange{
 			AspectMask:     aspect,
 			BaseMipLevel:   0,
 			LevelCount:     mipLevels,
@@ -1354,10 +1354,10 @@ func (app *HelloTriangleApplication) createImageView(image core1_0.Image, format
 	return imageView, err
 }
 
-func (app *HelloTriangleApplication) createImage(width, height int, mipLevels int, format common.DataFormat, tiling common.ImageTiling, usage common.ImageUsages, memoryProperties common.MemoryProperties) (core1_0.Image, core1_0.DeviceMemory, error) {
+func (app *HelloTriangleApplication) createImage(width, height int, mipLevels int, format core1_0.DataFormat, tiling core1_0.ImageTiling, usage core1_0.ImageUsages, memoryProperties core1_0.MemoryProperties) (core1_0.Image, core1_0.DeviceMemory, error) {
 	image, _, err := app.device.CreateImage(nil, core1_0.ImageCreateOptions{
 		ImageType: core1_0.ImageType2D,
-		Extent: common.Extent3D{
+		Extent: core1_0.Extent3D{
 			Width:  width,
 			Height: height,
 			Depth:  1,
@@ -1394,14 +1394,14 @@ func (app *HelloTriangleApplication) createImage(width, height int, mipLevels in
 	return image, imageMemory, nil
 }
 
-func (app *HelloTriangleApplication) transitionImageLayout(image core1_0.Image, format common.DataFormat, oldLayout common.ImageLayout, newLayout common.ImageLayout, mipLevels int) error {
+func (app *HelloTriangleApplication) transitionImageLayout(image core1_0.Image, format core1_0.DataFormat, oldLayout core1_0.ImageLayout, newLayout core1_0.ImageLayout, mipLevels int) error {
 	buffer, err := app.beginSingleTimeCommands()
 	if err != nil {
 		return err
 	}
 
-	var sourceStage, destStage common.PipelineStages
-	var sourceAccess, destAccess common.AccessFlags
+	var sourceStage, destStage core1_0.PipelineStages
+	var sourceAccess, destAccess core1_0.AccessFlags
 
 	if oldLayout == core1_0.ImageLayoutUndefined && newLayout == core1_0.ImageLayoutTransferDstOptimal {
 		sourceAccess = 0
@@ -1424,7 +1424,7 @@ func (app *HelloTriangleApplication) transitionImageLayout(image core1_0.Image, 
 			SrcQueueFamilyIndex: -1,
 			DstQueueFamilyIndex: -1,
 			Image:               image,
-			SubresourceRange: common.ImageSubresourceRange{
+			SubresourceRange: core1_0.ImageSubresourceRange{
 				AspectMask:     core1_0.AspectColor,
 				BaseMipLevel:   0,
 				LevelCount:     mipLevels,
@@ -1454,14 +1454,14 @@ func (app *HelloTriangleApplication) copyBufferToImage(buffer core1_0.Buffer, im
 			BufferRowLength:   0,
 			BufferImageHeight: 0,
 
-			ImageSubresource: common.ImageSubresourceLayers{
+			ImageSubresource: core1_0.ImageSubresourceLayers{
 				AspectMask:     core1_0.AspectColor,
 				MipLevel:       0,
 				BaseArrayLayer: 0,
 				LayerCount:     1,
 			},
-			ImageOffset: common.Offset3D{X: 0, Y: 0, Z: 0},
-			ImageExtent: common.Extent3D{Width: width, Height: height, Depth: 1},
+			ImageOffset: core1_0.Offset3D{X: 0, Y: 0, Z: 0},
+			ImageExtent: core1_0.Extent3D{Width: width, Height: height, Depth: 1},
 		},
 	})
 	if err != nil {
@@ -1698,7 +1698,7 @@ func (app *HelloTriangleApplication) createDescriptorSets() error {
 	return nil
 }
 
-func (app *HelloTriangleApplication) createBuffer(size int, usage common.BufferUsages, properties common.MemoryProperties) (core1_0.Buffer, core1_0.DeviceMemory, error) {
+func (app *HelloTriangleApplication) createBuffer(size int, usage core1_0.BufferUsages, properties core1_0.MemoryProperties) (core1_0.Buffer, core1_0.DeviceMemory, error) {
 	buffer, _, err := app.device.CreateBuffer(nil, core1_0.BufferCreateOptions{
 		BufferSize:  size,
 		Usage:       usage,
@@ -1788,7 +1788,7 @@ func (app *HelloTriangleApplication) copyBuffer(srcBuffer core1_0.Buffer, dstBuf
 	return app.endSingleTimeCommands(buffer)
 }
 
-func (app *HelloTriangleApplication) findMemoryType(typeFilter uint32, properties common.MemoryProperties) (int, error) {
+func (app *HelloTriangleApplication) findMemoryType(typeFilter uint32, properties core1_0.MemoryProperties) (int, error) {
 	memProperties := app.physicalDevice.MemoryProperties()
 	for i, memoryType := range memProperties.MemoryTypes {
 		typeBit := uint32(1 << i)
@@ -1823,13 +1823,13 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
 			core1_0.RenderPassBeginOptions{
 				RenderPass:  app.renderPass,
 				Framebuffer: app.swapchainFramebuffers[bufferIdx],
-				RenderArea: common.Rect2D{
-					Offset: common.Offset2D{X: 0, Y: 0},
+				RenderArea: core1_0.Rect2D{
+					Offset: core1_0.Offset2D{X: 0, Y: 0},
 					Extent: app.swapchainExtent,
 				},
-				ClearValues: []common.ClearValue{
-					common.ClearValueFloat{0, 0, 0, 1},
-					common.ClearValueDepthStencil{Depth: 1.0, Stencil: 0},
+				ClearValues: []core1_0.ClearValue{
+					core1_0.ClearValueFloat{0, 0, 0, 1},
+					core1_0.ClearValueDepthStencil{Depth: 1.0, Stencil: 0},
 				},
 			})
 		if err != nil {
@@ -1923,7 +1923,7 @@ func (app *HelloTriangleApplication) drawFrame() error {
 	_, err = app.graphicsQueue.SubmitToQueue(app.inFlightFence[app.currentFrame], []core1_0.SubmitOptions{
 		{
 			WaitSemaphores:   []core1_0.Semaphore{app.imageAvailableSemaphore[app.currentFrame]},
-			WaitDstStages:    []common.PipelineStages{core1_0.PipelineStageColorAttachmentOutput},
+			WaitDstStages:    []core1_0.PipelineStages{core1_0.PipelineStageColorAttachmentOutput},
 			CommandBuffers:   []core1_0.CommandBuffer{app.commandBuffers[imageIndex]},
 			SignalSemaphores: []core1_0.Semaphore{app.renderFinishedSemaphore[app.currentFrame]},
 		},
@@ -1988,7 +1988,7 @@ func (app *HelloTriangleApplication) chooseSwapPresentMode(availablePresentModes
 	return khr_surface.PresentFIFO
 }
 
-func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *khr_surface.Capabilities) common.Extent2D {
+func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *khr_surface.Capabilities) core1_0.Extent2D {
 	if capabilities.CurrentExtent.Width != -1 {
 		return capabilities.CurrentExtent
 	}
@@ -2010,7 +2010,7 @@ func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *khr_surface.
 		height = capabilities.MaxImageExtent.Height
 	}
 
-	return common.Extent2D{Width: width, Height: height}
+	return core1_0.Extent2D{Width: width, Height: height}
 }
 
 func (app *HelloTriangleApplication) querySwapChainSupport(device core1_0.PhysicalDevice) (SwapChainSupportDetails, error) {
