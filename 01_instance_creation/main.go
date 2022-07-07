@@ -80,12 +80,12 @@ func (app *HelloTriangleApplication) cleanup() {
 }
 
 func (app *HelloTriangleApplication) createInstance() error {
-	instanceOptions := core1_0.InstanceCreateOptions{
+	instanceOptions := core1_0.InstanceCreateInfo{
 		ApplicationName:    "Hello Triangle",
 		ApplicationVersion: common.CreateVersion(1, 0, 0),
 		EngineName:         "No Engine",
 		EngineVersion:      common.CreateVersion(1, 0, 0),
-		VulkanVersion:      common.Vulkan1_2,
+		APIVersion:         common.Vulkan1_2,
 	}
 
 	// Add extensions
@@ -100,7 +100,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		if !hasExt {
 			return errors.Newf("createinstance: cannot initialize sdl: missing extension %s", ext)
 		}
-		instanceOptions.ExtensionNames = append(instanceOptions.ExtensionNames, ext)
+		instanceOptions.EnabledExtensionNames = append(instanceOptions.EnabledExtensionNames, ext)
 	}
 
 	app.instance, _, err = app.loader.CreateInstance(nil, instanceOptions)

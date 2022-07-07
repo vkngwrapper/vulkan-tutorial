@@ -136,12 +136,12 @@ func (app *HelloTriangleApplication) cleanup() {
 }
 
 func (app *HelloTriangleApplication) createInstance() error {
-	instanceOptions := core1_0.InstanceCreateOptions{
+	instanceOptions := core1_0.InstanceCreateInfo{
 		ApplicationName:    "Hello Triangle",
 		ApplicationVersion: common.CreateVersion(1, 0, 0),
 		EngineName:         "No Engine",
 		EngineVersion:      common.CreateVersion(1, 0, 0),
-		VulkanVersion:      common.Vulkan1_2,
+		APIVersion:         common.Vulkan1_2,
 	}
 
 	// Add extensions
@@ -156,11 +156,11 @@ func (app *HelloTriangleApplication) createInstance() error {
 		if !hasExt {
 			return errors.Newf("createinstance: cannot initialize sdl: missing extension %s", ext)
 		}
-		instanceOptions.ExtensionNames = append(instanceOptions.ExtensionNames, ext)
+		instanceOptions.EnabledExtensionNames = append(instanceOptions.EnabledExtensionNames, ext)
 	}
 
 	if enableValidationLayers {
-		instanceOptions.ExtensionNames = append(instanceOptions.ExtensionNames, ext_debug_utils.ExtensionName)
+		instanceOptions.EnabledExtensionNames = append(instanceOptions.EnabledExtensionNames, ext_debug_utils.ExtensionName)
 	}
 
 	// Add layers
@@ -175,7 +175,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 			if !hasValidation {
 				return errors.Newf("createInstance: cannot add validation- layer %s not available- install LunarG Vulkan SDK", layer)
 			}
-			instanceOptions.LayerNames = append(instanceOptions.LayerNames, layer)
+			instanceOptions.EnabledLayerNames = append(instanceOptions.EnabledLayerNames, layer)
 		}
 
 		// Add debug messenger
@@ -190,11 +190,11 @@ func (app *HelloTriangleApplication) createInstance() error {
 	return nil
 }
 
-func (app *HelloTriangleApplication) debugMessengerOptions() ext_debug_utils.CreateOptions {
-	return ext_debug_utils.CreateOptions{
-		CaptureSeverities: ext_debug_utils.SeverityError | ext_debug_utils.SeverityWarning,
-		CaptureTypes:      ext_debug_utils.TypeGeneral | ext_debug_utils.TypeValidation | ext_debug_utils.TypePerformance,
-		Callback:          app.logDebug,
+func (app *HelloTriangleApplication) debugMessengerOptions() ext_debug_utils.DebugUtilsMessengerCreateInfo {
+	return ext_debug_utils.DebugUtilsMessengerCreateInfo{
+		MessageSeverity: ext_debug_utils.SeverityError | ext_debug_utils.SeverityWarning,
+		MessageType:     ext_debug_utils.TypeGeneral | ext_debug_utils.TypeValidation | ext_debug_utils.TypePerformance,
+		UserCallback:    app.logDebug,
 	}
 }
 
@@ -205,7 +205,7 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 
 	var err error
 	debugLoader := ext_debug_utils.CreateExtensionFromInstance(app.instance)
-	app.debugMessenger, _, err = debugLoader.CreateMessenger(app.instance, nil, app.debugMessengerOptions())
+	app.debugMessenger, _, err = debugLoader.CreateDebugUtilsMessenger(app.instance, nil, app.debugMessengerOptions())
 	if err != nil {
 		return err
 	}
@@ -225,7 +225,7 @@ func (app *HelloTriangleApplication) createSurface() error {
 }
 
 func (app *HelloTriangleApplication) pickPhysicalDevice() error {
-	physicalDevices, _, err := app.instance.PhysicalDevices()
+	physicalDevices, _, err := app.instance.EnumeratePhysicalDevices()
 	if err != nil {
 		return err
 	}
@@ -255,19 +255,19 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		uniqueQueueFamilies = append(uniqueQueueFamilies, *indices.PresentFamily)
 	}
 
-	var queueFamilyOptions []core1_0.DeviceQueueCreateOptions
+	var queueFamilyOptions []core1_0.DeviceQueueCreateInfo
 	queuePriority := float32(1.0)
 	for _, queueFamily := range uniqueQueueFamilies {
-		queueFamilyOptions = append(queueFamilyOptions, core1_0.DeviceQueueCreateOptions{
-			QueueFamilyIndex:       queueFamily,
-			CreatedQueuePriorities: []float32{queuePriority},
+		queueFamilyOptions = append(queueFamilyOptions, core1_0.DeviceQueueCreateInfo{
+			QueueFamilyIndex: queueFamily,
+			QueuePriorities:  []float32{queuePriority},
 		})
 	}
 
 	var extensionNames []string
 
 	// Makes this example compatible with vulkan portability, necessary to run on mobile & mac
-	extensions, _, err := app.physicalDevice.AvailableExtensions()
+	extensions, _, err := app.physicalDevice.EnumerateDeviceExtensionProperties()
 	if err != nil {
 		return err
 	}
@@ -282,11 +282,11 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		layerNames = append(layerNames, validationLayers...)
 	}
 
-	app.device, _, err = app.physicalDevice.CreateDevice(nil, core1_0.DeviceCreateOptions{
-		QueueFamilies:   queueFamilyOptions,
-		EnabledFeatures: &core1_0.PhysicalDeviceFeatures{},
-		ExtensionNames:  extensionNames,
-		LayerNames:      layerNames,
+	app.device, _, err = app.physicalDevice.CreateDevice(nil, core1_0.DeviceCreateInfo{
+		QueueCreateInfos:      queueFamilyOptions,
+		EnabledFeatures:       &core1_0.PhysicalDeviceFeatures{},
+		EnabledExtensionNames: extensionNames,
+		EnabledLayerNames:     layerNames,
 	})
 	if err != nil {
 		return err
@@ -311,12 +311,12 @@ func (app *HelloTriangleApplication) findQueueFamilies(device core1_0.PhysicalDe
 	queueFamilies := device.QueueFamilyProperties()
 
 	for queueFamilyIdx, queueFamily := range queueFamilies {
-		if (queueFamily.Flags & core1_0.QueueGraphics) != 0 {
+		if (queueFamily.QueueFlags & core1_0.QueueGraphics) != 0 {
 			indices.GraphicsFamily = new(int)
 			*indices.GraphicsFamily = queueFamilyIdx
 		}
 
-		supported, _, err := app.surface.SupportsDevice(device, queueFamilyIdx)
+		supported, _, err := app.surface.PhysicalDeviceSurfaceSupport(device, queueFamilyIdx)
 		if err != nil {
 			return indices, err
 		}
@@ -334,7 +334,7 @@ func (app *HelloTriangleApplication) findQueueFamilies(device core1_0.PhysicalDe
 	return indices, nil
 }
 
-func (app *HelloTriangleApplication) logDebug(msgType ext_debug_utils.MessageTypes, severity ext_debug_utils.MessageSeverities, data *ext_debug_utils.CallbackDataOptions) bool {
+func (app *HelloTriangleApplication) logDebug(msgType ext_debug_utils.MessageTypes, severity ext_debug_utils.MessageSeverities, data *ext_debug_utils.DebugUtilsMessengerCallbackData) bool {
 	log.Printf("[%s %s] - %s", severity, msgType, data.Message)
 	return false
 }
