@@ -4,15 +4,15 @@ import (
 	"bytes"
 	"embed"
 	"encoding/binary"
-	"github.com/CannibalVox/VKng/core"
-	"github.com/CannibalVox/VKng/core/common"
-	"github.com/CannibalVox/VKng/core/core1_0"
-	"github.com/CannibalVox/VKng/extensions/ext_debug_utils"
-	"github.com/CannibalVox/VKng/extensions/khr_surface"
-	"github.com/CannibalVox/VKng/extensions/khr_swapchain"
-	"github.com/CannibalVox/VKng/extensions/vkng_surface_sdl2"
 	"github.com/cockroachdb/errors"
 	"github.com/veandco/go-sdl2/sdl"
+	"github.com/vkngwrapper/core"
+	"github.com/vkngwrapper/core/common"
+	"github.com/vkngwrapper/core/core1_0"
+	"github.com/vkngwrapper/extensions/ext_debug_utils"
+	"github.com/vkngwrapper/extensions/khr_surface"
+	"github.com/vkngwrapper/extensions/khr_swapchain"
+	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2"
 	"log"
 	"unsafe"
 )
@@ -481,7 +481,7 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 }
 
 func (app *HelloTriangleApplication) createSurface() error {
-	surfaceLoader := vkng_surface_sdl2.CreateExtensionFromInstance(app.instance)
+	surfaceLoader := vkng_sdl2.CreateExtensionFromInstance(app.instance)
 	surface, _, err := surfaceLoader.CreateSurface(app.instance, app.window)
 	if err != nil {
 		return err
