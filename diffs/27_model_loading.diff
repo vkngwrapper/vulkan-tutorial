@@ -1,0 +1,185 @@
+diff --git a/../steps/26_depth_buffering/main.go b/../steps/27_model_loading/main.go
+index 054255f..f22c2ef 100644
+--- a/../steps/26_depth_buffering/main.go
++++ b/../steps/27_model_loading/main.go
+@@ -5,6 +5,7 @@ import (
+ 	"embed"
+ 	"encoding/binary"
+ 	"github.com/cockroachdb/errors"
++	"github.com/g3n/engine/loader/obj"
+ 	"github.com/go-gl/mathgl/mgl32"
+ 	"github.com/loov/hrtime"
+ 	"github.com/veandco/go-sdl2/sdl"
+@@ -21,7 +22,7 @@ import (
+ 	"unsafe"
+ )
+ 
+-//go:embed shaders images
++//go:embed shaders images meshes
+ var fileSystem embed.FS
+ 
+ const MaxFramesInFlight = 2
+@@ -93,23 +94,6 @@ func getVertexAttributeDescriptions() []core1_0.VertexInputAttributeDescription
+ 	}
+ }
+ 
+-var vertices = []Vertex{
+-	{Position: mgl32.Vec3{-0.5, -0.5, 0}, Color: mgl32.Vec3{1, 0, 0}, TexCoord: mgl32.Vec2{1, 0}},
+-	{Position: mgl32.Vec3{0.5, -0.5, 0}, Color: mgl32.Vec3{0, 1, 0}, TexCoord: mgl32.Vec2{0, 0}},
+-	{Position: mgl32.Vec3{0.5, 0.5, 0}, Color: mgl32.Vec3{0, 0, 1}, TexCoord: mgl32.Vec2{0, 1}},
+-	{Position: mgl32.Vec3{-0.5, 0.5, 0}, Color: mgl32.Vec3{1, 1, 1}, TexCoord: mgl32.Vec2{1, 1}},
+-
+-	{Position: mgl32.Vec3{-0.5, -0.5, -0.5}, Color: mgl32.Vec3{1, 0, 0}, TexCoord: mgl32.Vec2{0, 0}},
+-	{Position: mgl32.Vec3{0.5, -0.5, -0.5}, Color: mgl32.Vec3{0, 1, 0}, TexCoord: mgl32.Vec2{1, 0}},
+-	{Position: mgl32.Vec3{0.5, 0.5, -0.5}, Color: mgl32.Vec3{0, 0, 1}, TexCoord: mgl32.Vec2{1, 1}},
+-	{Position: mgl32.Vec3{-0.5, 0.5, -0.5}, Color: mgl32.Vec3{1, 1, 1}, TexCoord: mgl32.Vec2{0, 1}},
+-}
+-
+-var indices = []uint16{
+-	0, 1, 2, 2, 3, 0,
+-	4, 5, 6, 6, 7, 4,
+-}
+-
+ type HelloTriangleApplication struct {
+ 	window *sdl.Window
+ 	loader core.Loader
+@@ -149,6 +133,8 @@ type HelloTriangleApplication struct {
+ 	currentFrame            int
+ 	frameStart              float64
+ 
++	vertices           []Vertex
++	indices            []uint32
+ 	vertexBuffer       core1_0.Buffer
+ 	vertexBufferMemory core1_0.DeviceMemory
+ 	indexBuffer        core1_0.Buffer
+@@ -282,6 +268,10 @@ func (app *HelloTriangleApplication) initVulkan() error {
+ 		return err
+ 	}
+ 
++	err = app.loadModel()
++	if err != nil {
++		return err
++	}
+ 	err = app.createVertexBuffer()
+ 	if err != nil {
+ 		return err
+@@ -1145,7 +1135,7 @@ func hasStencilComponent(format core1_0.Format) bool {
+ 
+ func (app *HelloTriangleApplication) createTextureImage() error {
+ 	//Put image data into staging buffer
+-	imageBytes, err := fileSystem.ReadFile("images/texture.png")
++	imageBytes, err := fileSystem.ReadFile("images/viking_room.png")
+ 	if err != nil {
+ 		return err
+ 	}
+@@ -1387,9 +1377,68 @@ func writeData(memory core1_0.DeviceMemory, offset int, data any) error {
+ 	return nil
+ }
+ 
++func (app *HelloTriangleApplication) addVertex(decoder *obj.Decoder, uniqueVertices map[int]uint32, face obj.Face, faceIndex int) {
++	vertInd := face.Vertices[faceIndex]
++	index, vertexExists := uniqueVertices[vertInd]
++
++	if !vertexExists {
++		vert := Vertex{Position: mgl32.Vec3{
++			decoder.Vertices[vertInd*3],
++			decoder.Vertices[vertInd*3+1],
++			decoder.Vertices[vertInd*3+2],
++		}, Color: mgl32.Vec3{1, 1, 1}}
++
++		uvInd := face.Uvs[faceIndex]
++		vert.TexCoord = mgl32.Vec2{
++			decoder.Uvs[uvInd*2],
++			1.0 - decoder.Uvs[uvInd*2+1],
++		}
++
++		index = uint32(len(app.vertices))
++		app.vertices = append(app.vertices, vert)
++		uniqueVertices[vertInd] = index
++	}
++
++	app.indices = append(app.indices, index)
++}
++
++func (app *HelloTriangleApplication) loadModel() error {
++	meshFile, err := fileSystem.Open("meshes/viking_room.obj")
++	if err != nil {
++		return err
++	}
++	defer meshFile.Close()
++
++	matFile, err := fileSystem.Open("meshes/viking_room.mtl")
++	if err != nil {
++		return err
++	}
++	defer matFile.Close()
++
++	decoder, err := obj.DecodeReader(meshFile, matFile)
++	if err != nil {
++		return err
++	}
++
++	uniqueVertices := make(map[int]uint32)
++
++	for _, decodedObj := range decoder.Objects {
++		for _, face := range decodedObj.Faces {
++			// We need to triangularize faces
++			for i := 2; i < len(face.Vertices); i++ {
++				app.addVertex(decoder, uniqueVertices, face, 0)
++				app.addVertex(decoder, uniqueVertices, face, i-1)
++				app.addVertex(decoder, uniqueVertices, face, i)
++			}
++		}
++	}
++
++	return nil
++}
++
+ func (app *HelloTriangleApplication) createVertexBuffer() error {
+ 	var err error
+-	bufferSize := binary.Size(vertices)
++	bufferSize := binary.Size(app.vertices)
+ 
+ 	stagingBuffer, stagingBufferMemory, err := app.createBuffer(bufferSize, core1_0.BufferUsageTransferSrc, core1_0.MemoryPropertyHostVisible|core1_0.MemoryPropertyHostCoherent)
+ 	if stagingBuffer != nil {
+@@ -1403,7 +1452,7 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
+ 		return err
+ 	}
+ 
+-	err = writeData(stagingBufferMemory, 0, vertices)
++	err = writeData(stagingBufferMemory, 0, app.vertices)
+ 	if err != nil {
+ 		return err
+ 	}
+@@ -1417,7 +1466,7 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
+ }
+ 
+ func (app *HelloTriangleApplication) createIndexBuffer() error {
+-	bufferSize := binary.Size(indices)
++	bufferSize := binary.Size(app.indices)
+ 
+ 	stagingBuffer, stagingBufferMemory, err := app.createBuffer(bufferSize, core1_0.BufferUsageTransferSrc, core1_0.MemoryPropertyHostVisible|core1_0.MemoryPropertyHostCoherent)
+ 	if stagingBuffer != nil {
+@@ -1431,7 +1480,7 @@ func (app *HelloTriangleApplication) createIndexBuffer() error {
+ 		return err
+ 	}
+ 
+-	err = writeData(stagingBufferMemory, 0, indices)
++	err = writeData(stagingBufferMemory, 0, app.indices)
+ 	if err != nil {
+ 		return err
+ 	}
+@@ -1674,11 +1723,11 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
+ 
+ 		buffer.CmdBindPipeline(core1_0.PipelineBindPointGraphics, app.graphicsPipeline)
+ 		buffer.CmdBindVertexBuffers([]core1_0.Buffer{app.vertexBuffer}, []int{0})
+-		buffer.CmdBindIndexBuffer(app.indexBuffer, 0, core1_0.IndexTypeUInt16)
++		buffer.CmdBindIndexBuffer(app.indexBuffer, 0, core1_0.IndexTypeUInt32)
+ 		buffer.CmdBindDescriptorSets(core1_0.PipelineBindPointGraphics, app.pipelineLayout, []core1_0.DescriptorSet{
+ 			app.descriptorSets[bufferIdx],
+ 		}, nil)
+-		buffer.CmdDrawIndexed(len(indices), 1, 0, 0, 0)
++		buffer.CmdDrawIndexed(len(app.indices), 1, 0, 0, 0)
+ 		buffer.CmdEndRenderPass()
+ 
+ 		_, err = buffer.End()

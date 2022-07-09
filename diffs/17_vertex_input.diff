@@ -1,0 +1,71 @@
+diff --git a/../steps/16_swap_chain_recreation/main.go b/../steps/17_vertex_input/main.go
+index b8e3abb..18fcccc 100644
+--- a/../steps/16_swap_chain_recreation/main.go
++++ b/../steps/17_vertex_input/main.go
+@@ -12,6 +12,7 @@ import (
+ 	"github.com/vkngwrapper/extensions/khr_swapchain"
+ 	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2"
+ 	"log"
++	"unsafe"
+ )
+ 
+ //go:embed shaders
+@@ -39,6 +40,46 @@ type SwapChainSupportDetails struct {
+ 	PresentModes []khr_surface.PresentMode
+ }
+ 
++type Vertex struct {
++	X, Y    float32 // Could also be Position Vector2 - as long as Vector2 is a value, not a pointer
++	R, G, B float32 // Could also be Color Vector3
++}
++
++func getVertexBindingDescription() []core1_0.VertexInputBindingDescription {
++	v := Vertex{}
++	return []core1_0.VertexInputBindingDescription{
++		{
++			Binding:   0,
++			Stride:    int(unsafe.Sizeof(v)),
++			InputRate: core1_0.RateVertex,
++		},
++	}
++}
++
++func getVertexAttributeDescriptions() []core1_0.VertexInputAttributeDescription {
++	v := Vertex{}
++	return []core1_0.VertexInputAttributeDescription{
++		{
++			Binding:  0,
++			Location: 0,
++			Format:   core1_0.FormatR32G32SignedFloat,
++			Offset:   int(unsafe.Offsetof(v.X)),
++		},
++		{
++			Binding:  0,
++			Location: 1,
++			Format:   core1_0.FormatR32G32B32SignedFloat,
++			Offset:   int(unsafe.Offsetof(v.R)),
++		},
++	}
++}
++
++var vertices = []Vertex{
++	{X: 0, Y: -0.5, R: 1, G: 0, B: 0},
++	{X: 0.5, Y: 0.5, R: 0, G: 1, B: 0},
++	{X: -0.5, Y: 0.5, R: 0, G: 0, B: 1},
++}
++
+ type HelloTriangleApplication struct {
+ 	window *sdl.Window
+ 	loader core.Loader
+@@ -692,7 +733,10 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+ 	}
+ 	defer fragShader.Destroy(nil)
+ 
+-	vertexInput := &core1_0.PipelineVertexInputStateCreateInfo{}
++	vertexInput := &core1_0.PipelineVertexInputStateCreateInfo{
++		VertexBindingDescriptions:   getVertexBindingDescription(),
++		VertexAttributeDescriptions: getVertexAttributeDescriptions(),
++	}
+ 
+ 	inputAssembly := &core1_0.PipelineInputAssemblyStateCreateInfo{
+ 		Topology:               core1_0.PrimitiveTopologyTriangleList,

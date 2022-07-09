@@ -1,0 +1,317 @@
+diff --git a/../steps/28_mipmapping/main.go b/../steps/29_multisampling/main.go
+index 35c03e7..4ae5c20 100644
+--- a/../steps/28_mipmapping/main.go
++++ b/../steps/29_multisampling/main.go
+@@ -19,6 +19,7 @@ import (
+ 	"image/png"
+ 	"log"
+ 	"math"
++	"runtime"
+ 	"unsafe"
+ )
+ 
+@@ -152,6 +153,11 @@ type HelloTriangleApplication struct {
+ 	depthImage       core1_0.Image
+ 	depthImageMemory core1_0.DeviceMemory
+ 	depthImageView   core1_0.ImageView
++
++	msaaSamples      core1_0.SampleCountFlags
++	colorImage       core1_0.Image
++	colorImageMemory core1_0.DeviceMemory
++	colorImageView   core1_0.ImageView
+ }
+ 
+ func (app *HelloTriangleApplication) Run() error {
+@@ -244,6 +250,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
+ 		return err
+ 	}
+ 
++	err = app.createColorResources()
++	if err != nil {
++		return err
++	}
++
+ 	err = app.createDepthResources()
+ 	if err != nil {
+ 		return err
+@@ -345,6 +356,21 @@ appLoop:
+ }
+ 
+ func (app *HelloTriangleApplication) cleanupSwapChain() {
++	if app.colorImageView != nil {
++		app.colorImageView.Destroy(nil)
++		app.colorImageView = nil
++	}
++
++	if app.colorImage != nil {
++		app.colorImage.Destroy(nil)
++		app.colorImage = nil
++	}
++
++	if app.colorImageMemory != nil {
++		app.colorImageMemory.Free(nil)
++		app.colorImageMemory = nil
++	}
++
+ 	if app.depthImageView != nil {
+ 		app.depthImageView.Destroy(nil)
+ 		app.depthImageView = nil
+@@ -483,6 +509,8 @@ func (app *HelloTriangleApplication) cleanup() {
+ 		app.window.Destroy()
+ 	}
+ 	sdl.Quit()
++
++	app.loader.Driver().ObjectStore().PrintDebug()
+ }
+ 
+ func (app *HelloTriangleApplication) recreateSwapChain() error {
+@@ -521,6 +549,11 @@ func (app *HelloTriangleApplication) recreateSwapChain() error {
+ 		return err
+ 	}
+ 
++	err = app.createColorResources()
++	if err != nil {
++		return err
++	}
++
+ 	err = app.createDepthResources()
+ 	if err != nil {
+ 		return err
+@@ -657,6 +690,10 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
+ 	for _, device := range physicalDevices {
+ 		if app.isDeviceSuitable(device) {
+ 			app.physicalDevice = device
++			app.msaaSamples, err = app.getMaxUsableSampleCount()
++			if err != nil {
++				return err
++			}
+ 			break
+ 		}
+ 	}
+@@ -813,17 +850,17 @@ func (app *HelloTriangleApplication) createRenderPass() error {
+ 		Attachments: []core1_0.AttachmentDescription{
+ 			{
+ 				Format:         app.swapchainImageFormat,
+-				Samples:        core1_0.Samples1,
++				Samples:        app.msaaSamples,
+ 				LoadOp:         core1_0.AttachmentLoadOpClear,
+ 				StoreOp:        core1_0.AttachmentStoreOpStore,
+ 				StencilLoadOp:  core1_0.AttachmentLoadOpDontCare,
+ 				StencilStoreOp: core1_0.AttachmentStoreOpDontCare,
+ 				InitialLayout:  core1_0.ImageLayoutUndefined,
+-				FinalLayout:    khr_swapchain.ImageLayoutPresentSrc,
++				FinalLayout:    core1_0.ImageLayoutColorAttachmentOptimal,
+ 			},
+ 			{
+ 				Format:         depthFormat,
+-				Samples:        core1_0.Samples1,
++				Samples:        app.msaaSamples,
+ 				LoadOp:         core1_0.AttachmentLoadOpClear,
+ 				StoreOp:        core1_0.AttachmentStoreOpDontCare,
+ 				StencilLoadOp:  core1_0.AttachmentLoadOpDontCare,
+@@ -831,6 +868,16 @@ func (app *HelloTriangleApplication) createRenderPass() error {
+ 				InitialLayout:  core1_0.ImageLayoutUndefined,
+ 				FinalLayout:    core1_0.ImageLayoutDepthStencilAttachmentOptimal,
+ 			},
++			{
++				Format:         app.swapchainImageFormat,
++				Samples:        core1_0.Samples1,
++				LoadOp:         core1_0.AttachmentLoadOpDontCare,
++				StoreOp:        core1_0.AttachmentStoreOpStore,
++				StencilLoadOp:  core1_0.AttachmentLoadOpDontCare,
++				StencilStoreOp: core1_0.AttachmentStoreOpDontCare,
++				InitialLayout:  core1_0.ImageLayoutUndefined,
++				FinalLayout:    khr_swapchain.ImageLayoutPresentSrc,
++			},
+ 		},
+ 		Subpasses: []core1_0.SubpassDescription{
+ 			{
+@@ -841,6 +888,12 @@ func (app *HelloTriangleApplication) createRenderPass() error {
+ 						Layout:     core1_0.ImageLayoutColorAttachmentOptimal,
+ 					},
+ 				},
++				ResolveAttachments: []core1_0.AttachmentReference{
++					{
++						Attachment: 2,
++						Layout:     core1_0.ImageLayoutColorAttachmentOptimal,
++					},
++				},
+ 				DepthStencilAttachment: &core1_0.AttachmentReference{
+ 					Attachment: 1,
+ 					Layout:     core1_0.ImageLayoutDepthStencilAttachmentOptimal,
+@@ -995,7 +1048,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+ 
+ 	multisample := &core1_0.PipelineMultisampleStateCreateInfo{
+ 		SampleShadingEnable:  false,
+-		RasterizationSamples: core1_0.Samples1,
++		RasterizationSamples: app.msaaSamples,
+ 		MinSampleShading:     1.0,
+ 	}
+ 
+@@ -1057,8 +1110,9 @@ func (app *HelloTriangleApplication) createFramebuffers() error {
+ 			RenderPass: app.renderPass,
+ 			Layers:     1,
+ 			Attachments: []core1_0.ImageView{
+-				imageView,
++				app.colorImageView,
+ 				app.depthImageView,
++				imageView,
+ 			},
+ 			Width:  app.swapchainExtent.Width,
+ 			Height: app.swapchainExtent.Height,
+@@ -1091,6 +1145,29 @@ func (app *HelloTriangleApplication) createCommandPool() error {
+ 	return nil
+ }
+ 
++func (app *HelloTriangleApplication) createColorResources() error {
++	var err error
++	app.colorImage, app.colorImageMemory, err = app.createImage(
++		app.swapchainExtent.Width,
++		app.swapchainExtent.Height,
++		1,
++		app.msaaSamples,
++		app.swapchainImageFormat,
++		core1_0.ImageTilingOptimal,
++		core1_0.ImageUsageTransientAttachment|core1_0.ImageUsageColorAttachment,
++		core1_0.MemoryPropertyDeviceLocal)
++	if err != nil {
++		return err
++	}
++
++	app.colorImageView, err = app.createImageView(
++		app.colorImage,
++		app.swapchainImageFormat,
++		core1_0.ImageAspectColor,
++		1)
++	return err
++}
++
+ func (app *HelloTriangleApplication) createDepthResources() error {
+ 	depthFormat, err := app.findDepthFormat()
+ 	if err != nil {
+@@ -1100,6 +1177,7 @@ func (app *HelloTriangleApplication) createDepthResources() error {
+ 	app.depthImage, app.depthImageMemory, err = app.createImage(app.swapchainExtent.Width,
+ 		app.swapchainExtent.Height,
+ 		1,
++		app.msaaSamples,
+ 		depthFormat,
+ 		core1_0.ImageTilingOptimal,
+ 		core1_0.ImageUsageDepthStencilAttachment,
+@@ -1157,6 +1235,9 @@ func (app *HelloTriangleApplication) createTextureImage() error {
+ 		return err
+ 	}
+ 
++	defer stagingBuffer.Destroy(nil)
++	defer stagingMemory.Free(nil)
++
+ 	var pixelData []byte
+ 
+ 	for y := imageBounds.Min.Y; y < imageBounds.Max.Y; y++ {
+@@ -1172,7 +1253,14 @@ func (app *HelloTriangleApplication) createTextureImage() error {
+ 	}
+ 
+ 	//Create final image
+-	app.textureImage, app.textureImageMemory, err = app.createImage(imageDims.X, imageDims.Y, app.mipLevels, core1_0.FormatR8G8B8A8SRGB, core1_0.ImageTilingOptimal, core1_0.ImageUsageTransferSrc|core1_0.ImageUsageTransferDst|core1_0.ImageUsageSampled, core1_0.MemoryPropertyDeviceLocal)
++	app.textureImage, app.textureImageMemory, err = app.createImage(imageDims.X,
++		imageDims.Y,
++		app.mipLevels,
++		core1_0.Samples1,
++		core1_0.FormatR8G8B8A8SRGB,
++		core1_0.ImageTilingOptimal,
++		core1_0.ImageUsageTransferSrc|core1_0.ImageUsageTransferDst|core1_0.ImageUsageSampled,
++		core1_0.MemoryPropertyDeviceLocal)
+ 	if err != nil {
+ 		return err
+ 	}
+@@ -1187,15 +1275,7 @@ func (app *HelloTriangleApplication) createTextureImage() error {
+ 		return err
+ 	}
+ 
+-	err = app.generateMipmaps(app.textureImage, core1_0.FormatR8G8B8A8SRGB, imageDims.X, imageDims.Y, app.mipLevels)
+-	if err != nil {
+-		return err
+-	}
+-
+-	stagingBuffer.Destroy(nil)
+-	stagingMemory.Free(nil)
+-
+-	return nil
++	return app.generateMipmaps(app.textureImage, core1_0.FormatR8G8B8A8SRGB, imageDims.X, imageDims.Y, app.mipLevels)
+ }
+ 
+ func (app *HelloTriangleApplication) generateMipmaps(image core1_0.Image, imageFormat core1_0.Format, width, height int, mipLevels int) error {
+@@ -1279,6 +1359,8 @@ func (app *HelloTriangleApplication) generateMipmaps(image core1_0.Image, imageF
+ 		barrier.NewLayout = core1_0.ImageLayoutShaderReadOnlyOptimal
+ 		barrier.SrcAccessMask = core1_0.AccessTransferRead
+ 		barrier.DstAccessMask = core1_0.AccessShaderRead
++		barrier.SrcQueueFamilyIndex = -1
++		barrier.DstQueueFamilyIndex = -1
+ 		err = commandBuffer.CmdPipelineBarrier(core1_0.PipelineStageTransfer, core1_0.PipelineStageFragmentShader, 0, nil, nil, []core1_0.ImageMemoryBarrier{barrier})
+ 		if err != nil {
+ 			return err
+@@ -1306,6 +1388,35 @@ func (app *HelloTriangleApplication) generateMipmaps(image core1_0.Image, imageF
+ 	return app.endSingleTimeCommands(commandBuffer)
+ }
+ 
++func (app *HelloTriangleApplication) getMaxUsableSampleCount() (core1_0.SampleCountFlags, error) {
++	properties, err := app.physicalDevice.Properties()
++	if err != nil {
++		return 0, err
++	}
++
++	counts := properties.Limits.FramebufferColorSampleCounts & properties.Limits.FramebufferDepthSampleCounts
++
++	if (counts & core1_0.Samples64) != 0 {
++		return core1_0.Samples64, nil
++	}
++	if (counts & core1_0.Samples32) != 0 {
++		return core1_0.Samples32, nil
++	}
++	if (counts & core1_0.Samples16) != 0 {
++		return core1_0.Samples16, nil
++	}
++	if (counts & core1_0.Samples8) != 0 {
++		return core1_0.Samples8, nil
++	}
++	if (counts & core1_0.Samples4) != 0 {
++		return core1_0.Samples4, nil
++	}
++	if (counts & core1_0.Samples2) != 0 {
++		return core1_0.Samples2, nil
++	}
++	return core1_0.Samples1, nil
++}
++
+ func (app *HelloTriangleApplication) createTextureImageView() error {
+ 	var err error
+ 	app.textureImageView, err = app.createImageView(app.textureImage, core1_0.FormatR8G8B8A8SRGB, core1_0.ImageAspectColor, app.mipLevels)
+@@ -1354,7 +1465,7 @@ func (app *HelloTriangleApplication) createImageView(image core1_0.Image, format
+ 	return imageView, err
+ }
+ 
+-func (app *HelloTriangleApplication) createImage(width, height int, mipLevels int, format core1_0.Format, tiling core1_0.ImageTiling, usage core1_0.ImageUsageFlags, memoryProperties core1_0.MemoryPropertyFlags) (core1_0.Image, core1_0.DeviceMemory, error) {
++func (app *HelloTriangleApplication) createImage(width, height int, mipLevels int, numSamples core1_0.SampleCountFlags, format core1_0.Format, tiling core1_0.ImageTiling, usage core1_0.ImageUsageFlags, memoryProperties core1_0.MemoryPropertyFlags) (core1_0.Image, core1_0.DeviceMemory, error) {
+ 	image, _, err := app.device.CreateImage(nil, core1_0.ImageCreateOptions{
+ 		ImageType: core1_0.ImageType2D,
+ 		Extent: core1_0.Extent3D{
+@@ -1369,7 +1480,7 @@ func (app *HelloTriangleApplication) createImage(width, height int, mipLevels in
+ 		InitialLayout: core1_0.ImageLayoutUndefined,
+ 		Usage:         usage,
+ 		SharingMode:   core1_0.SharingModeExclusive,
+-		Samples:       core1_0.Samples1,
++		Samples:       numSamples,
+ 	})
+ 	if err != nil {
+ 		return nil, nil, err
+@@ -2103,7 +2214,10 @@ func (app *HelloTriangleApplication) logDebug(msgType ext_debug_utils.MessageTyp
+ }
+ 
+ func main() {
+-	app := &HelloTriangleApplication{}
++	runtime.LockOSThread()
++	app := &HelloTriangleApplication{
++		msaaSamples: core1_0.Samples1,
++	}
+ 
+ 	err := app.Run()
+ 	if err != nil {

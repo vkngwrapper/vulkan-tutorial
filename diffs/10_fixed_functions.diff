@@ -1,0 +1,110 @@
+diff --git a/../steps/09_shader_modules/main.go b/../steps/10_fixed_functions/main.go
+index a35b86d..1a8d1f5 100644
+--- a/../steps/09_shader_modules/main.go
++++ b/../steps/10_fixed_functions/main.go
+@@ -57,6 +57,8 @@ type HelloTriangleApplication struct {
+ 	swapchainImageFormat core1_0.Format
+ 	swapchainExtent      core1_0.Extent2D
+ 	swapchainImageViews  []core1_0.ImageView
++
++	pipelineLayout core1_0.PipelineLayout
+ }
+ 
+ func (app *HelloTriangleApplication) Run() error {
+@@ -142,6 +144,10 @@ appLoop:
+ }
+ 
+ func (app *HelloTriangleApplication) cleanup() {
++	if app.pipelineLayout != nil {
++		app.pipelineLayout.Destroy(nil)
++	}
++
+ 	for _, imageView := range app.swapchainImageViews {
+ 		imageView.Destroy(nil)
+ 	}
+@@ -275,7 +281,7 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
+ 	}
+ 
+ 	if app.physicalDevice == nil {
+-		return errors.Newf("failed to find a suitable GPU!")
++		return errors.New("failed to find a suitable GPU!")
+ 	}
+ 
+ 	return nil
+@@ -470,6 +476,13 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+ 	}
+ 	defer fragShader.Destroy(nil)
+ 
++	_ = &core1_0.PipelineVertexInputStateCreateInfo{}
++
++	_ = &core1_0.PipelineInputAssemblyStateCreateInfo{
++		Topology:               core1_0.PrimitiveTopologyTriangleList,
++		PrimitiveRestartEnable: false,
++	}
++
+ 	_ = &core1_0.PipelineShaderStageCreateInfo{
+ 		Stage:  core1_0.StageVertex,
+ 		Module: vertShader,
+@@ -482,6 +495,62 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+ 		Name:   "main",
+ 	}
+ 
++	_ = &core1_0.PipelineViewportStateCreateInfo{
++		Viewports: []core1_0.Viewport{
++			{
++				X:        0,
++				Y:        0,
++				Width:    float32(app.swapchainExtent.Width),
++				Height:   float32(app.swapchainExtent.Height),
++				MinDepth: 0,
++				MaxDepth: 1,
++			},
++		},
++		Scissors: []core1_0.Rect2D{
++			{
++				Offset: core1_0.Offset2D{X: 0, Y: 0},
++				Extent: app.swapchainExtent,
++			},
++		},
++	}
++
++	_ = &core1_0.PipelineRasterizationStateCreateInfo{
++		DepthClampEnable:        false,
++		RasterizerDiscardEnable: false,
++
++		PolygonMode: core1_0.PolygonModeFill,
++		CullMode:    core1_0.CullModeBack,
++		FrontFace:   core1_0.FrontFaceClockwise,
++
++		DepthBiasEnable: false,
++
++		LineWidth: 1.0,
++	}
++
++	_ = &core1_0.PipelineMultisampleStateCreateInfo{
++		SampleShadingEnable:  false,
++		RasterizationSamples: core1_0.Samples1,
++		MinSampleShading:     1.0,
++	}
++
++	_ = &core1_0.PipelineColorBlendStateCreateInfo{
++		LogicOpEnabled: false,
++		LogicOp:        core1_0.LogicOpCopy,
++
++		BlendConstants: [4]float32{0, 0, 0, 0},
++		Attachments: []core1_0.PipelineColorBlendAttachmentState{
++			{
++				BlendEnabled:   false,
++				ColorWriteMask: core1_0.ColorComponentRed | core1_0.ColorComponentGreen | core1_0.ColorComponentBlue | core1_0.ColorComponentAlpha,
++			},
++		},
++	}
++
++	app.pipelineLayout, _, err = app.device.CreatePipelineLayout(nil, core1_0.PipelineLayoutCreateInfo{})
++	if err != nil {
++		return err
++	}
++
+ 	return nil
+ }
+ 

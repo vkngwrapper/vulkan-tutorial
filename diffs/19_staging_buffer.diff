@@ -1,0 +1,150 @@
+diff --git a/../steps/18_vertex_buffer/main.go b/../steps/19_staging_buffer/main.go
+index 33eb6e5..dd426d2 100644
+--- a/../steps/18_vertex_buffer/main.go
++++ b/../steps/19_staging_buffer/main.go
+@@ -894,54 +894,128 @@ func (app *HelloTriangleApplication) createCommandPool() error {
+ 	return nil
+ }
+ 
++func writeData(memory core1_0.DeviceMemory, offset int, data any) error {
++	bufferSize := binary.Size(data)
++
++	memoryPtr, _, err := memory.Map(offset, bufferSize, 0)
++	if err != nil {
++		return err
++	}
++	defer memory.Unmap()
++
++	dataBuffer := unsafe.Slice((*byte)(memoryPtr), bufferSize)
++
++	buf := &bytes.Buffer{}
++	err = binary.Write(buf, common.ByteOrder, data)
++	if err != nil {
++		return err
++	}
++
++	copy(dataBuffer, buf.Bytes())
++	return nil
++}
++
+ func (app *HelloTriangleApplication) createVertexBuffer() error {
+ 	var err error
+ 	bufferSize := binary.Size(vertices)
+-	app.vertexBuffer, _, err = app.device.CreateBuffer(nil, core1_0.BufferCreateInfo{
+-		Size:        bufferSize,
+-		Usage:       core1_0.BufferUsageVertexBuffer,
+-		SharingMode: core1_0.SharingModeExclusive,
+-	})
++
++	stagingBuffer, stagingBufferMemory, err := app.createBuffer(bufferSize, core1_0.BufferUsageTransferSrc, core1_0.MemoryPropertyHostVisible|core1_0.MemoryPropertyHostCoherent)
++	if stagingBuffer != nil {
++		defer stagingBuffer.Destroy(nil)
++	}
++	if stagingBufferMemory != nil {
++		defer stagingBufferMemory.Free(nil)
++	}
++
++	if err != nil {
++		return err
++	}
++
++	err = writeData(stagingBufferMemory, 0, vertices)
+ 	if err != nil {
+ 		return err
+ 	}
+ 
+-	memRequirements := app.vertexBuffer.MemoryRequirements()
+-	memoryTypeIndex, err := app.findMemoryType(memRequirements.MemoryTypeBits, core1_0.MemoryPropertyHostVisible|core1_0.MemoryPropertyHostCoherent)
++	app.vertexBuffer, app.vertexBufferMemory, err = app.createBuffer(bufferSize, core1_0.BufferUsageTransferDst|core1_0.BufferUsageVertexBuffer, core1_0.MemoryPropertyDeviceLocal)
+ 	if err != nil {
+ 		return err
+ 	}
+ 
+-	app.vertexBufferMemory, _, err = app.device.AllocateMemory(nil, core1_0.MemoryAllocateInfo{
++	return app.copyBuffer(stagingBuffer, app.vertexBuffer, bufferSize)
++}
++
++func (app *HelloTriangleApplication) createBuffer(size int, usage core1_0.BufferUsageFlags, properties core1_0.MemoryPropertyFlags) (core1_0.Buffer, core1_0.DeviceMemory, error) {
++	buffer, _, err := app.device.CreateBuffer(nil, core1_0.BufferCreateInfo{
++		Size:        size,
++		Usage:       usage,
++		SharingMode: core1_0.SharingModeExclusive,
++	})
++	if err != nil {
++		return nil, nil, err
++	}
++
++	memRequirements := buffer.MemoryRequirements()
++
++	memoryTypeIndex, err := app.findMemoryType(memRequirements.MemoryTypeBits, properties)
++	if err != nil {
++		return buffer, nil, err
++	}
++
++	memory, _, err := app.device.AllocateMemory(nil, core1_0.MemoryAllocateInfo{
+ 		AllocationSize:  memRequirements.Size,
+ 		MemoryTypeIndex: memoryTypeIndex,
+ 	})
+ 	if err != nil {
+-		return err
++		return buffer, nil, err
+ 	}
+ 
+-	_, err = app.vertexBuffer.BindBufferMemory(app.vertexBufferMemory, 0)
++	_, err = buffer.BindBufferMemory(memory, 0)
++	return buffer, memory, err
++}
++
++func (app *HelloTriangleApplication) copyBuffer(srcBuffer core1_0.Buffer, dstBuffer core1_0.Buffer, size int) error {
++	buffers, _, err := app.device.AllocateCommandBuffers(core1_0.CommandBufferAllocateInfo{
++		CommandPool:        app.commandPool,
++		Level:              core1_0.CommandBufferLevelPrimary,
++		CommandBufferCount: 1,
++	})
+ 	if err != nil {
+ 		return err
+ 	}
+ 
+-	memory, _, err := app.vertexBufferMemory.Map(0, bufferSize, 0)
++	buffer := buffers[0]
++	_, err = buffer.Begin(core1_0.CommandBufferBeginInfo{
++		Flags: core1_0.CommandBufferUsageOneTimeSubmit,
++	})
+ 	if err != nil {
+ 		return err
+ 	}
+-	defer app.vertexBufferMemory.Unmap()
++	defer app.device.FreeCommandBuffers(buffers)
+ 
+-	dataBuffer := unsafe.Slice((*byte)(memory), bufferSize)
++	buffer.CmdCopyBuffer(srcBuffer, dstBuffer, []core1_0.BufferCopy{
++		{
++			SrcOffset: 0,
++			DstOffset: 0,
++			Size:      size,
++		},
++	})
+ 
+-	buf := &bytes.Buffer{}
+-	err = binary.Write(buf, common.ByteOrder, vertices)
++	_, err = buffer.End()
+ 	if err != nil {
+ 		return err
+ 	}
+ 
+-	copy(dataBuffer, buf.Bytes())
++	_, err = app.graphicsQueue.Submit(nil, []core1_0.SubmitInfo{
++		{
++			CommandBuffers: []core1_0.CommandBuffer{buffer},
++		},
++	})
++	if err != nil {
++		return err
++	}
+ 
+-	return nil
++	_, err = app.graphicsQueue.WaitIdle()
++	return err
+ }
+ 
+ func (app *HelloTriangleApplication) findMemoryType(typeFilter uint32, properties core1_0.MemoryPropertyFlags) (int, error) {

@@ -1,0 +1,84 @@
+diff --git a/../steps/08_graphics_pipeline/main.go b/../steps/09_shader_modules/main.go
+index 2f8e289..a35b86d 100644
+--- a/../steps/08_graphics_pipeline/main.go
++++ b/../steps/09_shader_modules/main.go
+@@ -1,6 +1,7 @@
+ package main
+ 
+ import (
++	"embed"
+ 	"github.com/cockroachdb/errors"
+ 	"github.com/veandco/go-sdl2/sdl"
+ 	"github.com/vkngwrapper/core"
+@@ -13,6 +14,9 @@ import (
+ 	"log"
+ )
+ 
++//go:embed shaders
++var shaders embed.FS
++
+ var validationLayers = []string{"VK_LAYER_KHRONOS_validation"}
+ var deviceExtensions = []string{khr_swapchain.ExtensionName}
+ 
+@@ -423,7 +427,61 @@ func (app *HelloTriangleApplication) createSwapchain() error {
+ 	return nil
+ }
+ 
++func bytesToBytecode(b []byte) []uint32 {
++	byteCode := make([]uint32, len(b)/4)
++	for i := 0; i < len(byteCode); i++ {
++		byteIndex := i * 4
++		byteCode[i] = 0
++		byteCode[i] |= uint32(b[byteIndex])
++		byteCode[i] |= uint32(b[byteIndex+1]) << 8
++		byteCode[i] |= uint32(b[byteIndex+2]) << 16
++		byteCode[i] |= uint32(b[byteIndex+3]) << 24
++	}
++
++	return byteCode
++}
++
+ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
++	// Load vertex shader
++	vertShaderBytes, err := shaders.ReadFile("shaders/vert.spv")
++	if err != nil {
++		return err
++	}
++
++	vertShader, _, err := app.device.CreateShaderModule(nil, core1_0.ShaderModuleCreateInfo{
++		Code: bytesToBytecode(vertShaderBytes),
++	})
++	if err != nil {
++		return err
++	}
++	defer vertShader.Destroy(nil)
++
++	// Load fragment shader
++	fragShaderBytes, err := shaders.ReadFile("shaders/frag.spv")
++	if err != nil {
++		return err
++	}
++
++	fragShader, _, err := app.device.CreateShaderModule(nil, core1_0.ShaderModuleCreateInfo{
++		Code: bytesToBytecode(fragShaderBytes),
++	})
++	if err != nil {
++		return err
++	}
++	defer fragShader.Destroy(nil)
++
++	_ = &core1_0.PipelineShaderStageCreateInfo{
++		Stage:  core1_0.StageVertex,
++		Module: vertShader,
++		Name:   "main",
++	}
++
++	_ = &core1_0.PipelineShaderStageCreateInfo{
++		Stage:  core1_0.StageFragment,
++		Module: fragShader,
++		Name:   "main",
++	}
++
+ 	return nil
+ }
+ 

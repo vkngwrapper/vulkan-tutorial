@@ -1,0 +1,113 @@
+diff --git a/../steps/02_validation_layers/main.go b/../steps/03_physical_device_selection/main.go
+index b6faabf..2abb0e7 100644
+--- a/../steps/02_validation_layers/main.go
++++ b/../steps/03_physical_device_selection/main.go
+@@ -14,12 +14,22 @@ var validationLayers = []string{"VK_LAYER_KHRONOS_validation"}
+ 
+ const enableValidationLayers = true
+ 
++type QueueFamilyIndices struct {
++	GraphicsFamily *int
++}
++
++func (i *QueueFamilyIndices) IsComplete() bool {
++	return i.GraphicsFamily != nil
++}
++
+ type HelloTriangleApplication struct {
+ 	window *sdl.Window
+ 	loader core.Loader
+ 
+ 	instance       core1_0.Instance
+ 	debugMessenger ext_debug_utils.Messenger
++
++	physicalDevice core1_0.PhysicalDevice
+ }
+ 
+ func (app *HelloTriangleApplication) Run() error {
+@@ -48,7 +58,7 @@ func (app *HelloTriangleApplication) initWindow() error {
+ 	}
+ 	app.window = window
+ 
+-	app.loader, err = core.CreateStaticLinkedLoader()
++	app.loader, err = core.CreateLoaderFromProcAddr(sdl.VulkanGetVkGetInstanceProcAddr())
+ 	if err != nil {
+ 		return err
+ 	}
+@@ -62,7 +72,12 @@ func (app *HelloTriangleApplication) initVulkan() error {
+ 		return err
+ 	}
+ 
+-	return app.setupDebugMessenger()
++	err = app.setupDebugMessenger()
++	if err != nil {
++		return err
++	}
++
++	return app.pickPhysicalDevice()
+ }
+ 
+ func (app *HelloTriangleApplication) mainLoop() error {
+@@ -172,11 +187,62 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
+ 	return nil
+ }
+ 
++func (app *HelloTriangleApplication) pickPhysicalDevice() error {
++	physicalDevices, _, err := app.instance.EnumeratePhysicalDevices()
++	if err != nil {
++		return err
++	}
++
++	for _, device := range physicalDevices {
++		if app.isDeviceSuitable(device) {
++			app.physicalDevice = device
++			break
++		}
++	}
++
++	if app.physicalDevice == nil {
++		return errors.New("failed to find a suitable GPU!")
++	}
++
++	return nil
++}
++
++func (app *HelloTriangleApplication) isDeviceSuitable(device core1_0.PhysicalDevice) bool {
++	indices, err := app.findQueueFamilies(device)
++	if err != nil {
++		return false
++	}
++
++	return indices.IsComplete()
++}
++
++func (app *HelloTriangleApplication) findQueueFamilies(device core1_0.PhysicalDevice) (QueueFamilyIndices, error) {
++	indices := QueueFamilyIndices{}
++	queueFamilies := device.QueueFamilyProperties()
++
++	for queueFamilyIdx, queueFamily := range queueFamilies {
++		if (queueFamily.QueueFlags & core1_0.QueueGraphics) != 0 {
++			indices.GraphicsFamily = new(int)
++			*indices.GraphicsFamily = queueFamilyIdx
++		}
++
++		if indices.IsComplete() {
++			break
++		}
++	}
++
++	return indices, nil
++}
++
+ func (app *HelloTriangleApplication) logDebug(msgType ext_debug_utils.MessageTypes, severity ext_debug_utils.MessageSeverities, data *ext_debug_utils.DebugUtilsMessengerCallbackData) bool {
+ 	log.Printf("[%s %s] - %s", severity, msgType, data.Message)
+ 	return false
+ }
+ 
++func fail(val any) {
++	log.Fatalf("%+v\n", val)
++}
++
+ func main() {
+ 	app := &HelloTriangleApplication{}
+ 

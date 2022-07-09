@@ -1,0 +1,147 @@
+diff --git a/../steps/23_texture_image/main.go b/../steps/24_sampler/main.go
+index 5765adf..0b065e4 100644
+--- a/../steps/23_texture_image/main.go
++++ b/../steps/24_sampler/main.go
+@@ -144,6 +144,8 @@ type HelloTriangleApplication struct {
+ 
+ 	textureImage       core1_0.Image
+ 	textureImageMemory core1_0.DeviceMemory
++	textureImageView   core1_0.ImageView
++	textureSampler     core1_0.Sampler
+ }
+ 
+ func (app *HelloTriangleApplication) Run() error {
+@@ -246,6 +248,16 @@ func (app *HelloTriangleApplication) initVulkan() error {
+ 		return err
+ 	}
+ 
++	err = app.createTextureImageView()
++	if err != nil {
++		return err
++	}
++
++	err = app.createSampler()
++	if err != nil {
++		return err
++	}
++
+ 	err = app.createVertexBuffer()
+ 	if err != nil {
+ 		return err
+@@ -369,6 +381,14 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
+ func (app *HelloTriangleApplication) cleanup() {
+ 	app.cleanupSwapChain()
+ 
++	if app.textureSampler != nil {
++		app.textureSampler.Destroy(nil)
++	}
++
++	if app.textureImageView != nil {
++		app.textureImageView.Destroy(nil)
++	}
++
+ 	if app.textureImage != nil {
+ 		app.textureImage.Destroy(nil)
+ 	}
+@@ -653,8 +673,10 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
+ 	}
+ 
+ 	app.device, _, err = app.physicalDevice.CreateDevice(nil, core1_0.DeviceCreateInfo{
+-		QueueCreateInfos:      queueFamilyOptions,
+-		EnabledFeatures:       &core1_0.PhysicalDeviceFeatures{},
++		QueueCreateInfos: queueFamilyOptions,
++		EnabledFeatures: &core1_0.PhysicalDeviceFeatures{
++			SamplerAnisotropy: true,
++		},
+ 		EnabledExtensionNames: extensionNames,
+ 		EnabledLayerNames:     layerNames,
+ 	})
+@@ -734,24 +756,7 @@ func (app *HelloTriangleApplication) createImageViews() error {
+ 
+ 	var imageViews []core1_0.ImageView
+ 	for _, image := range images {
+-		view, _, err := app.device.CreateImageView(nil, core1_0.ImageViewCreateInfo{
+-			ViewType: core1_0.ImageViewType2D,
+-			Image:    image,
+-			Format:   app.swapchainImageFormat,
+-			Components: core1_0.ComponentMapping{
+-				R: core1_0.ComponentSwizzleIdentity,
+-				G: core1_0.ComponentSwizzleIdentity,
+-				B: core1_0.ComponentSwizzleIdentity,
+-				A: core1_0.ComponentSwizzleIdentity,
+-			},
+-			SubresourceRange: core1_0.ImageSubresourceRange{
+-				AspectMask:     core1_0.ImageAspectColor,
+-				BaseMipLevel:   0,
+-				LevelCount:     1,
+-				BaseArrayLayer: 0,
+-				LayerCount:     1,
+-			},
+-		})
++		view, err := app.createImageView(image, app.swapchainImageFormat)
+ 		if err != nil {
+ 			return err
+ 		}
+@@ -1077,6 +1082,52 @@ func (app *HelloTriangleApplication) createTextureImage() error {
+ 	return nil
+ }
+ 
++func (app *HelloTriangleApplication) createTextureImageView() error {
++	var err error
++	app.textureImageView, err = app.createImageView(app.textureImage, core1_0.FormatR8G8B8A8SRGB)
++	return err
++}
++
++func (app *HelloTriangleApplication) createSampler() error {
++	properties, err := app.physicalDevice.Properties()
++	if err != nil {
++		return err
++	}
++
++	app.textureSampler, _, err = app.device.CreateSampler(nil, core1_0.SamplerCreateInfo{
++		MagFilter:    core1_0.FilterLinear,
++		MinFilter:    core1_0.FilterLinear,
++		AddressModeU: core1_0.SamplerAddressModeRepeat,
++		AddressModeV: core1_0.SamplerAddressModeRepeat,
++		AddressModeW: core1_0.SamplerAddressModeRepeat,
++
++		AnisotropyEnable: true,
++		MaxAnisotropy:    properties.Limits.MaxSamplerAnisotropy,
++
++		BorderColor: core1_0.BorderColorIntOpaqueBlack,
++
++		MipmapMode: core1_0.SamplerMipmapModeLinear,
++	})
++
++	return err
++}
++
++func (app *HelloTriangleApplication) createImageView(image core1_0.Image, format core1_0.Format) (core1_0.ImageView, error) {
++	imageView, _, err := app.device.CreateImageView(nil, core1_0.ImageViewCreateInfo{
++		Image:    image,
++		ViewType: core1_0.ImageViewType2D,
++		Format:   format,
++		SubresourceRange: core1_0.ImageSubresourceRange{
++			AspectMask:     core1_0.ImageAspectColor,
++			BaseMipLevel:   0,
++			LevelCount:     1,
++			BaseArrayLayer: 0,
++			LayerCount:     1,
++		},
++	})
++	return imageView, err
++}
++
+ func (app *HelloTriangleApplication) createImage(width, height int, format core1_0.Format, tiling core1_0.ImageTiling, usage core1_0.ImageUsageFlags, memoryProperties core1_0.MemoryPropertyFlags) (core1_0.Image, core1_0.DeviceMemory, error) {
+ 	image, _, err := app.device.CreateImage(nil, core1_0.ImageCreateOptions{
+ 		ImageType: core1_0.ImageType2D,
+@@ -1688,7 +1739,8 @@ func (app *HelloTriangleApplication) isDeviceSuitable(device core1_0.PhysicalDev
+ 		swapChainAdequate = len(swapChainSupport.Formats) > 0 && len(swapChainSupport.PresentModes) > 0
+ 	}
+ 
+-	return indices.IsComplete() && extensionsSupported && swapChainAdequate
++	features := device.Features()
++	return indices.IsComplete() && extensionsSupported && swapChainAdequate && features.SamplerAnisotropy
+ }
+ 
+ func (app *HelloTriangleApplication) checkDeviceExtensionSupport(device core1_0.PhysicalDevice) bool {

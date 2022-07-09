@@ -1,0 +1,129 @@
+diff --git a/../steps/19_staging_buffer/main.go b/../steps/20_index_buffer/main.go
+index dd426d2..6af1785 100644
+--- a/../steps/19_staging_buffer/main.go
++++ b/../steps/20_index_buffer/main.go
+@@ -77,11 +77,14 @@ func getVertexAttributeDescriptions() []core1_0.VertexInputAttributeDescription
+ }
+ 
+ var vertices = []Vertex{
+-	{X: 0, Y: -0.5, R: 1, G: 0, B: 0},
+-	{X: 0.5, Y: 0.5, R: 0, G: 1, B: 0},
+-	{X: -0.5, Y: 0.5, R: 0, G: 0, B: 1},
++	{X: -0.5, Y: -0.5, R: 1, G: 0, B: 0},
++	{X: 0.5, Y: -0.5, R: 0, G: 1, B: 0},
++	{X: 0.5, Y: 0.5, R: 0, G: 0, B: 1},
++	{X: -0.5, Y: 0.5, R: 1, G: 1, B: 1},
+ }
+ 
++var indices = []uint16{0, 1, 2, 2, 3, 0}
++
+ type HelloTriangleApplication struct {
+ 	window *sdl.Window
+ 	loader core.Loader
+@@ -119,6 +122,8 @@ type HelloTriangleApplication struct {
+ 
+ 	vertexBuffer       core1_0.Buffer
+ 	vertexBufferMemory core1_0.DeviceMemory
++	indexBuffer        core1_0.Buffer
++	indexBufferMemory  core1_0.DeviceMemory
+ }
+ 
+ func (app *HelloTriangleApplication) Run() error {
+@@ -216,6 +221,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
+ 		return err
+ 	}
+ 
++	err = app.createIndexBuffer()
++	if err != nil {
++		return err
++	}
++
+ 	err = app.createCommandBuffers()
+ 	if err != nil {
+ 		return err
+@@ -302,6 +312,14 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
+ func (app *HelloTriangleApplication) cleanup() {
+ 	app.cleanupSwapChain()
+ 
++	if app.indexBuffer != nil {
++		app.indexBuffer.Destroy(nil)
++	}
++
++	if app.indexBufferMemory != nil {
++		app.indexBufferMemory.Free(nil)
++	}
++
+ 	if app.vertexBuffer != nil {
+ 		app.vertexBuffer.Destroy(nil)
+ 	}
+@@ -505,7 +523,7 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
+ 	}
+ 
+ 	if app.physicalDevice == nil {
+-		return errors.New("failed to find a suitable GPU!")
++		return errors.Newf("failed to find a suitable GPU!")
+ 	}
+ 
+ 	return nil
+@@ -944,6 +962,34 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
+ 	return app.copyBuffer(stagingBuffer, app.vertexBuffer, bufferSize)
+ }
+ 
++func (app *HelloTriangleApplication) createIndexBuffer() error {
++	bufferSize := binary.Size(indices)
++
++	stagingBuffer, stagingBufferMemory, err := app.createBuffer(bufferSize, core1_0.BufferUsageTransferSrc, core1_0.MemoryPropertyHostVisible|core1_0.MemoryPropertyHostCoherent)
++	if stagingBuffer != nil {
++		defer stagingBuffer.Destroy(nil)
++	}
++	if stagingBufferMemory != nil {
++		defer stagingBufferMemory.Free(nil)
++	}
++
++	if err != nil {
++		return err
++	}
++
++	err = writeData(stagingBufferMemory, 0, indices)
++	if err != nil {
++		return err
++	}
++
++	app.indexBuffer, app.indexBufferMemory, err = app.createBuffer(bufferSize, core1_0.BufferUsageTransferDst|core1_0.BufferUsageIndexBuffer, core1_0.MemoryPropertyDeviceLocal)
++	if err != nil {
++		return err
++	}
++
++	return app.copyBuffer(stagingBuffer, app.indexBuffer, bufferSize)
++}
++
+ func (app *HelloTriangleApplication) createBuffer(size int, usage core1_0.BufferUsageFlags, properties core1_0.MemoryPropertyFlags) (core1_0.Buffer, core1_0.DeviceMemory, error) {
+ 	buffer, _, err := app.device.CreateBuffer(nil, core1_0.BufferCreateInfo{
+ 		Size:        size,
+@@ -955,7 +1001,6 @@ func (app *HelloTriangleApplication) createBuffer(size int, usage core1_0.Buffer
+ 	}
+ 
+ 	memRequirements := buffer.MemoryRequirements()
+-
+ 	memoryTypeIndex, err := app.findMemoryType(memRequirements.MemoryTypeBits, properties)
+ 	if err != nil {
+ 		return buffer, nil, err
+@@ -1028,7 +1073,7 @@ func (app *HelloTriangleApplication) findMemoryType(typeFilter uint32, propertie
+ 		}
+ 	}
+ 
+-	return 0, errors.New("failed to find any suitable memory type!")
++	return 0, errors.Newf("failed to find any suitable memory type!")
+ }
+ 
+ func (app *HelloTriangleApplication) createCommandBuffers() error {
+@@ -1067,7 +1112,8 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
+ 
+ 		buffer.CmdBindPipeline(core1_0.PipelineBindPointGraphics, app.graphicsPipeline)
+ 		buffer.CmdBindVertexBuffers([]core1_0.Buffer{app.vertexBuffer}, []int{0})
+-		buffer.CmdDraw(len(vertices), 1, 0, 0)
++		buffer.CmdBindIndexBuffer(app.indexBuffer, 0, core1_0.IndexTypeUInt16)
++		buffer.CmdDrawIndexed(len(indices), 1, 0, 0, 0)
+ 		buffer.CmdEndRenderPass()
+ 
+ 		_, err = buffer.End()

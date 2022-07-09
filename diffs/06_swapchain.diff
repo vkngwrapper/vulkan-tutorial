@@ -1,0 +1,251 @@
+diff --git a/../steps/05_window_surface/main.go b/../steps/06_swapchain/main.go
+index 3fb97e1..9e905f3 100644
+--- a/../steps/05_window_surface/main.go
++++ b/../steps/06_swapchain/main.go
+@@ -8,11 +8,13 @@ import (
+ 	"github.com/vkngwrapper/core/core1_0"
+ 	"github.com/vkngwrapper/extensions/ext_debug_utils"
+ 	"github.com/vkngwrapper/extensions/khr_surface"
++	"github.com/vkngwrapper/extensions/khr_swapchain"
+ 	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2"
+ 	"log"
+ )
+ 
+ var validationLayers = []string{"VK_LAYER_KHRONOS_validation"}
++var deviceExtensions = []string{khr_swapchain.ExtensionName}
+ 
+ const enableValidationLayers = true
+ 
+@@ -25,6 +27,12 @@ func (i *QueueFamilyIndices) IsComplete() bool {
+ 	return i.GraphicsFamily != nil && i.PresentFamily != nil
+ }
+ 
++type SwapChainSupportDetails struct {
++	Capabilities *khr_surface.Capabilities
++	Formats      []khr_surface.Format
++	PresentModes []khr_surface.PresentMode
++}
++
+ type HelloTriangleApplication struct {
+ 	window *sdl.Window
+ 	loader core.Loader
+@@ -38,6 +46,12 @@ type HelloTriangleApplication struct {
+ 
+ 	graphicsQueue core1_0.Queue
+ 	presentQueue  core1_0.Queue
++
++	swapchainExtension   khr_swapchain.Extension
++	swapchain            khr_swapchain.Swapchain
++	swapchainImages      []core1_0.Image
++	swapchainImageFormat core1_0.Format
++	swapchainExtent      core1_0.Extent2D
+ }
+ 
+ func (app *HelloTriangleApplication) Run() error {
+@@ -95,7 +109,12 @@ func (app *HelloTriangleApplication) initVulkan() error {
+ 		return err
+ 	}
+ 
+-	return app.createLogicalDevice()
++	err = app.createLogicalDevice()
++	if err != nil {
++		return err
++	}
++
++	return app.createSwapchain()
+ }
+ 
+ func (app *HelloTriangleApplication) mainLoop() error {
+@@ -113,6 +132,10 @@ appLoop:
+ }
+ 
+ func (app *HelloTriangleApplication) cleanup() {
++	if app.swapchain != nil {
++		app.swapchain.Destroy(nil)
++	}
++
+ 	if app.device != nil {
+ 		app.device.Destroy(nil)
+ 	}
+@@ -238,7 +261,7 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
+ 	}
+ 
+ 	if app.physicalDevice == nil {
+-		return errors.Newf("failed to find a suitable GPU!")
++		return errors.New("failed to find a suitable GPU!")
+ 	}
+ 
+ 	return nil
+@@ -265,6 +288,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
+ 	}
+ 
+ 	var extensionNames []string
++	extensionNames = append(extensionNames, deviceExtensions...)
+ 
+ 	// Makes this example compatible with vulkan portability, necessary to run on mobile & mac
+ 	extensions, _, err := app.physicalDevice.EnumerateDeviceExtensionProperties()
+@@ -297,13 +321,163 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
+ 	return nil
+ }
+ 
++func (app *HelloTriangleApplication) createSwapchain() error {
++	app.swapchainExtension = khr_swapchain.CreateExtensionFromDevice(app.device)
++
++	swapchainSupport, err := app.querySwapChainSupport(app.physicalDevice)
++	if err != nil {
++		return err
++	}
++
++	surfaceFormat := app.chooseSwapSurfaceFormat(swapchainSupport.Formats)
++	presentMode := app.chooseSwapPresentMode(swapchainSupport.PresentModes)
++	extent := app.chooseSwapExtent(swapchainSupport.Capabilities)
++
++	imageCount := swapchainSupport.Capabilities.MinImageCount + 1
++	if swapchainSupport.Capabilities.MaxImageCount > 0 && swapchainSupport.Capabilities.MaxImageCount < imageCount {
++		imageCount = swapchainSupport.Capabilities.MaxImageCount
++	}
++
++	sharingMode := core1_0.SharingModeExclusive
++	var queueFamilyIndices []int
++
++	indices, err := app.findQueueFamilies(app.physicalDevice)
++	if err != nil {
++		return err
++	}
++
++	if *indices.GraphicsFamily != *indices.PresentFamily {
++		sharingMode = core1_0.SharingModeConcurrent
++		queueFamilyIndices = append(queueFamilyIndices, *indices.GraphicsFamily, *indices.PresentFamily)
++	}
++
++	swapchain, _, err := app.swapchainExtension.CreateSwapchain(app.device, nil, khr_swapchain.SwapchainCreateInfo{
++		Surface: app.surface,
++
++		MinImageCount:    imageCount,
++		ImageFormat:      surfaceFormat.Format,
++		ImageColorSpace:  surfaceFormat.ColorSpace,
++		ImageExtent:      extent,
++		ImageArrayLayers: 1,
++		ImageUsage:       core1_0.ImageUsageColorAttachment,
++
++		ImageSharingMode:   sharingMode,
++		QueueFamilyIndices: queueFamilyIndices,
++
++		PreTransform:   swapchainSupport.Capabilities.CurrentTransform,
++		CompositeAlpha: khr_surface.CompositeAlphaOpaque,
++		PresentMode:    presentMode,
++		Clipped:        true,
++	})
++	if err != nil {
++		return err
++	}
++	app.swapchainExtent = extent
++	app.swapchain = swapchain
++
++	app.swapchainImageFormat = surfaceFormat.Format
++
++	return nil
++}
++
++func (app *HelloTriangleApplication) chooseSwapSurfaceFormat(availableFormats []khr_surface.Format) khr_surface.Format {
++	for _, format := range availableFormats {
++		if format.Format == core1_0.FormatB8G8R8A8SRGB && format.ColorSpace == khr_surface.ColorSpaceSRGBNonlinear {
++			return format
++		}
++	}
++
++	return availableFormats[0]
++}
++
++func (app *HelloTriangleApplication) chooseSwapPresentMode(availablePresentModes []khr_surface.PresentMode) khr_surface.PresentMode {
++	for _, presentMode := range availablePresentModes {
++		if presentMode == khr_surface.PresentModeMailbox {
++			return presentMode
++		}
++	}
++
++	return khr_surface.PresentModeFIFO
++}
++
++func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *khr_surface.Capabilities) core1_0.Extent2D {
++	if capabilities.CurrentExtent.Width != -1 {
++		return capabilities.CurrentExtent
++	}
++
++	widthInt, heightInt := app.window.VulkanGetDrawableSize()
++	width := int(widthInt)
++	height := int(heightInt)
++
++	if width < capabilities.MinImageExtent.Width {
++		width = capabilities.MinImageExtent.Width
++	}
++	if width > capabilities.MaxImageExtent.Width {
++		width = capabilities.MaxImageExtent.Width
++	}
++	if height < capabilities.MinImageExtent.Height {
++		height = capabilities.MinImageExtent.Height
++	}
++	if height > capabilities.MaxImageExtent.Height {
++		height = capabilities.MaxImageExtent.Height
++	}
++
++	return core1_0.Extent2D{Width: width, Height: height}
++}
++
++func (app *HelloTriangleApplication) querySwapChainSupport(device core1_0.PhysicalDevice) (SwapChainSupportDetails, error) {
++	var details SwapChainSupportDetails
++	var err error
++
++	details.Capabilities, _, err = app.surface.PhysicalDeviceSurfaceCapabilities(device)
++	if err != nil {
++		return details, err
++	}
++
++	details.Formats, _, err = app.surface.PhysicalDeviceSurfaceFormats(device)
++	if err != nil {
++		return details, err
++	}
++
++	details.PresentModes, _, err = app.surface.PhysicalDeviceSurfacePresentModes(device)
++	return details, err
++}
++
+ func (app *HelloTriangleApplication) isDeviceSuitable(device core1_0.PhysicalDevice) bool {
+ 	indices, err := app.findQueueFamilies(device)
+ 	if err != nil {
+ 		return false
+ 	}
+ 
+-	return indices.IsComplete()
++	extensionsSupported := app.checkDeviceExtensionSupport(device)
++
++	var swapChainAdequate bool
++	if extensionsSupported {
++		swapChainSupport, err := app.querySwapChainSupport(device)
++		if err != nil {
++			return false
++		}
++
++		swapChainAdequate = len(swapChainSupport.Formats) > 0 && len(swapChainSupport.PresentModes) > 0
++	}
++
++	return indices.IsComplete() && extensionsSupported && swapChainAdequate
++}
++
++func (app *HelloTriangleApplication) checkDeviceExtensionSupport(device core1_0.PhysicalDevice) bool {
++	extensions, _, err := device.EnumerateDeviceExtensionProperties()
++	if err != nil {
++		return false
++	}
++
++	for _, extension := range deviceExtensions {
++		_, hasExtension := extensions[extension]
++		if !hasExtension {
++			return false
++		}
++	}
++
++	return true
+ }
+ 
+ func (app *HelloTriangleApplication) findQueueFamilies(device core1_0.PhysicalDevice) (QueueFamilyIndices, error) {

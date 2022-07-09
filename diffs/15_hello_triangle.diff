@@ -1,0 +1,179 @@
+diff --git a/../steps/14_command_buffers/main.go b/../steps/15_hello_triangle/main.go
+index 84b8f8d..230bbce 100644
+--- a/../steps/14_command_buffers/main.go
++++ b/../steps/15_hello_triangle/main.go
+@@ -17,6 +17,8 @@ import (
+ //go:embed shaders
+ var shaders embed.FS
+ 
++const MaxFramesInFlight = 2
++
+ var validationLayers = []string{"VK_LAYER_KHRONOS_validation"}
+ var deviceExtensions = []string{khr_swapchain.ExtensionName}
+ 
+@@ -65,6 +67,12 @@ type HelloTriangleApplication struct {
+ 
+ 	commandPool    core1_0.CommandPool
+ 	commandBuffers []core1_0.CommandBuffer
++
++	imageAvailableSemaphore []core1_0.Semaphore
++	renderFinishedSemaphore []core1_0.Semaphore
++	inFlightFence           []core1_0.Fence
++	imagesInFlight          []core1_0.Fence
++	currentFrame            int
+ }
+ 
+ func (app *HelloTriangleApplication) Run() error {
+@@ -152,7 +160,12 @@ func (app *HelloTriangleApplication) initVulkan() error {
+ 		return err
+ 	}
+ 
+-	return app.createCommandBuffers()
++	err = app.createCommandBuffers()
++	if err != nil {
++		return err
++	}
++
++	return app.createSyncObjects()
+ }
+ 
+ func (app *HelloTriangleApplication) mainLoop() error {
+@@ -164,12 +177,29 @@ appLoop:
+ 				break appLoop
+ 			}
+ 		}
++		err := app.drawFrame()
++		if err != nil {
++			return err
++		}
+ 	}
+ 
+-	return nil
++	_, err := app.device.WaitIdle()
++	return err
+ }
+ 
+ func (app *HelloTriangleApplication) cleanup() {
++	for _, fence := range app.inFlightFence {
++		fence.Destroy(nil)
++	}
++
++	for _, semaphore := range app.renderFinishedSemaphore {
++		semaphore.Destroy(nil)
++	}
++
++	for _, semaphore := range app.imageAvailableSemaphore {
++		semaphore.Destroy(nil)
++	}
++
+ 	if app.commandPool != nil {
+ 		app.commandPool.Destroy(nil)
+ 	}
+@@ -436,6 +466,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
+ 	}
+ 	app.swapchainExtent = extent
+ 	app.swapchain = swapchain
++	app.swapchainImageFormat = surfaceFormat.Format
+ 
+ 	images, _, err := swapchain.SwapchainImages()
+ 	if err != nil {
+@@ -470,7 +501,6 @@ func (app *HelloTriangleApplication) createSwapchain() error {
+ 		imageViews = append(imageViews, view)
+ 	}
+ 	app.swapchainImageViews = imageViews
+-	app.swapchainImageFormat = surfaceFormat.Format
+ 
+ 	return nil
+ }
+@@ -752,6 +782,91 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
+ 	return nil
+ }
+ 
++func (app *HelloTriangleApplication) createSyncObjects() error {
++	for i := 0; i < MaxFramesInFlight; i++ {
++		semaphore, _, err := app.device.CreateSemaphore(nil, core1_0.SemaphoreCreateInfo{})
++		if err != nil {
++			return err
++		}
++
++		app.imageAvailableSemaphore = append(app.imageAvailableSemaphore, semaphore)
++
++		semaphore, _, err = app.device.CreateSemaphore(nil, core1_0.SemaphoreCreateInfo{})
++		if err != nil {
++			return err
++		}
++
++		app.renderFinishedSemaphore = append(app.renderFinishedSemaphore, semaphore)
++
++		fence, _, err := app.device.CreateFence(nil, core1_0.FenceCreateInfo{
++			Flags: core1_0.FenceCreateSignaled,
++		})
++		if err != nil {
++			return err
++		}
++
++		app.inFlightFence = append(app.inFlightFence, fence)
++	}
++
++	for i := 0; i < len(app.swapchainImages); i++ {
++		app.imagesInFlight = append(app.imagesInFlight, nil)
++	}
++
++	return nil
++}
++
++func (app *HelloTriangleApplication) drawFrame() error {
++	fences := []core1_0.Fence{app.inFlightFence[app.currentFrame]}
++
++	_, err := app.device.WaitForFences(true, common.NoTimeout, fences)
++	if err != nil {
++		return err
++	}
++
++	imageIndex, _, err := app.swapchain.AcquireNextImage(common.NoTimeout, app.imageAvailableSemaphore[app.currentFrame], nil)
++	if err != nil {
++		return err
++	}
++
++	if app.imagesInFlight[imageIndex] != nil {
++		_, err := app.device.WaitForFences(true, common.NoTimeout, []core1_0.Fence{app.imagesInFlight[imageIndex]})
++		if err != nil {
++			return err
++		}
++	}
++	app.imagesInFlight[imageIndex] = app.inFlightFence[app.currentFrame]
++
++	_, err = app.device.ResetFences(fences)
++	if err != nil {
++		return err
++	}
++
++	_, err = app.graphicsQueue.Submit(app.inFlightFence[app.currentFrame], []core1_0.SubmitInfo{
++		{
++			WaitSemaphores:   []core1_0.Semaphore{app.imageAvailableSemaphore[app.currentFrame]},
++			WaitDstStageMask: []core1_0.PipelineStageFlags{core1_0.PipelineStageColorAttachmentOutput},
++			CommandBuffers:   []core1_0.CommandBuffer{app.commandBuffers[imageIndex]},
++			SignalSemaphores: []core1_0.Semaphore{app.renderFinishedSemaphore[app.currentFrame]},
++		},
++	})
++	if err != nil {
++		return err
++	}
++
++	_, err = app.swapchainExtension.QueuePresent(app.presentQueue, khr_swapchain.PresentInfo{
++		WaitSemaphores: []core1_0.Semaphore{app.renderFinishedSemaphore[app.currentFrame]},
++		Swapchains:     []khr_swapchain.Swapchain{app.swapchain},
++		ImageIndices:   []int{imageIndex},
++	})
++	if err != nil {
++		return err
++	}
++
++	app.currentFrame = (app.currentFrame + 1) % MaxFramesInFlight
++
++	return nil
++}
++
+ func (app *HelloTriangleApplication) chooseSwapSurfaceFormat(availableFormats []khr_surface.Format) khr_surface.Format {
+ 	for _, format := range availableFormats {
+ 		if format.Format == core1_0.FormatB8G8R8A8SRGB && format.ColorSpace == khr_surface.ColorSpaceSRGBNonlinear {

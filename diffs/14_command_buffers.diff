@@ -1,0 +1,116 @@
+diff --git a/../steps/13_framebuffers/main.go b/../steps/14_command_buffers/main.go
+index 48d4ec1..84b8f8d 100644
+--- a/../steps/13_framebuffers/main.go
++++ b/../steps/14_command_buffers/main.go
+@@ -62,6 +62,9 @@ type HelloTriangleApplication struct {
+ 	renderPass       core1_0.RenderPass
+ 	pipelineLayout   core1_0.PipelineLayout
+ 	graphicsPipeline core1_0.Pipeline
++
++	commandPool    core1_0.CommandPool
++	commandBuffers []core1_0.CommandBuffer
+ }
+ 
+ func (app *HelloTriangleApplication) Run() error {
+@@ -139,7 +142,17 @@ func (app *HelloTriangleApplication) initVulkan() error {
+ 		return err
+ 	}
+ 
+-	return app.createFramebuffers()
++	err = app.createFramebuffers()
++	if err != nil {
++		return err
++	}
++
++	err = app.createCommandPool()
++	if err != nil {
++		return err
++	}
++
++	return app.createCommandBuffers()
+ }
+ 
+ func (app *HelloTriangleApplication) mainLoop() error {
+@@ -157,6 +170,10 @@ appLoop:
+ }
+ 
+ func (app *HelloTriangleApplication) cleanup() {
++	if app.commandPool != nil {
++		app.commandPool.Destroy(nil)
++	}
++
+ 	for _, framebuffer := range app.swapchainFramebuffers {
+ 		framebuffer.Destroy(nil)
+ 	}
+@@ -670,6 +687,71 @@ func (app *HelloTriangleApplication) createFramebuffers() error {
+ 	return nil
+ }
+ 
++func (app *HelloTriangleApplication) createCommandPool() error {
++	indices, err := app.findQueueFamilies(app.physicalDevice)
++	if err != nil {
++		return err
++	}
++
++	pool, _, err := app.device.CreateCommandPool(nil, core1_0.CommandPoolCreateInfo{
++		QueueFamilyIndex: indices.GraphicsFamily,
++	})
++
++	if err != nil {
++		return err
++	}
++	app.commandPool = pool
++
++	return nil
++}
++
++func (app *HelloTriangleApplication) createCommandBuffers() error {
++
++	buffers, _, err := app.device.AllocateCommandBuffers(core1_0.CommandBufferAllocateInfo{
++		CommandPool:        app.commandPool,
++		Level:              core1_0.CommandBufferLevelPrimary,
++		CommandBufferCount: len(app.swapchainImages),
++	})
++	if err != nil {
++		return err
++	}
++	app.commandBuffers = buffers
++
++	for bufferIdx, buffer := range buffers {
++		_, err = buffer.Begin(core1_0.CommandBufferBeginInfo{})
++		if err != nil {
++			return err
++		}
++
++		err = buffer.CmdBeginRenderPass(core1_0.SubpassContentsInline,
++			core1_0.RenderPassBeginInfo{
++				RenderPass:  app.renderPass,
++				Framebuffer: app.swapchainFramebuffers[bufferIdx],
++				RenderArea: core1_0.Rect2D{
++					Offset: core1_0.Offset2D{X: 0, Y: 0},
++					Extent: app.swapchainExtent,
++				},
++				ClearValues: []core1_0.ClearValue{
++					core1_0.ClearValueFloat{0, 0, 0, 1},
++				},
++			})
++		if err != nil {
++			return err
++		}
++
++		buffer.CmdBindPipeline(core1_0.PipelineBindPointGraphics, app.graphicsPipeline)
++		buffer.CmdDraw(3, 1, 0, 0)
++		buffer.CmdEndRenderPass()
++
++		_, err = buffer.End()
++		if err != nil {
++			return err
++		}
++	}
++
++	return nil
++}
++
+ func (app *HelloTriangleApplication) chooseSwapSurfaceFormat(availableFormats []khr_surface.Format) khr_surface.Format {
+ 	for _, format := range availableFormats {
+ 		if format.Format == core1_0.FormatB8G8R8A8SRGB && format.ColorSpace == khr_surface.ColorSpaceSRGBNonlinear {

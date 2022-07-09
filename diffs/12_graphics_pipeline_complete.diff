@@ -1,0 +1,114 @@
+diff --git a/../steps/11_render_passes/main.go b/../steps/12_graphics_pipeline_complete/main.go
+index 5236764..fa13f42 100644
+--- a/../steps/11_render_passes/main.go
++++ b/../steps/12_graphics_pipeline_complete/main.go
+@@ -58,8 +58,9 @@ type HelloTriangleApplication struct {
+ 	swapchainExtent      core1_0.Extent2D
+ 	swapchainImageViews  []core1_0.ImageView
+ 
+-	renderPass     core1_0.RenderPass
+-	pipelineLayout core1_0.PipelineLayout
++	renderPass       core1_0.RenderPass
++	pipelineLayout   core1_0.PipelineLayout
++	graphicsPipeline core1_0.Pipeline
+ }
+ 
+ func (app *HelloTriangleApplication) Run() error {
+@@ -150,6 +151,10 @@ appLoop:
+ }
+ 
+ func (app *HelloTriangleApplication) cleanup() {
++	if app.graphicsPipeline != nil {
++		app.graphicsPipeline.Destroy(nil)
++	}
++
+ 	if app.pipelineLayout != nil {
+ 		app.pipelineLayout.Destroy(nil)
+ 	}
+@@ -533,26 +538,26 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+ 	}
+ 	defer fragShader.Destroy(nil)
+ 
+-	_ = &core1_0.PipelineVertexInputStateCreateInfo{}
++	vertexInput := &core1_0.PipelineVertexInputStateCreateInfo{}
+ 
+-	_ = &core1_0.PipelineInputAssemblyStateCreateInfo{
++	inputAssembly := &core1_0.PipelineInputAssemblyStateCreateInfo{
+ 		Topology:               core1_0.PrimitiveTopologyTriangleList,
+ 		PrimitiveRestartEnable: false,
+ 	}
+ 
+-	_ = &core1_0.PipelineShaderStageCreateInfo{
++	vertStage := core1_0.PipelineShaderStageCreateInfo{
+ 		Stage:  core1_0.StageVertex,
+ 		Module: vertShader,
+ 		Name:   "main",
+ 	}
+ 
+-	_ = &core1_0.PipelineShaderStageCreateInfo{
++	fragStage := core1_0.PipelineShaderStageCreateInfo{
+ 		Stage:  core1_0.StageFragment,
+ 		Module: fragShader,
+ 		Name:   "main",
+ 	}
+ 
+-	_ = &core1_0.PipelineViewportStateCreateInfo{
++	viewport := &core1_0.PipelineViewportStateCreateInfo{
+ 		Viewports: []core1_0.Viewport{
+ 			{
+ 				X:        0,
+@@ -571,7 +576,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+ 		},
+ 	}
+ 
+-	_ = &core1_0.PipelineRasterizationStateCreateInfo{
++	rasterization := &core1_0.PipelineRasterizationStateCreateInfo{
+ 		DepthClampEnable:        false,
+ 		RasterizerDiscardEnable: false,
+ 
+@@ -584,13 +589,13 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+ 		LineWidth: 1.0,
+ 	}
+ 
+-	_ = &core1_0.PipelineMultisampleStateCreateInfo{
++	multisample := &core1_0.PipelineMultisampleStateCreateInfo{
+ 		SampleShadingEnable:  false,
+ 		RasterizationSamples: core1_0.Samples1,
+ 		MinSampleShading:     1.0,
+ 	}
+ 
+-	_ = &core1_0.PipelineColorBlendStateCreateInfo{
++	colorBlend := &core1_0.PipelineColorBlendStateCreateInfo{
+ 		LogicOpEnabled: false,
+ 		LogicOp:        core1_0.LogicOpCopy,
+ 
+@@ -608,6 +613,29 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+ 		return err
+ 	}
+ 
++	pipelines, _, err := app.device.CreateGraphicsPipelines(nil, nil, []core1_0.GraphicsPipelineCreateInfo{
++		{
++			Stages: []core1_0.PipelineShaderStageCreateInfo{
++				vertStage,
++				fragStage,
++			},
++			VertexInputState:   vertexInput,
++			InputAssemblyState: inputAssembly,
++			ViewportState:      viewport,
++			RasterizationState: rasterization,
++			MultisampleState:   multisample,
++			ColorBlendState:    colorBlend,
++			Layout:             app.pipelineLayout,
++			RenderPass:         app.renderPass,
++			Subpass:            0,
++			BasePipelineIndex:  -1,
++		},
++	})
++	if err != nil {
++		return err
++	}
++	app.graphicsPipeline = pipelines[0]
++
+ 	return nil
+ }
+ 

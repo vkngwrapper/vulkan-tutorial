@@ -1,0 +1,91 @@
+diff --git a/../steps/00_base_code/main.go b/../steps/01_instance_creation/main.go
+index fa094df..96f0337 100644
+--- a/../steps/00_base_code/main.go
++++ b/../steps/01_instance_creation/main.go
+@@ -1,12 +1,19 @@
+ package main
+ 
+ import (
++	"github.com/cockroachdb/errors"
+ 	"github.com/veandco/go-sdl2/sdl"
++	"github.com/vkngwrapper/core"
++	"github.com/vkngwrapper/core/common"
++	"github.com/vkngwrapper/core/core1_0"
+ 	"log"
+ )
+ 
+ type HelloTriangleApplication struct {
++	loader core.Loader
+ 	window *sdl.Window
++
++	instance core1_0.Instance
+ }
+ 
+ func (app *HelloTriangleApplication) Run() error {
+@@ -35,11 +42,16 @@ func (app *HelloTriangleApplication) initWindow() error {
+ 	}
+ 	app.window = window
+ 
++	app.loader, err = core.CreateStaticLinkedLoader()
++	if err != nil {
++		return err
++	}
++
+ 	return nil
+ }
+ 
+ func (app *HelloTriangleApplication) initVulkan() error {
+-	return nil
++	return app.createInstance()
+ }
+ 
+ func (app *HelloTriangleApplication) mainLoop() error {
+@@ -57,12 +69,48 @@ appLoop:
+ }
+ 
+ func (app *HelloTriangleApplication) cleanup() {
++	if app.instance != nil {
++		app.instance.Destroy(nil)
++	}
++
+ 	if app.window != nil {
+ 		app.window.Destroy()
+ 	}
+ 	sdl.Quit()
+ }
+ 
++func (app *HelloTriangleApplication) createInstance() error {
++	instanceOptions := core1_0.InstanceCreateInfo{
++		ApplicationName:    "Hello Triangle",
++		ApplicationVersion: common.CreateVersion(1, 0, 0),
++		EngineName:         "No Engine",
++		EngineVersion:      common.CreateVersion(1, 0, 0),
++		APIVersion:         common.Vulkan1_2,
++	}
++
++	// Add extensions
++	sdlExtensions := app.window.VulkanGetInstanceExtensions()
++	extensions, _, err := app.loader.AvailableExtensions()
++	if err != nil {
++		return err
++	}
++
++	for _, ext := range sdlExtensions {
++		_, hasExt := extensions[ext]
++		if !hasExt {
++			return errors.Newf("createinstance: cannot initialize sdl: missing extension %s", ext)
++		}
++		instanceOptions.EnabledExtensionNames = append(instanceOptions.EnabledExtensionNames, ext)
++	}
++
++	app.instance, _, err = app.loader.CreateInstance(nil, instanceOptions)
++	if err != nil {
++		return err
++	}
++
++	return nil
++}
++
+ func main() {
+ 	app := &HelloTriangleApplication{}
+ 

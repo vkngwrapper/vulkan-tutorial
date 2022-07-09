@@ -1,0 +1,72 @@
+diff --git a/../steps/06_swapchain/main.go b/../steps/07_image_views/main.go
+index 9e905f3..3dc703b 100644
+--- a/../steps/06_swapchain/main.go
++++ b/../steps/07_image_views/main.go
+@@ -52,6 +52,7 @@ type HelloTriangleApplication struct {
+ 	swapchainImages      []core1_0.Image
+ 	swapchainImageFormat core1_0.Format
+ 	swapchainExtent      core1_0.Extent2D
++	swapchainImageViews  []core1_0.ImageView
+ }
+ 
+ func (app *HelloTriangleApplication) Run() error {
+@@ -132,6 +133,10 @@ appLoop:
+ }
+ 
+ func (app *HelloTriangleApplication) cleanup() {
++	for _, imageView := range app.swapchainImageViews {
++		imageView.Destroy(nil)
++	}
++
+ 	if app.swapchain != nil {
+ 		app.swapchain.Destroy(nil)
+ 	}
+@@ -261,7 +266,7 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
+ 	}
+ 
+ 	if app.physicalDevice == nil {
+-		return errors.New("failed to find a suitable GPU!")
++		return errors.Newf("failed to find a suitable GPU!")
+ 	}
+ 
+ 	return nil
+@@ -375,6 +380,39 @@ func (app *HelloTriangleApplication) createSwapchain() error {
+ 	app.swapchainExtent = extent
+ 	app.swapchain = swapchain
+ 
++	images, _, err := swapchain.SwapchainImages()
++	if err != nil {
++		return err
++	}
++	app.swapchainImages = images
++
++	var imageViews []core1_0.ImageView
++	for _, image := range images {
++		view, _, err := app.device.CreateImageView(nil, core1_0.ImageViewCreateInfo{
++			ViewType: core1_0.ImageViewType2D,
++			Image:    image,
++			Format:   surfaceFormat.Format,
++			Components: core1_0.ComponentMapping{
++				R: core1_0.ComponentSwizzleIdentity,
++				G: core1_0.ComponentSwizzleIdentity,
++				B: core1_0.ComponentSwizzleIdentity,
++				A: core1_0.ComponentSwizzleIdentity,
++			},
++			SubresourceRange: core1_0.ImageSubresourceRange{
++				AspectMask:     core1_0.ImageAspectColor,
++				BaseMipLevel:   0,
++				LevelCount:     1,
++				BaseArrayLayer: 0,
++				LayerCount:     1,
++			},
++		})
++		if err != nil {
++			return err
++		}
++
++		imageViews = append(imageViews, view)
++	}
++	app.swapchainImageViews = imageViews
+ 	app.swapchainImageFormat = surfaceFormat.Format
+ 
+ 	return nil

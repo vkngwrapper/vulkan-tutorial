@@ -1,0 +1,156 @@
+diff --git a/../steps/21_descriptor_layout/main.go b/../steps/22_descriptor_sets/main.go
+index b52fbaf..40aac8e 100644
+--- a/../steps/21_descriptor_layout/main.go
++++ b/../steps/22_descriptor_sets/main.go
+@@ -117,6 +117,8 @@ type HelloTriangleApplication struct {
+ 	swapchainFramebuffers []core1_0.Framebuffer
+ 
+ 	renderPass          core1_0.RenderPass
++	descriptorPool      core1_0.DescriptorPool
++	descriptorSets      []core1_0.DescriptorSet
+ 	descriptorSetLayout core1_0.DescriptorSetLayout
+ 	pipelineLayout      core1_0.PipelineLayout
+ 	graphicsPipeline    core1_0.Pipeline
+@@ -250,6 +252,16 @@ func (app *HelloTriangleApplication) initVulkan() error {
+ 		return err
+ 	}
+ 
++	err = app.createDescriptorPool()
++	if err != nil {
++		return err
++	}
++
++	err = app.createDescriptorSets()
++	if err != nil {
++		return err
++	}
++
+ 	err = app.createCommandBuffers()
+ 	if err != nil {
+ 		return err
+@@ -341,6 +353,8 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
+ 		app.uniformBuffersMemory[i].Free(nil)
+ 	}
+ 	app.uniformBuffersMemory = app.uniformBuffersMemory[:0]
++
++	app.descriptorPool.Destroy(nil)
+ }
+ 
+ func (app *HelloTriangleApplication) cleanup() {
+@@ -450,6 +464,16 @@ func (app *HelloTriangleApplication) recreateSwapChain() error {
+ 		return err
+ 	}
+ 
++	err = app.createDescriptorPool()
++	if err != nil {
++		return err
++	}
++
++	err = app.createDescriptorSets()
++	if err != nil {
++		return err
++	}
++
+ 	err = app.createCommandBuffers()
+ 	if err != nil {
+ 		return err
+@@ -879,7 +903,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+ 
+ 		PolygonMode: core1_0.PolygonModeFill,
+ 		CullMode:    core1_0.CullModeBack,
+-		FrontFace:   core1_0.FrontFaceClockwise,
++		FrontFace:   core1_0.FrontFaceCounterClockwise,
+ 
+ 		DepthBiasEnable: false,
+ 
+@@ -910,9 +934,6 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+ 			app.descriptorSetLayout,
+ 		},
+ 	})
+-	if err != nil {
+-		return err
+-	}
+ 
+ 	pipelines, _, err := app.device.CreateGraphicsPipelines(nil, nil, []core1_0.GraphicsPipelineCreateInfo{
+ 		{
+@@ -1073,6 +1094,61 @@ func (app *HelloTriangleApplication) createUniformBuffers() error {
+ 	return nil
+ }
+ 
++func (app *HelloTriangleApplication) createDescriptorPool() error {
++	var err error
++	app.descriptorPool, _, err = app.device.CreateDescriptorPool(nil, core1_0.DescriptorPoolCreateInfo{
++		MaxSets: len(app.swapchainImages),
++		PoolSizes: []core1_0.DescriptorPoolSize{
++			{
++				Type:            core1_0.DescriptorTypeUniformBuffer,
++				DescriptorCount: len(app.swapchainImages),
++			},
++		},
++	})
++	return err
++}
++
++func (app *HelloTriangleApplication) createDescriptorSets() error {
++	var allocLayouts []core1_0.DescriptorSetLayout
++	for i := 0; i < len(app.swapchainImages); i++ {
++		allocLayouts = append(allocLayouts, app.descriptorSetLayout)
++	}
++
++	var err error
++	app.descriptorSets, _, err = app.device.AllocateDescriptorSets(core1_0.DescriptorSetAllocateInfo{
++		DescriptorPool: app.descriptorPool,
++		SetLayouts:     allocLayouts,
++	})
++	if err != nil {
++		return err
++	}
++
++	for i := 0; i < len(app.swapchainImages); i++ {
++		err = app.device.UpdateDescriptorSets([]core1_0.WriteDescriptorSet{
++			{
++				DstSet:          app.descriptorSets[i],
++				DstBinding:      0,
++				DstArrayElement: 0,
++
++				DescriptorType: core1_0.DescriptorTypeUniformBuffer,
++
++				BufferInfo: []core1_0.DescriptorBufferInfo{
++					{
++						Buffer: app.uniformBuffers[i],
++						Offset: 0,
++						Range:  int(unsafe.Sizeof(UniformBufferObject{})),
++					},
++				},
++			},
++		}, nil)
++		if err != nil {
++			return err
++		}
++	}
++
++	return nil
++}
++
+ func (app *HelloTriangleApplication) createBuffer(size int, usage core1_0.BufferUsageFlags, properties core1_0.MemoryPropertyFlags) (core1_0.Buffer, core1_0.DeviceMemory, error) {
+ 	buffer, _, err := app.device.CreateBuffer(nil, core1_0.BufferCreateInfo{
+ 		Size:        size,
+@@ -1196,6 +1272,9 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
+ 		buffer.CmdBindPipeline(core1_0.PipelineBindPointGraphics, app.graphicsPipeline)
+ 		buffer.CmdBindVertexBuffers([]core1_0.Buffer{app.vertexBuffer}, []int{0})
+ 		buffer.CmdBindIndexBuffer(app.indexBuffer, 0, core1_0.IndexTypeUInt16)
++		buffer.CmdBindDescriptorSets(core1_0.PipelineBindPointGraphics, app.pipelineLayout, []core1_0.DescriptorSet{
++			app.descriptorSets[bufferIdx],
++		}, nil)
+ 		buffer.CmdDrawIndexed(len(indices), 1, 0, 0, 0)
+ 		buffer.CmdEndRenderPass()
+ 
+@@ -1303,7 +1382,7 @@ func (app *HelloTriangleApplication) drawFrame() error {
+ }
+ 
+ func (app *HelloTriangleApplication) updateUniformBuffer(currentImage int) error {
+-	currentTime := hrtime.NowPrecision()
++	currentTime := hrtime.Now().Seconds()
+ 	timePeriod := float32(math.Mod(currentTime, 4.0))
+ 
+ 	ubo := UniformBufferObject{}

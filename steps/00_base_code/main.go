@@ -63,15 +63,11 @@ func (app *HelloTriangleApplication) cleanup() {
 	sdl.Quit()
 }
 
-func fail(val any) {
-	log.Fatalf("%+v\n", val)
-}
-
 func main() {
 	app := &HelloTriangleApplication{}
 
 	err := app.Run()
 	if err != nil {
-		fail(err)
+		log.Fatalf("%+v\n", err)
 	}
 }

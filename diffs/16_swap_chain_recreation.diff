@@ -1,0 +1,263 @@
+diff --git a/../steps/15_hello_triangle/main.go b/../steps/16_swap_chain_recreation/main.go
+index 230bbce..b8e3abb 100644
+--- a/../steps/15_hello_triangle/main.go
++++ b/../steps/16_swap_chain_recreation/main.go
+@@ -95,7 +95,7 @@ func (app *HelloTriangleApplication) initWindow() error {
+ 		return err
+ 	}
+ 
+-	window, err := sdl.CreateWindow("Vulkan", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED, 800, 600, sdl.WINDOW_SHOWN|sdl.WINDOW_VULKAN)
++	window, err := sdl.CreateWindow("Vulkan", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED, 800, 600, sdl.WINDOW_SHOWN|sdl.WINDOW_VULKAN|sdl.WINDOW_RESIZABLE)
+ 	if err != nil {
+ 		return err
+ 	}
+@@ -140,6 +140,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
+ 		return err
+ 	}
+ 
++	err = app.createImageViews()
++	if err != nil {
++		return err
++	}
++
+ 	err = app.createRenderPass()
+ 	if err != nil {
+ 		return err
+@@ -169,17 +174,36 @@ func (app *HelloTriangleApplication) initVulkan() error {
+ }
+ 
+ func (app *HelloTriangleApplication) mainLoop() error {
++	rendering := true
++
+ appLoop:
+ 	for true {
+ 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
+-			switch event.(type) {
++			switch e := event.(type) {
+ 			case *sdl.QuitEvent:
+ 				break appLoop
++			case *sdl.WindowEvent:
++				switch e.Event {
++				case sdl.WINDOWEVENT_MINIMIZED:
++					rendering = false
++				case sdl.WINDOWEVENT_RESTORED:
++					rendering = true
++				case sdl.WINDOWEVENT_RESIZED:
++					w, h := app.window.GetSize()
++					if w > 0 && h > 0 {
++						rendering = true
++						app.recreateSwapChain()
++					} else {
++						rendering = false
++					}
++				}
+ 			}
+ 		}
+-		err := app.drawFrame()
+-		if err != nil {
+-			return err
++		if rendering {
++			err := app.drawFrame()
++			if err != nil {
++				return err
++			}
+ 		}
+ 	}
+ 
+@@ -187,45 +211,60 @@ appLoop:
+ 	return err
+ }
+ 
+-func (app *HelloTriangleApplication) cleanup() {
+-	for _, fence := range app.inFlightFence {
+-		fence.Destroy(nil)
+-	}
+-
+-	for _, semaphore := range app.renderFinishedSemaphore {
+-		semaphore.Destroy(nil)
+-	}
+-
+-	for _, semaphore := range app.imageAvailableSemaphore {
+-		semaphore.Destroy(nil)
+-	}
+-
+-	if app.commandPool != nil {
+-		app.commandPool.Destroy(nil)
+-	}
+-
++func (app *HelloTriangleApplication) cleanupSwapChain() {
+ 	for _, framebuffer := range app.swapchainFramebuffers {
+ 		framebuffer.Destroy(nil)
+ 	}
++	app.swapchainFramebuffers = []core1_0.Framebuffer{}
++
++	if len(app.commandBuffers) > 0 {
++		app.device.FreeCommandBuffers(app.commandBuffers)
++		app.commandBuffers = []core1_0.CommandBuffer{}
++	}
+ 
+ 	if app.graphicsPipeline != nil {
+ 		app.graphicsPipeline.Destroy(nil)
++		app.graphicsPipeline = nil
+ 	}
+ 
+ 	if app.pipelineLayout != nil {
+ 		app.pipelineLayout.Destroy(nil)
++		app.pipelineLayout = nil
+ 	}
+ 
+ 	if app.renderPass != nil {
+ 		app.renderPass.Destroy(nil)
++		app.renderPass = nil
+ 	}
+ 
+ 	for _, imageView := range app.swapchainImageViews {
+ 		imageView.Destroy(nil)
+ 	}
++	app.swapchainImageViews = []core1_0.ImageView{}
+ 
+ 	if app.swapchain != nil {
+ 		app.swapchain.Destroy(nil)
++		app.swapchain = nil
++	}
++}
++
++func (app *HelloTriangleApplication) cleanup() {
++	app.cleanupSwapChain()
++
++	for _, fence := range app.inFlightFence {
++		fence.Destroy(nil)
++	}
++
++	for _, semaphore := range app.renderFinishedSemaphore {
++		semaphore.Destroy(nil)
++	}
++
++	for _, semaphore := range app.imageAvailableSemaphore {
++		semaphore.Destroy(nil)
++	}
++
++	if app.commandPool != nil {
++		app.commandPool.Destroy(nil)
+ 	}
+ 
+ 	if app.device != nil {
+@@ -250,6 +289,60 @@ func (app *HelloTriangleApplication) cleanup() {
+ 	sdl.Quit()
+ }
+ 
++func (app *HelloTriangleApplication) recreateSwapChain() error {
++	w, h := app.window.VulkanGetDrawableSize()
++	if w == 0 || h == 0 {
++		return nil
++	}
++	if (app.window.GetFlags() & sdl.WINDOW_MINIMIZED) != 0 {
++		return nil
++	}
++
++	_, err := app.device.WaitIdle()
++	if err != nil {
++		return err
++	}
++
++	app.cleanupSwapChain()
++
++	err = app.createSwapchain()
++	if err != nil {
++		return err
++	}
++
++	err = app.createImageViews()
++	if err != nil {
++		return err
++	}
++
++	err = app.createRenderPass()
++	if err != nil {
++		return err
++	}
++
++	err = app.createGraphicsPipeline()
++	if err != nil {
++		return err
++	}
++
++	err = app.createFramebuffers()
++	if err != nil {
++		return err
++	}
++
++	err = app.createCommandBuffers()
++	if err != nil {
++		return err
++	}
++
++	app.imagesInFlight = []core1_0.Fence{}
++	for i := 0; i < len(app.swapchainImages); i++ {
++		app.imagesInFlight = append(app.imagesInFlight, nil)
++	}
++
++	return nil
++}
++
+ func (app *HelloTriangleApplication) createInstance() error {
+ 	instanceOptions := core1_0.InstanceCreateInfo{
+ 		ApplicationName:    "Hello Triangle",
+@@ -468,7 +561,11 @@ func (app *HelloTriangleApplication) createSwapchain() error {
+ 	app.swapchain = swapchain
+ 	app.swapchainImageFormat = surfaceFormat.Format
+ 
+-	images, _, err := swapchain.SwapchainImages()
++	return nil
++}
++
++func (app *HelloTriangleApplication) createImageViews() error {
++	images, _, err := app.swapchain.SwapchainImages()
+ 	if err != nil {
+ 		return err
+ 	}
+@@ -479,7 +576,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
+ 		view, _, err := app.device.CreateImageView(nil, core1_0.ImageViewCreateInfo{
+ 			ViewType: core1_0.ImageViewType2D,
+ 			Image:    image,
+-			Format:   surfaceFormat.Format,
++			Format:   app.swapchainImageFormat,
+ 			Components: core1_0.ComponentMapping{
+ 				R: core1_0.ComponentSwizzleIdentity,
+ 				G: core1_0.ComponentSwizzleIdentity,
+@@ -823,13 +920,15 @@ func (app *HelloTriangleApplication) drawFrame() error {
+ 		return err
+ 	}
+ 
+-	imageIndex, _, err := app.swapchain.AcquireNextImage(common.NoTimeout, app.imageAvailableSemaphore[app.currentFrame], nil)
+-	if err != nil {
++	imageIndex, res, err := app.swapchain.AcquireNextImage(common.NoTimeout, app.imageAvailableSemaphore[app.currentFrame], nil)
++	if res == khr_swapchain.VKErrorOutOfDate {
++		return app.recreateSwapChain()
++	} else if err != nil {
+ 		return err
+ 	}
+ 
+ 	if app.imagesInFlight[imageIndex] != nil {
+-		_, err := app.device.WaitForFences(true, common.NoTimeout, []core1_0.Fence{app.imagesInFlight[imageIndex]})
++		_, err := app.imagesInFlight[imageIndex].Wait(common.NoTimeout)
+ 		if err != nil {
+ 			return err
+ 		}
+@@ -853,12 +952,14 @@ func (app *HelloTriangleApplication) drawFrame() error {
+ 		return err
+ 	}
+ 
+-	_, err = app.swapchainExtension.QueuePresent(app.presentQueue, khr_swapchain.PresentInfo{
++	res, err = app.swapchainExtension.QueuePresent(app.presentQueue, khr_swapchain.PresentInfo{
+ 		WaitSemaphores: []core1_0.Semaphore{app.renderFinishedSemaphore[app.currentFrame]},
+ 		Swapchains:     []khr_swapchain.Swapchain{app.swapchain},
+ 		ImageIndices:   []int{imageIndex},
+ 	})
+-	if err != nil {
++	if res == khr_swapchain.VKErrorOutOfDate || res == khr_swapchain.VKSuboptimal {
++		return app.recreateSwapChain()
++	} else if err != nil {
+ 		return err
+ 	}
+ 

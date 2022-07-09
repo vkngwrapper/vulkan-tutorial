@@ -1,0 +1,77 @@
+diff --git a/../steps/12_graphics_pipeline_complete/main.go b/../steps/13_framebuffers/main.go
+index fa13f42..48d4ec1 100644
+--- a/../steps/12_graphics_pipeline_complete/main.go
++++ b/../steps/13_framebuffers/main.go
+@@ -51,12 +51,13 @@ type HelloTriangleApplication struct {
+ 	graphicsQueue core1_0.Queue
+ 	presentQueue  core1_0.Queue
+ 
+-	swapchainExtension   khr_swapchain.Extension
+-	swapchain            khr_swapchain.Swapchain
+-	swapchainImages      []core1_0.Image
+-	swapchainImageFormat core1_0.Format
+-	swapchainExtent      core1_0.Extent2D
+-	swapchainImageViews  []core1_0.ImageView
++	swapchainExtension    khr_swapchain.Extension
++	swapchain             khr_swapchain.Swapchain
++	swapchainImages       []core1_0.Image
++	swapchainImageFormat  core1_0.Format
++	swapchainExtent       core1_0.Extent2D
++	swapchainImageViews   []core1_0.ImageView
++	swapchainFramebuffers []core1_0.Framebuffer
+ 
+ 	renderPass       core1_0.RenderPass
+ 	pipelineLayout   core1_0.PipelineLayout
+@@ -133,7 +134,12 @@ func (app *HelloTriangleApplication) initVulkan() error {
+ 		return err
+ 	}
+ 
+-	return app.createGraphicsPipeline()
++	err = app.createGraphicsPipeline()
++	if err != nil {
++		return err
++	}
++
++	return app.createFramebuffers()
+ }
+ 
+ func (app *HelloTriangleApplication) mainLoop() error {
+@@ -151,6 +157,10 @@ appLoop:
+ }
+ 
+ func (app *HelloTriangleApplication) cleanup() {
++	for _, framebuffer := range app.swapchainFramebuffers {
++		framebuffer.Destroy(nil)
++	}
++
+ 	if app.graphicsPipeline != nil {
+ 		app.graphicsPipeline.Destroy(nil)
+ 	}
+@@ -639,6 +649,27 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+ 	return nil
+ }
+ 
++func (app *HelloTriangleApplication) createFramebuffers() error {
++	for _, imageView := range app.swapchainImageViews {
++		framebuffer, _, err := app.device.CreateFramebuffer(nil, core1_0.FramebufferCreateInfo{
++			RenderPass: app.renderPass,
++			Layers:     1,
++			Attachments: []core1_0.ImageView{
++				imageView,
++			},
++			Width:  app.swapchainExtent.Width,
++			Height: app.swapchainExtent.Height,
++		})
++		if err != nil {
++			return err
++		}
++
++		app.swapchainFramebuffers = append(app.swapchainFramebuffers, framebuffer)
++	}
++
++	return nil
++}
++
+ func (app *HelloTriangleApplication) chooseSwapSurfaceFormat(availableFormats []khr_surface.Format) khr_surface.Format {
+ 	for _, format := range availableFormats {
+ 		if format.Format == core1_0.FormatB8G8R8A8SRGB && format.ColorSpace == khr_surface.ColorSpaceSRGBNonlinear {

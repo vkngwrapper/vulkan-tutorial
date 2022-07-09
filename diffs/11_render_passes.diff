@@ -1,0 +1,89 @@
+diff --git a/../steps/10_fixed_functions/main.go b/../steps/11_render_passes/main.go
+index 1a8d1f5..5236764 100644
+--- a/../steps/10_fixed_functions/main.go
++++ b/../steps/11_render_passes/main.go
+@@ -58,6 +58,7 @@ type HelloTriangleApplication struct {
+ 	swapchainExtent      core1_0.Extent2D
+ 	swapchainImageViews  []core1_0.ImageView
+ 
++	renderPass     core1_0.RenderPass
+ 	pipelineLayout core1_0.PipelineLayout
+ }
+ 
+@@ -126,6 +127,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
+ 		return err
+ 	}
+ 
++	err = app.createRenderPass()
++	if err != nil {
++		return err
++	}
++
+ 	return app.createGraphicsPipeline()
+ }
+ 
+@@ -148,6 +154,10 @@ func (app *HelloTriangleApplication) cleanup() {
+ 		app.pipelineLayout.Destroy(nil)
+ 	}
+ 
++	if app.renderPass != nil {
++		app.renderPass.Destroy(nil)
++	}
++
+ 	for _, imageView := range app.swapchainImageViews {
+ 		imageView.Destroy(nil)
+ 	}
+@@ -433,6 +443,53 @@ func (app *HelloTriangleApplication) createSwapchain() error {
+ 	return nil
+ }
+ 
++func (app *HelloTriangleApplication) createRenderPass() error {
++	renderPass, _, err := app.device.CreateRenderPass(nil, core1_0.RenderPassCreateInfo{
++		Attachments: []core1_0.AttachmentDescription{
++			{
++				Format:         app.swapchainImageFormat,
++				Samples:        core1_0.Samples1,
++				LoadOp:         core1_0.AttachmentLoadOpClear,
++				StoreOp:        core1_0.AttachmentStoreOpStore,
++				StencilLoadOp:  core1_0.AttachmentLoadOpDontCare,
++				StencilStoreOp: core1_0.AttachmentStoreOpDontCare,
++				InitialLayout:  core1_0.ImageLayoutUndefined,
++				FinalLayout:    khr_swapchain.ImageLayoutPresentSrc,
++			},
++		},
++		Subpasses: []core1_0.SubpassDescription{
++			{
++				PipelineBindPoint: core1_0.PipelineBindPointGraphics,
++				ColorAttachments: []core1_0.AttachmentReference{
++					{
++						Attachment: 0,
++						Layout:     core1_0.ImageLayoutColorAttachmentOptimal,
++					},
++				},
++			},
++		},
++		SubpassDependencies: []core1_0.SubpassDependency{
++			{
++				SrcSubpass: core1_0.SubpassExternal,
++				DstSubpass: 0,
++
++				SrcStageMask:  core1_0.PipelineStageColorAttachmentOutput,
++				SrcAccessMask: 0,
++
++				DstStageMask:  core1_0.PipelineStageColorAttachmentOutput,
++				DstAccessMask: core1_0.AccessColorAttachmentWrite,
++			},
++		},
++	})
++	if err != nil {
++		return err
++	}
++
++	app.renderPass = renderPass
++
++	return nil
++}
++
+ func bytesToBytecode(b []byte) []uint32 {
+ 	byteCode := make([]uint32, len(b)/4)
+ 	for i := 0; i < len(byteCode); i++ {

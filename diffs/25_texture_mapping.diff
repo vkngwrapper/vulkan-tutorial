@@ -1,0 +1,84 @@
+diff --git a/../steps/24_sampler/main.go b/../steps/25_texture_mapping/main.go
+index 0b065e4..b8f1672 100644
+--- a/../steps/24_sampler/main.go
++++ b/../steps/25_texture_mapping/main.go
+@@ -49,6 +49,7 @@ type SwapChainSupportDetails struct {
+ type Vertex struct {
+ 	Position mgl32.Vec2
+ 	Color    mgl32.Vec3
++	TexCoord mgl32.Vec2
+ }
+ 
+ type UniformBufferObject struct {
+@@ -83,14 +84,20 @@ func getVertexAttributeDescriptions() []core1_0.VertexInputAttributeDescription
+ 			Format:   core1_0.FormatR32G32B32SignedFloat,
+ 			Offset:   int(unsafe.Offsetof(v.Color)),
+ 		},
++		{
++			Binding:  0,
++			Location: 2,
++			Format:   core1_0.FormatR32G32SignedFloat,
++			Offset:   int(unsafe.Offsetof(v.TexCoord)),
++		},
+ 	}
+ }
+ 
+ var vertices = []Vertex{
+-	{Position: mgl32.Vec2{-0.5, -0.5}, Color: mgl32.Vec3{1, 0, 0}},
+-	{Position: mgl32.Vec2{0.5, -0.5}, Color: mgl32.Vec3{0, 1, 0}},
+-	{Position: mgl32.Vec2{0.5, 0.5}, Color: mgl32.Vec3{0, 0, 1}},
+-	{Position: mgl32.Vec2{-0.5, 0.5}, Color: mgl32.Vec3{1, 1, 1}},
++	{Position: mgl32.Vec2{-0.5, -0.5}, Color: mgl32.Vec3{1, 0, 0}, TexCoord: mgl32.Vec2{1, 0}},
++	{Position: mgl32.Vec2{0.5, -0.5}, Color: mgl32.Vec3{0, 1, 0}, TexCoord: mgl32.Vec2{0, 0}},
++	{Position: mgl32.Vec2{0.5, 0.5}, Color: mgl32.Vec3{0, 0, 1}, TexCoord: mgl32.Vec2{0, 1}},
++	{Position: mgl32.Vec2{-0.5, 0.5}, Color: mgl32.Vec3{1, 1, 1}, TexCoord: mgl32.Vec2{1, 1}},
+ }
+ 
+ var indices = []uint16{0, 1, 2, 2, 3, 0}
+@@ -826,6 +833,13 @@ func (app *HelloTriangleApplication) createDescriptorSetLayout() error {
+ 
+ 				StageFlags: core1_0.StageVertex,
+ 			},
++			{
++				Binding:         1,
++				DescriptorType:  core1_0.DescriptorTypeCombinedImageSampler,
++				DescriptorCount: 1,
++
++				StageFlags: core1_0.StageFragment,
++			},
+ 		},
+ 	})
+ 	if err != nil {
+@@ -1348,6 +1362,10 @@ func (app *HelloTriangleApplication) createDescriptorPool() error {
+ 				Type:            core1_0.DescriptorTypeUniformBuffer,
+ 				DescriptorCount: len(app.swapchainImages),
+ 			},
++			{
++				Type:            core1_0.DescriptorTypeCombinedImageSampler,
++				DescriptorCount: len(app.swapchainImages),
++			},
+ 		},
+ 	})
+ 	return err
+@@ -1385,6 +1403,21 @@ func (app *HelloTriangleApplication) createDescriptorSets() error {
+ 					},
+ 				},
+ 			},
++			{
++				DstSet:          app.descriptorSets[i],
++				DstBinding:      1,
++				DstArrayElement: 0,
++
++				DescriptorType: core1_0.DescriptorTypeCombinedImageSampler,
++
++				ImageInfo: []core1_0.DescriptorImageInfo{
++					{
++						ImageView:   app.textureImageView,
++						Sampler:     app.textureSampler,
++						ImageLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
++					},
++				},
++			},
+ 		}, nil)
+ 		if err != nil {
+ 			return err
