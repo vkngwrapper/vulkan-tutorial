@@ -1,5 +1,5 @@
 diff --git a/../steps/05_window_surface/main.go b/../steps/06_swapchain/main.go
-index 3fb97e1..9e905f3 100644
+index f78b345..14dc838 100644
 --- a/../steps/05_window_surface/main.go
 +++ b/../steps/06_swapchain/main.go
 @@ -8,11 +8,13 @@ import (
@@ -21,8 +21,8 @@ index 3fb97e1..9e905f3 100644
  }
  
 +type SwapChainSupportDetails struct {
-+	Capabilities *khr_surface.Capabilities
-+	Formats      []khr_surface.Format
++	Capabilities *khr_surface.SurfaceCapabilities
++	Formats      []khr_surface.SurfaceFormat
 +	PresentModes []khr_surface.PresentMode
 +}
 +
@@ -67,7 +67,7 @@ index 3fb97e1..9e905f3 100644
  	if app.device != nil {
  		app.device.Destroy(nil)
  	}
-@@ -238,7 +261,7 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
+@@ -239,7 +262,7 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
  	}
  
  	if app.physicalDevice == nil {
@@ -76,7 +76,7 @@ index 3fb97e1..9e905f3 100644
  	}
  
  	return nil
-@@ -265,6 +288,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
+@@ -266,6 +289,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
  	}
  
  	var extensionNames []string
@@ -84,7 +84,7 @@ index 3fb97e1..9e905f3 100644
  
  	// Makes this example compatible with vulkan portability, necessary to run on mobile & mac
  	extensions, _, err := app.physicalDevice.EnumerateDeviceExtensionProperties()
-@@ -297,13 +321,163 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
+@@ -292,13 +316,163 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
  	return nil
  }
  
@@ -147,7 +147,7 @@ index 3fb97e1..9e905f3 100644
 +	return nil
 +}
 +
-+func (app *HelloTriangleApplication) chooseSwapSurfaceFormat(availableFormats []khr_surface.Format) khr_surface.Format {
++func (app *HelloTriangleApplication) chooseSwapSurfaceFormat(availableFormats []khr_surface.SurfaceFormat) khr_surface.SurfaceFormat {
 +	for _, format := range availableFormats {
 +		if format.Format == core1_0.FormatB8G8R8A8SRGB && format.ColorSpace == khr_surface.ColorSpaceSRGBNonlinear {
 +			return format
@@ -167,7 +167,7 @@ index 3fb97e1..9e905f3 100644
 +	return khr_surface.PresentModeFIFO
 +}
 +
-+func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *khr_surface.Capabilities) core1_0.Extent2D {
++func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *khr_surface.SurfaceCapabilities) core1_0.Extent2D {
 +	if capabilities.CurrentExtent.Width != -1 {
 +		return capabilities.CurrentExtent
 +	}

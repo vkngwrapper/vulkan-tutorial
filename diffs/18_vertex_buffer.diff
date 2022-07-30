@@ -1,5 +1,5 @@
 diff --git a/../steps/17_vertex_input/main.go b/../steps/18_vertex_buffer/main.go
-index 18fcccc..33eb6e5 100644
+index 5e280bb..84dbcf0 100644
 --- a/../steps/17_vertex_input/main.go
 +++ b/../steps/18_vertex_buffer/main.go
 @@ -1,7 +1,9 @@
@@ -49,7 +49,7 @@ index 18fcccc..33eb6e5 100644
  	for _, fence := range app.inFlightFence {
  		fence.Destroy(nil)
  	}
-@@ -876,6 +894,69 @@ func (app *HelloTriangleApplication) createCommandPool() error {
+@@ -871,6 +889,69 @@ func (app *HelloTriangleApplication) createCommandPool() error {
  	return nil
  }
  
@@ -119,7 +119,7 @@ index 18fcccc..33eb6e5 100644
  func (app *HelloTriangleApplication) createCommandBuffers() error {
  
  	buffers, _, err := app.device.AllocateCommandBuffers(core1_0.CommandBufferAllocateInfo{
-@@ -911,7 +992,8 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
+@@ -906,7 +987,8 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
  		}
  
  		buffer.CmdBindPipeline(core1_0.PipelineBindPointGraphics, app.graphicsPipeline)

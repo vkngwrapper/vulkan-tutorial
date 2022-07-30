@@ -1,5 +1,5 @@
 diff --git a/../steps/12_graphics_pipeline_complete/main.go b/../steps/13_framebuffers/main.go
-index fa13f42..48d4ec1 100644
+index c6e560e..fd825f6 100644
 --- a/../steps/12_graphics_pipeline_complete/main.go
 +++ b/../steps/13_framebuffers/main.go
 @@ -51,12 +51,13 @@ type HelloTriangleApplication struct {
@@ -47,7 +47,7 @@ index fa13f42..48d4ec1 100644
  	if app.graphicsPipeline != nil {
  		app.graphicsPipeline.Destroy(nil)
  	}
-@@ -639,6 +649,27 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -634,6 +644,27 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  	return nil
  }
  
@@ -72,6 +72,6 @@ index fa13f42..48d4ec1 100644
 +	return nil
 +}
 +
- func (app *HelloTriangleApplication) chooseSwapSurfaceFormat(availableFormats []khr_surface.Format) khr_surface.Format {
+ func (app *HelloTriangleApplication) chooseSwapSurfaceFormat(availableFormats []khr_surface.SurfaceFormat) khr_surface.SurfaceFormat {
  	for _, format := range availableFormats {
  		if format.Format == core1_0.FormatB8G8R8A8SRGB && format.ColorSpace == khr_surface.ColorSpaceSRGBNonlinear {

@@ -1,5 +1,5 @@
 diff --git a/../steps/04_logical_device/main.go b/../steps/05_window_surface/main.go
-index a96f6a5..3fb97e1 100644
+index d8a6d43..f78b345 100644
 --- a/../steps/04_logical_device/main.go
 +++ b/../steps/05_window_surface/main.go
 @@ -7,6 +7,8 @@ import (
@@ -27,7 +27,7 @@ index a96f6a5..3fb97e1 100644
 @@ -28,11 +31,13 @@ type HelloTriangleApplication struct {
  
  	instance       core1_0.Instance
- 	debugMessenger ext_debug_utils.Messenger
+ 	debugMessenger ext_debug_utils.DebugUtilsMessenger
 +	surface        khr_surface.Surface
  
  	physicalDevice core1_0.PhysicalDevice
@@ -61,13 +61,14 @@ index a96f6a5..3fb97e1 100644
  	if app.instance != nil {
  		app.instance.Destroy(nil)
  	}
-@@ -199,6 +213,17 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
+@@ -199,6 +213,18 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
  	return nil
  }
  
 +func (app *HelloTriangleApplication) createSurface() error {
-+	surfaceLoader := vkng_sdl2.CreateExtensionFromInstance(app.instance)
-+	surface, _, err := surfaceLoader.CreateSurface(app.instance, app.window)
++	surfaceLoader := khr_surface.CreateExtensionFromInstance(app.instance)
++
++	surface, err := vkng_sdl2.CreateSurface(app.instance, surfaceLoader, app.window)
 +	if err != nil {
 +		return err
 +	}
@@ -79,7 +80,7 @@ index a96f6a5..3fb97e1 100644
  func (app *HelloTriangleApplication) pickPhysicalDevice() error {
  	physicalDevices, _, err := app.instance.EnumeratePhysicalDevices()
  	if err != nil {
-@@ -226,6 +251,9 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
+@@ -226,6 +252,9 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
  	}
  
  	uniqueQueueFamilies := []int{*indices.GraphicsFamily}
@@ -89,7 +90,7 @@ index a96f6a5..3fb97e1 100644
  
  	var queueFamilyOptions []core1_0.DeviceQueueCreateInfo
  	queuePriority := float32(1.0)
-@@ -265,6 +293,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
+@@ -259,6 +288,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
  	}
  
  	app.graphicsQueue = app.device.GetQueue(*indices.GraphicsFamily, 0)
@@ -97,7 +98,7 @@ index a96f6a5..3fb97e1 100644
  	return nil
  }
  
-@@ -287,6 +316,16 @@ func (app *HelloTriangleApplication) findQueueFamilies(device core1_0.PhysicalDe
+@@ -281,6 +311,16 @@ func (app *HelloTriangleApplication) findQueueFamilies(device core1_0.PhysicalDe
  			*indices.GraphicsFamily = queueFamilyIdx
  		}
  

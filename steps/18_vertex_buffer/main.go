@@ -37,8 +37,8 @@ func (i *QueueFamilyIndices) IsComplete() bool {
 }
 
 type SwapChainSupportDetails struct {
-	Capabilities *khr_surface.Capabilities
-	Formats      []khr_surface.Format
+	Capabilities *khr_surface.SurfaceCapabilities
+	Formats      []khr_surface.SurfaceFormat
 	PresentModes []khr_surface.PresentMode
 }
 
@@ -53,7 +53,7 @@ func getVertexBindingDescription() []core1_0.VertexInputBindingDescription {
 		{
 			Binding:   0,
 			Stride:    int(unsafe.Sizeof(v)),
-			InputRate: core1_0.RateVertex,
+			InputRate: core1_0.VertexInputRateVertex,
 		},
 	}
 }
@@ -87,7 +87,7 @@ type HelloTriangleApplication struct {
 	loader core.Loader
 
 	instance       core1_0.Instance
-	debugMessenger ext_debug_utils.Messenger
+	debugMessenger ext_debug_utils.DebugUtilsMessenger
 	surface        khr_surface.Surface
 
 	physicalDevice core1_0.PhysicalDevice
@@ -481,8 +481,9 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 }
 
 func (app *HelloTriangleApplication) createSurface() error {
-	surfaceLoader := vkng_sdl2.CreateExtensionFromInstance(app.instance)
-	surface, _, err := surfaceLoader.CreateSurface(app.instance, app.window)
+	surfaceLoader := khr_surface.CreateExtensionFromInstance(app.instance)
+
+	surface, err := vkng_sdl2.CreateSurface(app.instance, surfaceLoader, app.window)
 	if err != nil {
 		return err
 	}
@@ -545,16 +546,10 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		extensionNames = append(extensionNames, "VK_KHR_portability_subset")
 	}
 
-	var layerNames []string
-	if enableValidationLayers {
-		layerNames = append(layerNames, validationLayers...)
-	}
-
 	app.device, _, err = app.physicalDevice.CreateDevice(nil, core1_0.DeviceCreateInfo{
 		QueueCreateInfos:      queueFamilyOptions,
 		EnabledFeatures:       &core1_0.PhysicalDeviceFeatures{},
 		EnabledExtensionNames: extensionNames,
-		EnabledLayerNames:     layerNames,
 	})
 	if err != nil {
 		return err
@@ -883,7 +878,7 @@ func (app *HelloTriangleApplication) createCommandPool() error {
 	}
 
 	pool, _, err := app.device.CreateCommandPool(nil, core1_0.CommandPoolCreateInfo{
-		QueueFamilyIndex: indices.GraphicsFamily,
+		QueueFamilyIndex: *indices.GraphicsFamily,
 	})
 
 	if err != nil {
@@ -1094,7 +1089,7 @@ func (app *HelloTriangleApplication) drawFrame() error {
 	return nil
 }
 
-func (app *HelloTriangleApplication) chooseSwapSurfaceFormat(availableFormats []khr_surface.Format) khr_surface.Format {
+func (app *HelloTriangleApplication) chooseSwapSurfaceFormat(availableFormats []khr_surface.SurfaceFormat) khr_surface.SurfaceFormat {
 	for _, format := range availableFormats {
 		if format.Format == core1_0.FormatB8G8R8A8SRGB && format.ColorSpace == khr_surface.ColorSpaceSRGBNonlinear {
 			return format
@@ -1114,7 +1109,7 @@ func (app *HelloTriangleApplication) chooseSwapPresentMode(availablePresentModes
 	return khr_surface.PresentModeFIFO
 }
 
-func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *khr_surface.Capabilities) core1_0.Extent2D {
+func (app *HelloTriangleApplication) chooseSwapExtent(capabilities *khr_surface.SurfaceCapabilities) core1_0.Extent2D {
 	if capabilities.CurrentExtent.Width != -1 {
 		return capabilities.CurrentExtent
 	}
@@ -1222,7 +1217,7 @@ func (app *HelloTriangleApplication) findQueueFamilies(device core1_0.PhysicalDe
 	return indices, nil
 }
 
-func (app *HelloTriangleApplication) logDebug(msgType ext_debug_utils.MessageTypes, severity ext_debug_utils.MessageSeverities, data *ext_debug_utils.DebugUtilsMessengerCallbackData) bool {
+func (app *HelloTriangleApplication) logDebug(msgType ext_debug_utils.DebugUtilsMessageTypeFlags, severity ext_debug_utils.DebugUtilsMessageSeverityFlags, data *ext_debug_utils.DebugUtilsMessengerCallbackData) bool {
 	log.Printf("[%s %s] - %s", severity, msgType, data.Message)
 	return false
 }

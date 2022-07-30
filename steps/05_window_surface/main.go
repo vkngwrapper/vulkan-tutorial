@@ -30,7 +30,7 @@ type HelloTriangleApplication struct {
 	loader core.Loader
 
 	instance       core1_0.Instance
-	debugMessenger ext_debug_utils.Messenger
+	debugMessenger ext_debug_utils.DebugUtilsMessenger
 	surface        khr_surface.Surface
 
 	physicalDevice core1_0.PhysicalDevice
@@ -214,8 +214,9 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 }
 
 func (app *HelloTriangleApplication) createSurface() error {
-	surfaceLoader := vkng_sdl2.CreateExtensionFromInstance(app.instance)
-	surface, _, err := surfaceLoader.CreateSurface(app.instance, app.window)
+	surfaceLoader := khr_surface.CreateExtensionFromInstance(app.instance)
+
+	surface, err := vkng_sdl2.CreateSurface(app.instance, surfaceLoader, app.window)
 	if err != nil {
 		return err
 	}
@@ -277,16 +278,10 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		extensionNames = append(extensionNames, "VK_KHR_portability_subset")
 	}
 
-	var layerNames []string
-	if enableValidationLayers {
-		layerNames = append(layerNames, validationLayers...)
-	}
-
 	app.device, _, err = app.physicalDevice.CreateDevice(nil, core1_0.DeviceCreateInfo{
 		QueueCreateInfos:      queueFamilyOptions,
 		EnabledFeatures:       &core1_0.PhysicalDeviceFeatures{},
 		EnabledExtensionNames: extensionNames,
-		EnabledLayerNames:     layerNames,
 	})
 	if err != nil {
 		return err
@@ -334,7 +329,7 @@ func (app *HelloTriangleApplication) findQueueFamilies(device core1_0.PhysicalDe
 	return indices, nil
 }
 
-func (app *HelloTriangleApplication) logDebug(msgType ext_debug_utils.MessageTypes, severity ext_debug_utils.MessageSeverities, data *ext_debug_utils.DebugUtilsMessengerCallbackData) bool {
+func (app *HelloTriangleApplication) logDebug(msgType ext_debug_utils.DebugUtilsMessageTypeFlags, severity ext_debug_utils.DebugUtilsMessageSeverityFlags, data *ext_debug_utils.DebugUtilsMessengerCallbackData) bool {
 	log.Printf("[%s %s] - %s", severity, msgType, data.Message)
 	return false
 }

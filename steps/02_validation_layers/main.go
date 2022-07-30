@@ -19,7 +19,7 @@ type HelloTriangleApplication struct {
 	loader core.Loader
 
 	instance       core1_0.Instance
-	debugMessenger ext_debug_utils.Messenger
+	debugMessenger ext_debug_utils.DebugUtilsMessenger
 }
 
 func (app *HelloTriangleApplication) Run() error {
@@ -48,7 +48,7 @@ func (app *HelloTriangleApplication) initWindow() error {
 	}
 	app.window = window
 
-	app.loader, err = core.CreateStaticLinkedLoader()
+	app.loader, err = core.CreateSystemLoader()
 	if err != nil {
 		return err
 	}
@@ -172,7 +172,7 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 	return nil
 }
 
-func (app *HelloTriangleApplication) logDebug(msgType ext_debug_utils.MessageTypes, severity ext_debug_utils.MessageSeverities, data *ext_debug_utils.DebugUtilsMessengerCallbackData) bool {
+func (app *HelloTriangleApplication) logDebug(msgType ext_debug_utils.DebugUtilsMessageTypeFlags, severity ext_debug_utils.DebugUtilsMessageSeverityFlags, data *ext_debug_utils.DebugUtilsMessengerCallbackData) bool {
 	log.Printf("[%s %s] - %s", severity, msgType, data.Message)
 	return false
 }

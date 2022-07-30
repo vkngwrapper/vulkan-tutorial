@@ -1,5 +1,5 @@
 diff --git a/../steps/00_base_code/main.go b/../steps/01_instance_creation/main.go
-index fa094df..96f0337 100644
+index fa094df..beaec8b 100644
 --- a/../steps/00_base_code/main.go
 +++ b/../steps/01_instance_creation/main.go
 @@ -1,12 +1,19 @@
@@ -26,7 +26,7 @@ index fa094df..96f0337 100644
  	}
  	app.window = window
  
-+	app.loader, err = core.CreateStaticLinkedLoader()
++	app.loader, err = core.CreateSystemLoader()
 +	if err != nil {
 +		return err
 +	}

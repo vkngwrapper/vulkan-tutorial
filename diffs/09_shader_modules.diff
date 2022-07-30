@@ -1,5 +1,5 @@
 diff --git a/../steps/08_graphics_pipeline/main.go b/../steps/09_shader_modules/main.go
-index 2f8e289..a35b86d 100644
+index 1a66fd9..fac12d6 100644
 --- a/../steps/08_graphics_pipeline/main.go
 +++ b/../steps/09_shader_modules/main.go
 @@ -1,6 +1,7 @@
@@ -20,7 +20,7 @@ index 2f8e289..a35b86d 100644
  var validationLayers = []string{"VK_LAYER_KHRONOS_validation"}
  var deviceExtensions = []string{khr_swapchain.ExtensionName}
  
-@@ -423,7 +427,61 @@ func (app *HelloTriangleApplication) createSwapchain() error {
+@@ -418,7 +422,61 @@ func (app *HelloTriangleApplication) createSwapchain() error {
  	return nil
  }
  

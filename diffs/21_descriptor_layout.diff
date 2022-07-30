@@ -1,5 +1,5 @@
 diff --git a/../steps/20_index_buffer/main.go b/../steps/21_descriptor_layout/main.go
-index 6af1785..b52fbaf 100644
+index 4180a1b..183252f 100644
 --- a/../steps/20_index_buffer/main.go
 +++ b/../steps/21_descriptor_layout/main.go
 @@ -5,6 +5,8 @@ import (
@@ -159,7 +159,7 @@ index 6af1785..b52fbaf 100644
  	err = app.createCommandBuffers()
  	if err != nil {
  		return err
-@@ -726,6 +769,26 @@ func (app *HelloTriangleApplication) createRenderPass() error {
+@@ -721,6 +764,26 @@ func (app *HelloTriangleApplication) createRenderPass() error {
  	return nil
  }
  
@@ -186,7 +186,7 @@ index 6af1785..b52fbaf 100644
  func bytesToBytecode(b []byte) []uint32 {
  	byteCode := make([]uint32, len(b)/4)
  	for i := 0; i < len(byteCode); i++ {
-@@ -842,7 +905,11 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -837,7 +900,11 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  		},
  	}
  
@@ -199,7 +199,7 @@ index 6af1785..b52fbaf 100644
  	if err != nil {
  		return err
  	}
-@@ -990,6 +1057,22 @@ func (app *HelloTriangleApplication) createIndexBuffer() error {
+@@ -985,6 +1052,22 @@ func (app *HelloTriangleApplication) createIndexBuffer() error {
  	return app.copyBuffer(stagingBuffer, app.indexBuffer, bufferSize)
  }
  
@@ -222,7 +222,7 @@ index 6af1785..b52fbaf 100644
  func (app *HelloTriangleApplication) createBuffer(size int, usage core1_0.BufferUsageFlags, properties core1_0.MemoryPropertyFlags) (core1_0.Buffer, core1_0.DeviceMemory, error) {
  	buffer, _, err := app.device.CreateBuffer(nil, core1_0.BufferCreateInfo{
  		Size:        size,
-@@ -1186,6 +1269,11 @@ func (app *HelloTriangleApplication) drawFrame() error {
+@@ -1181,6 +1264,11 @@ func (app *HelloTriangleApplication) drawFrame() error {
  		return err
  	}
  
@@ -234,7 +234,7 @@ index 6af1785..b52fbaf 100644
  	_, err = app.graphicsQueue.Submit(app.inFlightFence[app.currentFrame], []core1_0.SubmitInfo{
  		{
  			WaitSemaphores:   []core1_0.Semaphore{app.imageAvailableSemaphore[app.currentFrame]},
-@@ -1214,6 +1302,21 @@ func (app *HelloTriangleApplication) drawFrame() error {
+@@ -1209,6 +1297,21 @@ func (app *HelloTriangleApplication) drawFrame() error {
  	return nil
  }
  
@@ -253,6 +253,6 @@ index 6af1785..b52fbaf 100644
 +	return err
 +}
 +
- func (app *HelloTriangleApplication) chooseSwapSurfaceFormat(availableFormats []khr_surface.Format) khr_surface.Format {
+ func (app *HelloTriangleApplication) chooseSwapSurfaceFormat(availableFormats []khr_surface.SurfaceFormat) khr_surface.SurfaceFormat {
  	for _, format := range availableFormats {
  		if format.Format == core1_0.FormatB8G8R8A8SRGB && format.ColorSpace == khr_surface.ColorSpaceSRGBNonlinear {

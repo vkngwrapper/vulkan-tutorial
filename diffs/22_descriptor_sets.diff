@@ -1,5 +1,5 @@
 diff --git a/../steps/21_descriptor_layout/main.go b/../steps/22_descriptor_sets/main.go
-index b52fbaf..40aac8e 100644
+index 183252f..6021294 100644
 --- a/../steps/21_descriptor_layout/main.go
 +++ b/../steps/22_descriptor_sets/main.go
 @@ -117,6 +117,8 @@ type HelloTriangleApplication struct {
@@ -54,7 +54,7 @@ index b52fbaf..40aac8e 100644
  	err = app.createCommandBuffers()
  	if err != nil {
  		return err
-@@ -879,7 +903,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -874,7 +898,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  
  		PolygonMode: core1_0.PolygonModeFill,
  		CullMode:    core1_0.CullModeBack,
@@ -63,7 +63,7 @@ index b52fbaf..40aac8e 100644
  
  		DepthBiasEnable: false,
  
-@@ -910,9 +934,6 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -905,9 +929,6 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  			app.descriptorSetLayout,
  		},
  	})
@@ -73,7 +73,7 @@ index b52fbaf..40aac8e 100644
  
  	pipelines, _, err := app.device.CreateGraphicsPipelines(nil, nil, []core1_0.GraphicsPipelineCreateInfo{
  		{
-@@ -1073,6 +1094,61 @@ func (app *HelloTriangleApplication) createUniformBuffers() error {
+@@ -1068,6 +1089,61 @@ func (app *HelloTriangleApplication) createUniformBuffers() error {
  	return nil
  }
  
@@ -135,7 +135,7 @@ index b52fbaf..40aac8e 100644
  func (app *HelloTriangleApplication) createBuffer(size int, usage core1_0.BufferUsageFlags, properties core1_0.MemoryPropertyFlags) (core1_0.Buffer, core1_0.DeviceMemory, error) {
  	buffer, _, err := app.device.CreateBuffer(nil, core1_0.BufferCreateInfo{
  		Size:        size,
-@@ -1196,6 +1272,9 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
+@@ -1191,6 +1267,9 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
  		buffer.CmdBindPipeline(core1_0.PipelineBindPointGraphics, app.graphicsPipeline)
  		buffer.CmdBindVertexBuffers([]core1_0.Buffer{app.vertexBuffer}, []int{0})
  		buffer.CmdBindIndexBuffer(app.indexBuffer, 0, core1_0.IndexTypeUInt16)
@@ -145,7 +145,7 @@ index b52fbaf..40aac8e 100644
  		buffer.CmdDrawIndexed(len(indices), 1, 0, 0, 0)
  		buffer.CmdEndRenderPass()
  
-@@ -1303,7 +1382,7 @@ func (app *HelloTriangleApplication) drawFrame() error {
+@@ -1298,7 +1377,7 @@ func (app *HelloTriangleApplication) drawFrame() error {
  }
  
  func (app *HelloTriangleApplication) updateUniformBuffer(currentImage int) error {

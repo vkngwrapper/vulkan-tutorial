@@ -1,5 +1,5 @@
 diff --git a/../steps/06_swapchain/main.go b/../steps/07_image_views/main.go
-index 9e905f3..3dc703b 100644
+index 14dc838..be9b4cd 100644
 --- a/../steps/06_swapchain/main.go
 +++ b/../steps/07_image_views/main.go
 @@ -52,6 +52,7 @@ type HelloTriangleApplication struct {
@@ -21,7 +21,7 @@ index 9e905f3..3dc703b 100644
  	if app.swapchain != nil {
  		app.swapchain.Destroy(nil)
  	}
-@@ -261,7 +266,7 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
+@@ -262,7 +267,7 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
  	}
  
  	if app.physicalDevice == nil {
@@ -30,7 +30,7 @@ index 9e905f3..3dc703b 100644
  	}
  
  	return nil
-@@ -375,6 +380,39 @@ func (app *HelloTriangleApplication) createSwapchain() error {
+@@ -370,6 +375,39 @@ func (app *HelloTriangleApplication) createSwapchain() error {
  	app.swapchainExtent = extent
  	app.swapchain = swapchain
  

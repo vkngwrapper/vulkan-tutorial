@@ -1,5 +1,5 @@
 diff --git a/../steps/02_validation_layers/main.go b/../steps/03_physical_device_selection/main.go
-index b6faabf..2abb0e7 100644
+index 83f2a51..49b3c99 100644
 --- a/../steps/02_validation_layers/main.go
 +++ b/../steps/03_physical_device_selection/main.go
 @@ -14,12 +14,22 @@ var validationLayers = []string{"VK_LAYER_KHRONOS_validation"}
@@ -19,7 +19,7 @@ index b6faabf..2abb0e7 100644
  	loader core.Loader
  
  	instance       core1_0.Instance
- 	debugMessenger ext_debug_utils.Messenger
+ 	debugMessenger ext_debug_utils.DebugUtilsMessenger
 +
 +	physicalDevice core1_0.PhysicalDevice
  }
@@ -29,7 +29,7 @@ index b6faabf..2abb0e7 100644
  	}
  	app.window = window
  
--	app.loader, err = core.CreateStaticLinkedLoader()
+-	app.loader, err = core.CreateSystemLoader()
 +	app.loader, err = core.CreateLoaderFromProcAddr(sdl.VulkanGetVkGetInstanceProcAddr())
  	if err != nil {
  		return err
@@ -99,7 +99,7 @@ index b6faabf..2abb0e7 100644
 +	return indices, nil
 +}
 +
- func (app *HelloTriangleApplication) logDebug(msgType ext_debug_utils.MessageTypes, severity ext_debug_utils.MessageSeverities, data *ext_debug_utils.DebugUtilsMessengerCallbackData) bool {
+ func (app *HelloTriangleApplication) logDebug(msgType ext_debug_utils.DebugUtilsMessageTypeFlags, severity ext_debug_utils.DebugUtilsMessageSeverityFlags, data *ext_debug_utils.DebugUtilsMessengerCallbackData) bool {
  	log.Printf("[%s %s] - %s", severity, msgType, data.Message)
  	return false
  }

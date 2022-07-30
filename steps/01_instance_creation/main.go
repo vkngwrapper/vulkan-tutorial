@@ -42,7 +42,7 @@ func (app *HelloTriangleApplication) initWindow() error {
 	}
 	app.window = window
 
-	app.loader, err = core.CreateStaticLinkedLoader()
+	app.loader, err = core.CreateSystemLoader()
 	if err != nil {
 		return err
 	}

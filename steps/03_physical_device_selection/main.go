@@ -27,7 +27,7 @@ type HelloTriangleApplication struct {
 	loader core.Loader
 
 	instance       core1_0.Instance
-	debugMessenger ext_debug_utils.Messenger
+	debugMessenger ext_debug_utils.DebugUtilsMessenger
 
 	physicalDevice core1_0.PhysicalDevice
 }
@@ -234,7 +234,7 @@ func (app *HelloTriangleApplication) findQueueFamilies(device core1_0.PhysicalDe
 	return indices, nil
 }
 
-func (app *HelloTriangleApplication) logDebug(msgType ext_debug_utils.MessageTypes, severity ext_debug_utils.MessageSeverities, data *ext_debug_utils.DebugUtilsMessengerCallbackData) bool {
+func (app *HelloTriangleApplication) logDebug(msgType ext_debug_utils.DebugUtilsMessageTypeFlags, severity ext_debug_utils.DebugUtilsMessageSeverityFlags, data *ext_debug_utils.DebugUtilsMessengerCallbackData) bool {
 	log.Printf("[%s %s] - %s", severity, msgType, data.Message)
 	return false
 }
