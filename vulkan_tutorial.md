@@ -72,10 +72,8 @@ Images and meshes in this directory were obtained from the vulkan
 ## Executing This Code
 
 Before this code can be executed, you will need to install [the Vulkan SDK](https://www.lunarg.com/vulkan-sdk/)
- for your operating system.  Additionally, it may be necessary to download SDL2 using your local package
- manager. On Windows, it was necessary for me to install a full copy of MinGW and install SDL2
- from pacboy. Attempt to execute this code with only the Vulkan SDK installed, and if SDL2 symbols
- cannot be linked, then install SDL2.
+ for your operating system.Additionally, it may be necessary to download SDL2 using your local package
+ manager. For more information, see [go-sdl2 requirements](https://github.com/veandco/go-sdl2#requirements).
 
 ## Notable Changes From C++
 
