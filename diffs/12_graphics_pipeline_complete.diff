@@ -1,8 +1,8 @@
 diff --git a/../steps/11_render_passes/main.go b/../steps/12_graphics_pipeline_complete/main.go
-index 71891e5..c6e560e 100644
+index 20be744..7df77d1 100644
 --- a/../steps/11_render_passes/main.go
 +++ b/../steps/12_graphics_pipeline_complete/main.go
-@@ -58,8 +58,9 @@ type HelloTriangleApplication struct {
+@@ -59,8 +59,9 @@ type HelloTriangleApplication struct {
  	swapchainExtent      core1_0.Extent2D
  	swapchainImageViews  []core1_0.ImageView
  
@@ -14,7 +14,7 @@ index 71891e5..c6e560e 100644
  }
  
  func (app *HelloTriangleApplication) Run() error {
-@@ -150,6 +151,10 @@ appLoop:
+@@ -151,6 +152,10 @@ appLoop:
  }
  
  func (app *HelloTriangleApplication) cleanup() {
@@ -25,7 +25,7 @@ index 71891e5..c6e560e 100644
  	if app.pipelineLayout != nil {
  		app.pipelineLayout.Destroy(nil)
  	}
-@@ -528,26 +533,26 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -529,26 +534,26 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  	}
  	defer fragShader.Destroy(nil)
  
@@ -57,7 +57,7 @@ index 71891e5..c6e560e 100644
  		Viewports: []core1_0.Viewport{
  			{
  				X:        0,
-@@ -566,7 +571,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -567,7 +572,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  		},
  	}
  
@@ -66,7 +66,7 @@ index 71891e5..c6e560e 100644
  		DepthClampEnable:        false,
  		RasterizerDiscardEnable: false,
  
-@@ -579,13 +584,13 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -580,13 +585,13 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  		LineWidth: 1.0,
  	}
  
@@ -82,7 +82,7 @@ index 71891e5..c6e560e 100644
  		LogicOpEnabled: false,
  		LogicOp:        core1_0.LogicOpCopy,
  
-@@ -603,6 +608,29 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -604,6 +609,29 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  		return err
  	}
  

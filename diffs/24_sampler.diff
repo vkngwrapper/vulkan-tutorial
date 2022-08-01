@@ -1,8 +1,8 @@
 diff --git a/../steps/23_texture_image/main.go b/../steps/24_sampler/main.go
-index c1adfac..f9ea758 100644
+index 01701c8..a096fbd 100644
 --- a/../steps/23_texture_image/main.go
 +++ b/../steps/24_sampler/main.go
-@@ -144,6 +144,8 @@ type HelloTriangleApplication struct {
+@@ -145,6 +145,8 @@ type HelloTriangleApplication struct {
  
  	textureImage       core1_0.Image
  	textureImageMemory core1_0.DeviceMemory
@@ -11,7 +11,7 @@ index c1adfac..f9ea758 100644
  }
  
  func (app *HelloTriangleApplication) Run() error {
-@@ -246,6 +248,16 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -247,6 +249,16 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -28,7 +28,7 @@ index c1adfac..f9ea758 100644
  	err = app.createVertexBuffer()
  	if err != nil {
  		return err
-@@ -369,6 +381,14 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
+@@ -370,6 +382,14 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
  func (app *HelloTriangleApplication) cleanup() {
  	app.cleanupSwapChain()
  
@@ -43,7 +43,7 @@ index c1adfac..f9ea758 100644
  	if app.textureImage != nil {
  		app.textureImage.Destroy(nil)
  	}
-@@ -649,8 +669,10 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
+@@ -650,8 +670,10 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
  	}
  
  	app.device, _, err = app.physicalDevice.CreateDevice(nil, core1_0.DeviceCreateInfo{
@@ -56,7 +56,7 @@ index c1adfac..f9ea758 100644
  		EnabledExtensionNames: extensionNames,
  	})
  	if err != nil {
-@@ -729,24 +751,7 @@ func (app *HelloTriangleApplication) createImageViews() error {
+@@ -730,24 +752,7 @@ func (app *HelloTriangleApplication) createImageViews() error {
  
  	var imageViews []core1_0.ImageView
  	for _, image := range images {
@@ -82,7 +82,7 @@ index c1adfac..f9ea758 100644
  		if err != nil {
  			return err
  		}
-@@ -1072,6 +1077,52 @@ func (app *HelloTriangleApplication) createTextureImage() error {
+@@ -1073,6 +1078,52 @@ func (app *HelloTriangleApplication) createTextureImage() error {
  	return nil
  }
  
@@ -135,7 +135,7 @@ index c1adfac..f9ea758 100644
  func (app *HelloTriangleApplication) createImage(width, height int, format core1_0.Format, tiling core1_0.ImageTiling, usage core1_0.ImageUsageFlags, memoryProperties core1_0.MemoryPropertyFlags) (core1_0.Image, core1_0.DeviceMemory, error) {
  	image, _, err := app.device.CreateImage(nil, core1_0.ImageCreateInfo{
  		ImageType: core1_0.ImageType2D,
-@@ -1683,7 +1734,8 @@ func (app *HelloTriangleApplication) isDeviceSuitable(device core1_0.PhysicalDev
+@@ -1684,7 +1735,8 @@ func (app *HelloTriangleApplication) isDeviceSuitable(device core1_0.PhysicalDev
  		swapChainAdequate = len(swapChainSupport.Formats) > 0 && len(swapChainSupport.PresentModes) > 0
  	}
  

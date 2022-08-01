@@ -1,17 +1,17 @@
 diff --git a/../steps/04_logical_device/main.go b/../steps/05_window_surface/main.go
-index d8a6d43..f78b345 100644
+index 91e740b..c756ead 100644
 --- a/../steps/04_logical_device/main.go
 +++ b/../steps/05_window_surface/main.go
-@@ -7,6 +7,8 @@ import (
- 	"github.com/vkngwrapper/core/common"
+@@ -8,6 +8,8 @@ import (
  	"github.com/vkngwrapper/core/core1_0"
  	"github.com/vkngwrapper/extensions/ext_debug_utils"
+ 	"github.com/vkngwrapper/extensions/khr_portability_subset"
 +	"github.com/vkngwrapper/extensions/khr_surface"
 +	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2"
  	"log"
  )
  
-@@ -16,10 +18,11 @@ const enableValidationLayers = true
+@@ -17,10 +19,11 @@ const enableValidationLayers = true
  
  type QueueFamilyIndices struct {
  	GraphicsFamily *int
@@ -24,7 +24,7 @@ index d8a6d43..f78b345 100644
  }
  
  type HelloTriangleApplication struct {
-@@ -28,11 +31,13 @@ type HelloTriangleApplication struct {
+@@ -29,11 +32,13 @@ type HelloTriangleApplication struct {
  
  	instance       core1_0.Instance
  	debugMessenger ext_debug_utils.DebugUtilsMessenger
@@ -38,7 +38,7 @@ index d8a6d43..f78b345 100644
  }
  
  func (app *HelloTriangleApplication) Run() error {
-@@ -80,6 +85,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -81,6 +86,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -50,7 +50,7 @@ index d8a6d43..f78b345 100644
  	err = app.pickPhysicalDevice()
  	if err != nil {
  		return err
-@@ -111,6 +121,10 @@ func (app *HelloTriangleApplication) cleanup() {
+@@ -112,6 +122,10 @@ func (app *HelloTriangleApplication) cleanup() {
  		app.debugMessenger.Destroy(nil)
  	}
  
@@ -61,7 +61,7 @@ index d8a6d43..f78b345 100644
  	if app.instance != nil {
  		app.instance.Destroy(nil)
  	}
-@@ -199,6 +213,18 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
+@@ -200,6 +214,18 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
  	return nil
  }
  
@@ -80,7 +80,7 @@ index d8a6d43..f78b345 100644
  func (app *HelloTriangleApplication) pickPhysicalDevice() error {
  	physicalDevices, _, err := app.instance.EnumeratePhysicalDevices()
  	if err != nil {
-@@ -226,6 +252,9 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
+@@ -227,6 +253,9 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
  	}
  
  	uniqueQueueFamilies := []int{*indices.GraphicsFamily}
@@ -90,7 +90,7 @@ index d8a6d43..f78b345 100644
  
  	var queueFamilyOptions []core1_0.DeviceQueueCreateInfo
  	queuePriority := float32(1.0)
-@@ -259,6 +288,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
+@@ -260,6 +289,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
  	}
  
  	app.graphicsQueue = app.device.GetQueue(*indices.GraphicsFamily, 0)
@@ -98,7 +98,7 @@ index d8a6d43..f78b345 100644
  	return nil
  }
  
-@@ -281,6 +311,16 @@ func (app *HelloTriangleApplication) findQueueFamilies(device core1_0.PhysicalDe
+@@ -282,6 +312,16 @@ func (app *HelloTriangleApplication) findQueueFamilies(device core1_0.PhysicalDe
  			*indices.GraphicsFamily = queueFamilyIdx
  		}
  

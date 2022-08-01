@@ -1,8 +1,8 @@
 diff --git a/../steps/07_image_views/main.go b/../steps/08_graphics_pipeline/main.go
-index be9b4cd..1a66fd9 100644
+index 2b58610..8b26e59 100644
 --- a/../steps/07_image_views/main.go
 +++ b/../steps/08_graphics_pipeline/main.go
-@@ -115,7 +115,12 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -116,7 +116,12 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -16,7 +16,7 @@ index be9b4cd..1a66fd9 100644
  }
  
  func (app *HelloTriangleApplication) mainLoop() error {
-@@ -413,6 +418,10 @@ func (app *HelloTriangleApplication) createSwapchain() error {
+@@ -414,6 +419,10 @@ func (app *HelloTriangleApplication) createSwapchain() error {
  	return nil
  }
  

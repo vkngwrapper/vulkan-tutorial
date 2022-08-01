@@ -1,8 +1,8 @@
 diff --git a/../steps/06_swapchain/main.go b/../steps/07_image_views/main.go
-index 14dc838..be9b4cd 100644
+index 112fa6f..2b58610 100644
 --- a/../steps/06_swapchain/main.go
 +++ b/../steps/07_image_views/main.go
-@@ -52,6 +52,7 @@ type HelloTriangleApplication struct {
+@@ -53,6 +53,7 @@ type HelloTriangleApplication struct {
  	swapchainImages      []core1_0.Image
  	swapchainImageFormat core1_0.Format
  	swapchainExtent      core1_0.Extent2D
@@ -10,7 +10,7 @@ index 14dc838..be9b4cd 100644
  }
  
  func (app *HelloTriangleApplication) Run() error {
-@@ -132,6 +133,10 @@ appLoop:
+@@ -133,6 +134,10 @@ appLoop:
  }
  
  func (app *HelloTriangleApplication) cleanup() {
@@ -21,7 +21,7 @@ index 14dc838..be9b4cd 100644
  	if app.swapchain != nil {
  		app.swapchain.Destroy(nil)
  	}
-@@ -262,7 +267,7 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
+@@ -263,7 +268,7 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
  	}
  
  	if app.physicalDevice == nil {
@@ -30,7 +30,7 @@ index 14dc838..be9b4cd 100644
  	}
  
  	return nil
-@@ -370,6 +375,39 @@ func (app *HelloTriangleApplication) createSwapchain() error {
+@@ -371,6 +376,39 @@ func (app *HelloTriangleApplication) createSwapchain() error {
  	app.swapchainExtent = extent
  	app.swapchain = swapchain
  
