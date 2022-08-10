@@ -6,6 +6,7 @@ import (
 	"github.com/vkngwrapper/core"
 	"github.com/vkngwrapper/core/common"
 	"github.com/vkngwrapper/core/core1_0"
+	"github.com/vkngwrapper/extensions/khr_portability_enumeration"
 	"log"
 )
 
@@ -101,6 +102,12 @@ func (app *HelloTriangleApplication) createInstance() error {
 			return errors.Newf("createinstance: cannot initialize sdl: missing extension %s", ext)
 		}
 		instanceOptions.EnabledExtensionNames = append(instanceOptions.EnabledExtensionNames, ext)
+	}
+
+	_, enumerationSupported := extensions[khr_portability_enumeration.ExtensionName]
+	if enumerationSupported {
+		instanceOptions.EnabledExtensionNames = append(instanceOptions.EnabledExtensionNames, khr_portability_enumeration.ExtensionName)
+		instanceOptions.Flags |= khr_portability_enumeration.InstanceCreateEnumeratePortability
 	}
 
 	app.instance, _, err = app.loader.CreateInstance(nil, instanceOptions)

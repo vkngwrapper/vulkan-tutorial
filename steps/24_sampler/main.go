@@ -12,6 +12,7 @@ import (
 	"github.com/vkngwrapper/core/common"
 	"github.com/vkngwrapper/core/core1_0"
 	"github.com/vkngwrapper/extensions/ext_debug_utils"
+	"github.com/vkngwrapper/extensions/khr_portability_enumeration"
 	"github.com/vkngwrapper/extensions/khr_portability_subset"
 	"github.com/vkngwrapper/extensions/khr_surface"
 	"github.com/vkngwrapper/extensions/khr_swapchain"
@@ -551,6 +552,12 @@ func (app *HelloTriangleApplication) createInstance() error {
 
 	if enableValidationLayers {
 		instanceOptions.EnabledExtensionNames = append(instanceOptions.EnabledExtensionNames, ext_debug_utils.ExtensionName)
+	}
+
+	_, enumerationSupported := extensions[khr_portability_enumeration.ExtensionName]
+	if enumerationSupported {
+		instanceOptions.EnabledExtensionNames = append(instanceOptions.EnabledExtensionNames, khr_portability_enumeration.ExtensionName)
+		instanceOptions.Flags |= khr_portability_enumeration.InstanceCreateEnumeratePortability
 	}
 
 	// Add layers
