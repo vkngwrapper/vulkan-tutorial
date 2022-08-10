@@ -1,8 +1,8 @@
 diff --git a/../steps/27_model_loading/main.go b/../steps/28_mipmapping/main.go
-index 61169a0..074f225 100644
+index f095b68..6047126 100644
 --- a/../steps/27_model_loading/main.go
 +++ b/../steps/28_mipmapping/main.go
-@@ -144,6 +144,7 @@ type HelloTriangleApplication struct {
+@@ -145,6 +145,7 @@ type HelloTriangleApplication struct {
  	uniformBuffers       []core1_0.Buffer
  	uniformBuffersMemory []core1_0.DeviceMemory
  
@@ -10,7 +10,7 @@ index 61169a0..074f225 100644
  	textureImage       core1_0.Image
  	textureImageMemory core1_0.DeviceMemory
  	textureImageView   core1_0.ImageView
-@@ -786,7 +787,7 @@ func (app *HelloTriangleApplication) createImageViews() error {
+@@ -793,7 +794,7 @@ func (app *HelloTriangleApplication) createImageViews() error {
  
  	var imageViews []core1_0.ImageView
  	for _, image := range images {
@@ -19,7 +19,7 @@ index 61169a0..074f225 100644
  		if err != nil {
  			return err
  		}
-@@ -1094,6 +1095,7 @@ func (app *HelloTriangleApplication) createDepthResources() error {
+@@ -1101,6 +1102,7 @@ func (app *HelloTriangleApplication) createDepthResources() error {
  
  	app.depthImage, app.depthImageMemory, err = app.createImage(app.swapchainExtent.Width,
  		app.swapchainExtent.Height,
@@ -27,7 +27,7 @@ index 61169a0..074f225 100644
  		depthFormat,
  		core1_0.ImageTilingOptimal,
  		core1_0.ImageUsageDepthStencilAttachment,
-@@ -1101,7 +1103,7 @@ func (app *HelloTriangleApplication) createDepthResources() error {
+@@ -1108,7 +1110,7 @@ func (app *HelloTriangleApplication) createDepthResources() error {
  	if err != nil {
  		return err
  	}
@@ -36,7 +36,7 @@ index 61169a0..074f225 100644
  	return err
  }
  
-@@ -1144,6 +1146,8 @@ func (app *HelloTriangleApplication) createTextureImage() error {
+@@ -1151,6 +1153,8 @@ func (app *HelloTriangleApplication) createTextureImage() error {
  	imageDims := imageBounds.Size()
  	imageSize := imageDims.X * imageDims.Y * 4
  
@@ -45,7 +45,7 @@ index 61169a0..074f225 100644
  	stagingBuffer, stagingMemory, err := app.createBuffer(imageSize, core1_0.BufferUsageTransferSrc, core1_0.MemoryPropertyHostVisible|core1_0.MemoryPropertyHostCoherent)
  	if err != nil {
  		return err
-@@ -1164,13 +1168,13 @@ func (app *HelloTriangleApplication) createTextureImage() error {
+@@ -1171,13 +1175,13 @@ func (app *HelloTriangleApplication) createTextureImage() error {
  	}
  
  	//Create final image
@@ -61,7 +61,7 @@ index 61169a0..074f225 100644
  	if err != nil {
  		return err
  	}
-@@ -1178,7 +1182,8 @@ func (app *HelloTriangleApplication) createTextureImage() error {
+@@ -1185,7 +1189,8 @@ func (app *HelloTriangleApplication) createTextureImage() error {
  	if err != nil {
  		return err
  	}
@@ -71,7 +71,7 @@ index 61169a0..074f225 100644
  	if err != nil {
  		return err
  	}
-@@ -1189,9 +1194,117 @@ func (app *HelloTriangleApplication) createTextureImage() error {
+@@ -1196,9 +1201,117 @@ func (app *HelloTriangleApplication) createTextureImage() error {
  	return nil
  }
  
@@ -190,7 +190,7 @@ index 61169a0..074f225 100644
  	return err
  }
  
-@@ -1214,12 +1327,14 @@ func (app *HelloTriangleApplication) createSampler() error {
+@@ -1221,12 +1334,14 @@ func (app *HelloTriangleApplication) createSampler() error {
  		BorderColor: core1_0.BorderColorIntOpaqueBlack,
  
  		MipmapMode: core1_0.SamplerMipmapModeLinear,
@@ -206,7 +206,7 @@ index 61169a0..074f225 100644
  	imageView, _, err := app.device.CreateImageView(nil, core1_0.ImageViewCreateInfo{
  		Image:    image,
  		ViewType: core1_0.ImageViewType2D,
-@@ -1227,7 +1342,7 @@ func (app *HelloTriangleApplication) createImageView(image core1_0.Image, format
+@@ -1234,7 +1349,7 @@ func (app *HelloTriangleApplication) createImageView(image core1_0.Image, format
  		SubresourceRange: core1_0.ImageSubresourceRange{
  			AspectMask:     aspect,
  			BaseMipLevel:   0,
@@ -215,7 +215,7 @@ index 61169a0..074f225 100644
  			BaseArrayLayer: 0,
  			LayerCount:     1,
  		},
-@@ -1235,7 +1350,7 @@ func (app *HelloTriangleApplication) createImageView(image core1_0.Image, format
+@@ -1242,7 +1357,7 @@ func (app *HelloTriangleApplication) createImageView(image core1_0.Image, format
  	return imageView, err
  }
  
@@ -224,7 +224,7 @@ index 61169a0..074f225 100644
  	image, _, err := app.device.CreateImage(nil, core1_0.ImageCreateInfo{
  		ImageType: core1_0.ImageType2D,
  		Extent: core1_0.Extent3D{
-@@ -1243,7 +1358,7 @@ func (app *HelloTriangleApplication) createImage(width, height int, format core1
+@@ -1250,7 +1365,7 @@ func (app *HelloTriangleApplication) createImage(width, height int, format core1
  			Height: height,
  			Depth:  1,
  		},
@@ -233,7 +233,7 @@ index 61169a0..074f225 100644
  		ArrayLayers:   1,
  		Format:        format,
  		Tiling:        tiling,
-@@ -1275,7 +1390,7 @@ func (app *HelloTriangleApplication) createImage(width, height int, format core1
+@@ -1282,7 +1397,7 @@ func (app *HelloTriangleApplication) createImage(width, height int, format core1
  	return image, imageMemory, nil
  }
  
@@ -242,7 +242,7 @@ index 61169a0..074f225 100644
  	buffer, err := app.beginSingleTimeCommands()
  	if err != nil {
  		return err
-@@ -1308,7 +1423,7 @@ func (app *HelloTriangleApplication) transitionImageLayout(image core1_0.Image,
+@@ -1315,7 +1430,7 @@ func (app *HelloTriangleApplication) transitionImageLayout(image core1_0.Image,
  			SubresourceRange: core1_0.ImageSubresourceRange{
  				AspectMask:     core1_0.ImageAspectColor,
  				BaseMipLevel:   0,

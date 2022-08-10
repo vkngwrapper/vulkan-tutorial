@@ -1,8 +1,8 @@
 diff --git a/../steps/14_command_buffers/main.go b/../steps/15_hello_triangle/main.go
-index f63b151..c960fc0 100644
+index 6b7ca30..37eefed 100644
 --- a/../steps/14_command_buffers/main.go
 +++ b/../steps/15_hello_triangle/main.go
-@@ -18,6 +18,8 @@ import (
+@@ -19,6 +19,8 @@ import (
  //go:embed shaders
  var shaders embed.FS
  
@@ -11,7 +11,7 @@ index f63b151..c960fc0 100644
  var validationLayers = []string{"VK_LAYER_KHRONOS_validation"}
  var deviceExtensions = []string{khr_swapchain.ExtensionName}
  
-@@ -66,6 +68,12 @@ type HelloTriangleApplication struct {
+@@ -67,6 +69,12 @@ type HelloTriangleApplication struct {
  
  	commandPool    core1_0.CommandPool
  	commandBuffers []core1_0.CommandBuffer
@@ -24,7 +24,7 @@ index f63b151..c960fc0 100644
  }
  
  func (app *HelloTriangleApplication) Run() error {
-@@ -153,7 +161,12 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -154,7 +162,12 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -38,7 +38,7 @@ index f63b151..c960fc0 100644
  }
  
  func (app *HelloTriangleApplication) mainLoop() error {
-@@ -165,12 +178,29 @@ appLoop:
+@@ -166,12 +179,29 @@ appLoop:
  				break appLoop
  			}
  		}
@@ -69,7 +69,7 @@ index f63b151..c960fc0 100644
  	if app.commandPool != nil {
  		app.commandPool.Destroy(nil)
  	}
-@@ -432,6 +462,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
+@@ -439,6 +469,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
  	}
  	app.swapchainExtent = extent
  	app.swapchain = swapchain
@@ -77,7 +77,7 @@ index f63b151..c960fc0 100644
  
  	images, _, err := swapchain.SwapchainImages()
  	if err != nil {
-@@ -466,7 +497,6 @@ func (app *HelloTriangleApplication) createSwapchain() error {
+@@ -473,7 +504,6 @@ func (app *HelloTriangleApplication) createSwapchain() error {
  		imageViews = append(imageViews, view)
  	}
  	app.swapchainImageViews = imageViews
@@ -85,7 +85,7 @@ index f63b151..c960fc0 100644
  
  	return nil
  }
-@@ -748,6 +778,91 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
+@@ -755,6 +785,91 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
  	return nil
  }
  

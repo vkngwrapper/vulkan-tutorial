@@ -1,8 +1,8 @@
 diff --git a/../steps/13_framebuffers/main.go b/../steps/14_command_buffers/main.go
-index 982efb5..f63b151 100644
+index 1e6d6b7..6b7ca30 100644
 --- a/../steps/13_framebuffers/main.go
 +++ b/../steps/14_command_buffers/main.go
-@@ -63,6 +63,9 @@ type HelloTriangleApplication struct {
+@@ -64,6 +64,9 @@ type HelloTriangleApplication struct {
  	renderPass       core1_0.RenderPass
  	pipelineLayout   core1_0.PipelineLayout
  	graphicsPipeline core1_0.Pipeline
@@ -12,7 +12,7 @@ index 982efb5..f63b151 100644
  }
  
  func (app *HelloTriangleApplication) Run() error {
-@@ -140,7 +143,17 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -141,7 +144,17 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -31,7 +31,7 @@ index 982efb5..f63b151 100644
  }
  
  func (app *HelloTriangleApplication) mainLoop() error {
-@@ -158,6 +171,10 @@ appLoop:
+@@ -159,6 +172,10 @@ appLoop:
  }
  
  func (app *HelloTriangleApplication) cleanup() {
@@ -42,7 +42,7 @@ index 982efb5..f63b151 100644
  	for _, framebuffer := range app.swapchainFramebuffers {
  		framebuffer.Destroy(nil)
  	}
-@@ -666,6 +683,71 @@ func (app *HelloTriangleApplication) createFramebuffers() error {
+@@ -673,6 +690,71 @@ func (app *HelloTriangleApplication) createFramebuffers() error {
  	return nil
  }
  

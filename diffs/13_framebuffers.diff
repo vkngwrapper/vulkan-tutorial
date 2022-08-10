@@ -1,8 +1,8 @@
 diff --git a/../steps/12_graphics_pipeline_complete/main.go b/../steps/13_framebuffers/main.go
-index 7df77d1..982efb5 100644
+index 7d1c3a3..1e6d6b7 100644
 --- a/../steps/12_graphics_pipeline_complete/main.go
 +++ b/../steps/13_framebuffers/main.go
-@@ -52,12 +52,13 @@ type HelloTriangleApplication struct {
+@@ -53,12 +53,13 @@ type HelloTriangleApplication struct {
  	graphicsQueue core1_0.Queue
  	presentQueue  core1_0.Queue
  
@@ -22,7 +22,7 @@ index 7df77d1..982efb5 100644
  
  	renderPass       core1_0.RenderPass
  	pipelineLayout   core1_0.PipelineLayout
-@@ -134,7 +135,12 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -135,7 +136,12 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -36,7 +36,7 @@ index 7df77d1..982efb5 100644
  }
  
  func (app *HelloTriangleApplication) mainLoop() error {
-@@ -152,6 +158,10 @@ appLoop:
+@@ -153,6 +159,10 @@ appLoop:
  }
  
  func (app *HelloTriangleApplication) cleanup() {
@@ -47,7 +47,7 @@ index 7df77d1..982efb5 100644
  	if app.graphicsPipeline != nil {
  		app.graphicsPipeline.Destroy(nil)
  	}
-@@ -635,6 +645,27 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -642,6 +652,27 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  	return nil
  }
  

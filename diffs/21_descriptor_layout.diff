@@ -1,5 +1,5 @@
 diff --git a/../steps/20_index_buffer/main.go b/../steps/21_descriptor_layout/main.go
-index f83ff73..2fa12a9 100644
+index 615ccd2..ba9d7a2 100644
 --- a/../steps/20_index_buffer/main.go
 +++ b/../steps/21_descriptor_layout/main.go
 @@ -5,6 +5,8 @@ import (
@@ -11,7 +11,7 @@ index f83ff73..2fa12a9 100644
  	"github.com/veandco/go-sdl2/sdl"
  	"github.com/vkngwrapper/core"
  	"github.com/vkngwrapper/core/common"
-@@ -15,6 +17,7 @@ import (
+@@ -16,6 +18,7 @@ import (
  	"github.com/vkngwrapper/extensions/khr_swapchain"
  	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2"
  	"log"
@@ -19,7 +19,7 @@ index f83ff73..2fa12a9 100644
  	"unsafe"
  )
  
-@@ -44,8 +47,14 @@ type SwapChainSupportDetails struct {
+@@ -45,8 +48,14 @@ type SwapChainSupportDetails struct {
  }
  
  type Vertex struct {
@@ -36,7 +36,7 @@ index f83ff73..2fa12a9 100644
  }
  
  func getVertexBindingDescription() []core1_0.VertexInputBindingDescription {
-@@ -65,23 +74,23 @@ func getVertexAttributeDescriptions() []core1_0.VertexInputAttributeDescription
+@@ -66,23 +75,23 @@ func getVertexAttributeDescriptions() []core1_0.VertexInputAttributeDescription
  		{
  			Binding:  0,
  			Location: 0,
@@ -67,7 +67,7 @@ index f83ff73..2fa12a9 100644
  }
  
  var indices = []uint16{0, 1, 2, 2, 3, 0}
-@@ -108,9 +117,10 @@ type HelloTriangleApplication struct {
+@@ -109,9 +118,10 @@ type HelloTriangleApplication struct {
  	swapchainImageViews   []core1_0.ImageView
  	swapchainFramebuffers []core1_0.Framebuffer
  
@@ -81,7 +81,7 @@ index f83ff73..2fa12a9 100644
  
  	commandPool    core1_0.CommandPool
  	commandBuffers []core1_0.CommandBuffer
-@@ -120,11 +130,15 @@ type HelloTriangleApplication struct {
+@@ -121,11 +131,15 @@ type HelloTriangleApplication struct {
  	inFlightFence           []core1_0.Fence
  	imagesInFlight          []core1_0.Fence
  	currentFrame            int
@@ -97,7 +97,7 @@ index f83ff73..2fa12a9 100644
  }
  
  func (app *HelloTriangleApplication) Run() error {
-@@ -202,6 +216,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -203,6 +217,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -109,7 +109,7 @@ index f83ff73..2fa12a9 100644
  	err = app.createGraphicsPipeline()
  	if err != nil {
  		return err
-@@ -227,6 +246,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -228,6 +247,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -121,7 +121,7 @@ index f83ff73..2fa12a9 100644
  	err = app.createCommandBuffers()
  	if err != nil {
  		return err
-@@ -308,11 +332,25 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
+@@ -309,11 +333,25 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
  		app.swapchain.Destroy(nil)
  		app.swapchain = nil
  	}
@@ -147,7 +147,7 @@ index f83ff73..2fa12a9 100644
  	if app.indexBuffer != nil {
  		app.indexBuffer.Destroy(nil)
  	}
-@@ -408,6 +446,11 @@ func (app *HelloTriangleApplication) recreateSwapChain() error {
+@@ -409,6 +447,11 @@ func (app *HelloTriangleApplication) recreateSwapChain() error {
  		return err
  	}
  
@@ -159,7 +159,7 @@ index f83ff73..2fa12a9 100644
  	err = app.createCommandBuffers()
  	if err != nil {
  		return err
-@@ -722,6 +765,26 @@ func (app *HelloTriangleApplication) createRenderPass() error {
+@@ -729,6 +772,26 @@ func (app *HelloTriangleApplication) createRenderPass() error {
  	return nil
  }
  
@@ -186,7 +186,7 @@ index f83ff73..2fa12a9 100644
  func bytesToBytecode(b []byte) []uint32 {
  	byteCode := make([]uint32, len(b)/4)
  	for i := 0; i < len(byteCode); i++ {
-@@ -838,7 +901,11 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -845,7 +908,11 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  		},
  	}
  
@@ -199,7 +199,7 @@ index f83ff73..2fa12a9 100644
  	if err != nil {
  		return err
  	}
-@@ -986,6 +1053,22 @@ func (app *HelloTriangleApplication) createIndexBuffer() error {
+@@ -993,6 +1060,22 @@ func (app *HelloTriangleApplication) createIndexBuffer() error {
  	return app.copyBuffer(stagingBuffer, app.indexBuffer, bufferSize)
  }
  
@@ -222,7 +222,7 @@ index f83ff73..2fa12a9 100644
  func (app *HelloTriangleApplication) createBuffer(size int, usage core1_0.BufferUsageFlags, properties core1_0.MemoryPropertyFlags) (core1_0.Buffer, core1_0.DeviceMemory, error) {
  	buffer, _, err := app.device.CreateBuffer(nil, core1_0.BufferCreateInfo{
  		Size:        size,
-@@ -1182,6 +1265,11 @@ func (app *HelloTriangleApplication) drawFrame() error {
+@@ -1189,6 +1272,11 @@ func (app *HelloTriangleApplication) drawFrame() error {
  		return err
  	}
  
@@ -234,7 +234,7 @@ index f83ff73..2fa12a9 100644
  	_, err = app.graphicsQueue.Submit(app.inFlightFence[app.currentFrame], []core1_0.SubmitInfo{
  		{
  			WaitSemaphores:   []core1_0.Semaphore{app.imageAvailableSemaphore[app.currentFrame]},
-@@ -1210,6 +1298,21 @@ func (app *HelloTriangleApplication) drawFrame() error {
+@@ -1217,6 +1305,21 @@ func (app *HelloTriangleApplication) drawFrame() error {
  	return nil
  }
  

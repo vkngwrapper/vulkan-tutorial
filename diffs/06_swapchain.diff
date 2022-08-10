@@ -1,9 +1,9 @@
 diff --git a/../steps/05_window_surface/main.go b/../steps/06_swapchain/main.go
-index c756ead..112fa6f 100644
+index 669a260..8de9eb7 100644
 --- a/../steps/05_window_surface/main.go
 +++ b/../steps/06_swapchain/main.go
-@@ -9,11 +9,13 @@ import (
- 	"github.com/vkngwrapper/extensions/ext_debug_utils"
+@@ -10,11 +10,13 @@ import (
+ 	"github.com/vkngwrapper/extensions/khr_portability_enumeration"
  	"github.com/vkngwrapper/extensions/khr_portability_subset"
  	"github.com/vkngwrapper/extensions/khr_surface"
 +	"github.com/vkngwrapper/extensions/khr_swapchain"
@@ -16,7 +16,7 @@ index c756ead..112fa6f 100644
  
  const enableValidationLayers = true
  
-@@ -26,6 +28,12 @@ func (i *QueueFamilyIndices) IsComplete() bool {
+@@ -27,6 +29,12 @@ func (i *QueueFamilyIndices) IsComplete() bool {
  	return i.GraphicsFamily != nil && i.PresentFamily != nil
  }
  
@@ -29,7 +29,7 @@ index c756ead..112fa6f 100644
  type HelloTriangleApplication struct {
  	window *sdl.Window
  	loader core.Loader
-@@ -39,6 +47,12 @@ type HelloTriangleApplication struct {
+@@ -40,6 +48,12 @@ type HelloTriangleApplication struct {
  
  	graphicsQueue core1_0.Queue
  	presentQueue  core1_0.Queue
@@ -42,7 +42,7 @@ index c756ead..112fa6f 100644
  }
  
  func (app *HelloTriangleApplication) Run() error {
-@@ -96,7 +110,12 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -97,7 +111,12 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -56,7 +56,7 @@ index c756ead..112fa6f 100644
  }
  
  func (app *HelloTriangleApplication) mainLoop() error {
-@@ -114,6 +133,10 @@ appLoop:
+@@ -115,6 +134,10 @@ appLoop:
  }
  
  func (app *HelloTriangleApplication) cleanup() {
@@ -67,7 +67,7 @@ index c756ead..112fa6f 100644
  	if app.device != nil {
  		app.device.Destroy(nil)
  	}
-@@ -240,7 +263,7 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
+@@ -247,7 +270,7 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
  	}
  
  	if app.physicalDevice == nil {
@@ -76,7 +76,7 @@ index c756ead..112fa6f 100644
  	}
  
  	return nil
-@@ -267,6 +290,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
+@@ -274,6 +297,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
  	}
  
  	var extensionNames []string
@@ -84,7 +84,7 @@ index c756ead..112fa6f 100644
  
  	// Makes this example compatible with vulkan portability, necessary to run on mobile & mac
  	extensions, _, err := app.physicalDevice.EnumerateDeviceExtensionProperties()
-@@ -293,13 +317,163 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
+@@ -300,13 +324,163 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
  	return nil
  }
  

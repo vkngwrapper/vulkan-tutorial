@@ -1,5 +1,5 @@
 diff --git a/../steps/08_graphics_pipeline/main.go b/../steps/09_shader_modules/main.go
-index 8b26e59..706cc9c 100644
+index 4ad62c0..1c03581 100644
 --- a/../steps/08_graphics_pipeline/main.go
 +++ b/../steps/09_shader_modules/main.go
 @@ -1,6 +1,7 @@
@@ -10,7 +10,7 @@ index 8b26e59..706cc9c 100644
  	"github.com/cockroachdb/errors"
  	"github.com/veandco/go-sdl2/sdl"
  	"github.com/vkngwrapper/core"
-@@ -14,6 +15,9 @@ import (
+@@ -15,6 +16,9 @@ import (
  	"log"
  )
  
@@ -20,7 +20,7 @@ index 8b26e59..706cc9c 100644
  var validationLayers = []string{"VK_LAYER_KHRONOS_validation"}
  var deviceExtensions = []string{khr_swapchain.ExtensionName}
  
-@@ -419,7 +423,61 @@ func (app *HelloTriangleApplication) createSwapchain() error {
+@@ -426,7 +430,61 @@ func (app *HelloTriangleApplication) createSwapchain() error {
  	return nil
  }
  

@@ -1,8 +1,8 @@
 diff --git a/../steps/09_shader_modules/main.go b/../steps/10_fixed_functions/main.go
-index 706cc9c..85c3b72 100644
+index 1c03581..416cd84 100644
 --- a/../steps/09_shader_modules/main.go
 +++ b/../steps/10_fixed_functions/main.go
-@@ -58,6 +58,8 @@ type HelloTriangleApplication struct {
+@@ -59,6 +59,8 @@ type HelloTriangleApplication struct {
  	swapchainImageFormat core1_0.Format
  	swapchainExtent      core1_0.Extent2D
  	swapchainImageViews  []core1_0.ImageView
@@ -11,7 +11,7 @@ index 706cc9c..85c3b72 100644
  }
  
  func (app *HelloTriangleApplication) Run() error {
-@@ -143,6 +145,10 @@ appLoop:
+@@ -144,6 +146,10 @@ appLoop:
  }
  
  func (app *HelloTriangleApplication) cleanup() {
@@ -22,7 +22,7 @@ index 706cc9c..85c3b72 100644
  	for _, imageView := range app.swapchainImageViews {
  		imageView.Destroy(nil)
  	}
-@@ -277,7 +283,7 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
+@@ -284,7 +290,7 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
  	}
  
  	if app.physicalDevice == nil {
@@ -31,7 +31,7 @@ index 706cc9c..85c3b72 100644
  	}
  
  	return nil
-@@ -466,6 +472,13 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -473,6 +479,13 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  	}
  	defer fragShader.Destroy(nil)
  
@@ -45,7 +45,7 @@ index 706cc9c..85c3b72 100644
  	_ = &core1_0.PipelineShaderStageCreateInfo{
  		Stage:  core1_0.StageVertex,
  		Module: vertShader,
-@@ -478,6 +491,62 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -485,6 +498,62 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  		Name:   "main",
  	}
  
