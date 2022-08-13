@@ -1,8 +1,8 @@
 diff --git a/../steps/02_validation_layers/main.go b/../steps/03_physical_device_selection/main.go
-index 83f2a51..49b3c99 100644
+index 23f91d1..b368a0e 100644
 --- a/../steps/02_validation_layers/main.go
 +++ b/../steps/03_physical_device_selection/main.go
-@@ -14,12 +14,22 @@ var validationLayers = []string{"VK_LAYER_KHRONOS_validation"}
+@@ -15,12 +15,22 @@ var validationLayers = []string{"VK_LAYER_KHRONOS_validation"}
  
  const enableValidationLayers = true
  
@@ -25,7 +25,7 @@ index 83f2a51..49b3c99 100644
  }
  
  func (app *HelloTriangleApplication) Run() error {
-@@ -48,7 +58,7 @@ func (app *HelloTriangleApplication) initWindow() error {
+@@ -49,7 +59,7 @@ func (app *HelloTriangleApplication) initWindow() error {
  	}
  	app.window = window
  
@@ -34,7 +34,7 @@ index 83f2a51..49b3c99 100644
  	if err != nil {
  		return err
  	}
-@@ -62,7 +72,12 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -63,7 +73,12 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -48,7 +48,7 @@ index 83f2a51..49b3c99 100644
  }
  
  func (app *HelloTriangleApplication) mainLoop() error {
-@@ -172,11 +187,62 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
+@@ -179,11 +194,62 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
  	return nil
  }
  

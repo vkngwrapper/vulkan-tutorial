@@ -1,8 +1,8 @@
 diff --git a/../steps/16_swap_chain_recreation/main.go b/../steps/17_vertex_input/main.go
-index 381e2e8..73146c0 100644
+index ac5eb2d..cc6d433 100644
 --- a/../steps/16_swap_chain_recreation/main.go
 +++ b/../steps/17_vertex_input/main.go
-@@ -13,6 +13,7 @@ import (
+@@ -14,6 +14,7 @@ import (
  	"github.com/vkngwrapper/extensions/khr_swapchain"
  	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2"
  	"log"
@@ -10,7 +10,7 @@ index 381e2e8..73146c0 100644
  )
  
  //go:embed shaders
-@@ -40,6 +41,46 @@ type SwapChainSupportDetails struct {
+@@ -41,6 +42,46 @@ type SwapChainSupportDetails struct {
  	PresentModes []khr_surface.PresentMode
  }
  
@@ -57,7 +57,7 @@ index 381e2e8..73146c0 100644
  type HelloTriangleApplication struct {
  	window *sdl.Window
  	loader core.Loader
-@@ -688,7 +729,10 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -695,7 +736,10 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  	}
  	defer fragShader.Destroy(nil)
  

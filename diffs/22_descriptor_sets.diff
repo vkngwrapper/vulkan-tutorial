@@ -1,8 +1,8 @@
 diff --git a/../steps/21_descriptor_layout/main.go b/../steps/22_descriptor_sets/main.go
-index 2fa12a9..4f5f0a9 100644
+index ba9d7a2..84d8982 100644
 --- a/../steps/21_descriptor_layout/main.go
 +++ b/../steps/22_descriptor_sets/main.go
-@@ -118,6 +118,8 @@ type HelloTriangleApplication struct {
+@@ -119,6 +119,8 @@ type HelloTriangleApplication struct {
  	swapchainFramebuffers []core1_0.Framebuffer
  
  	renderPass          core1_0.RenderPass
@@ -11,7 +11,7 @@ index 2fa12a9..4f5f0a9 100644
  	descriptorSetLayout core1_0.DescriptorSetLayout
  	pipelineLayout      core1_0.PipelineLayout
  	graphicsPipeline    core1_0.Pipeline
-@@ -251,6 +253,16 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -252,6 +254,16 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -28,7 +28,7 @@ index 2fa12a9..4f5f0a9 100644
  	err = app.createCommandBuffers()
  	if err != nil {
  		return err
-@@ -342,6 +354,8 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
+@@ -343,6 +355,8 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
  		app.uniformBuffersMemory[i].Free(nil)
  	}
  	app.uniformBuffersMemory = app.uniformBuffersMemory[:0]
@@ -37,7 +37,7 @@ index 2fa12a9..4f5f0a9 100644
  }
  
  func (app *HelloTriangleApplication) cleanup() {
-@@ -451,6 +465,16 @@ func (app *HelloTriangleApplication) recreateSwapChain() error {
+@@ -452,6 +466,16 @@ func (app *HelloTriangleApplication) recreateSwapChain() error {
  		return err
  	}
  
@@ -54,7 +54,7 @@ index 2fa12a9..4f5f0a9 100644
  	err = app.createCommandBuffers()
  	if err != nil {
  		return err
-@@ -875,7 +899,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -882,7 +906,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  
  		PolygonMode: core1_0.PolygonModeFill,
  		CullMode:    core1_0.CullModeBack,
@@ -63,7 +63,7 @@ index 2fa12a9..4f5f0a9 100644
  
  		DepthBiasEnable: false,
  
-@@ -906,9 +930,6 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -913,9 +937,6 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  			app.descriptorSetLayout,
  		},
  	})
@@ -73,7 +73,7 @@ index 2fa12a9..4f5f0a9 100644
  
  	pipelines, _, err := app.device.CreateGraphicsPipelines(nil, nil, []core1_0.GraphicsPipelineCreateInfo{
  		{
-@@ -1069,6 +1090,61 @@ func (app *HelloTriangleApplication) createUniformBuffers() error {
+@@ -1076,6 +1097,61 @@ func (app *HelloTriangleApplication) createUniformBuffers() error {
  	return nil
  }
  
@@ -135,7 +135,7 @@ index 2fa12a9..4f5f0a9 100644
  func (app *HelloTriangleApplication) createBuffer(size int, usage core1_0.BufferUsageFlags, properties core1_0.MemoryPropertyFlags) (core1_0.Buffer, core1_0.DeviceMemory, error) {
  	buffer, _, err := app.device.CreateBuffer(nil, core1_0.BufferCreateInfo{
  		Size:        size,
-@@ -1192,6 +1268,9 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
+@@ -1199,6 +1275,9 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
  		buffer.CmdBindPipeline(core1_0.PipelineBindPointGraphics, app.graphicsPipeline)
  		buffer.CmdBindVertexBuffers([]core1_0.Buffer{app.vertexBuffer}, []int{0})
  		buffer.CmdBindIndexBuffer(app.indexBuffer, 0, core1_0.IndexTypeUInt16)
@@ -145,7 +145,7 @@ index 2fa12a9..4f5f0a9 100644
  		buffer.CmdDrawIndexed(len(indices), 1, 0, 0, 0)
  		buffer.CmdEndRenderPass()
  
-@@ -1299,7 +1378,7 @@ func (app *HelloTriangleApplication) drawFrame() error {
+@@ -1306,7 +1385,7 @@ func (app *HelloTriangleApplication) drawFrame() error {
  }
  
  func (app *HelloTriangleApplication) updateUniformBuffer(currentImage int) error {

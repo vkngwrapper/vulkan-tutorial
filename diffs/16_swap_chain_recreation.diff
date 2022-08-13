@@ -1,8 +1,8 @@
 diff --git a/../steps/15_hello_triangle/main.go b/../steps/16_swap_chain_recreation/main.go
-index c960fc0..381e2e8 100644
+index 37eefed..ac5eb2d 100644
 --- a/../steps/15_hello_triangle/main.go
 +++ b/../steps/16_swap_chain_recreation/main.go
-@@ -96,7 +96,7 @@ func (app *HelloTriangleApplication) initWindow() error {
+@@ -97,7 +97,7 @@ func (app *HelloTriangleApplication) initWindow() error {
  		return err
  	}
  
@@ -11,7 +11,7 @@ index c960fc0..381e2e8 100644
  	if err != nil {
  		return err
  	}
-@@ -141,6 +141,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -142,6 +142,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -23,7 +23,7 @@ index c960fc0..381e2e8 100644
  	err = app.createRenderPass()
  	if err != nil {
  		return err
-@@ -170,17 +175,36 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -171,17 +176,36 @@ func (app *HelloTriangleApplication) initVulkan() error {
  }
  
  func (app *HelloTriangleApplication) mainLoop() error {
@@ -64,7 +64,7 @@ index c960fc0..381e2e8 100644
  		}
  	}
  
-@@ -188,45 +212,60 @@ appLoop:
+@@ -189,45 +213,60 @@ appLoop:
  	return err
  }
  
@@ -142,7 +142,7 @@ index c960fc0..381e2e8 100644
  	}
  
  	if app.device != nil {
-@@ -251,6 +290,60 @@ func (app *HelloTriangleApplication) cleanup() {
+@@ -252,6 +291,60 @@ func (app *HelloTriangleApplication) cleanup() {
  	sdl.Quit()
  }
  
@@ -203,7 +203,7 @@ index c960fc0..381e2e8 100644
  func (app *HelloTriangleApplication) createInstance() error {
  	instanceOptions := core1_0.InstanceCreateInfo{
  		ApplicationName:    "Hello Triangle",
-@@ -464,7 +557,11 @@ func (app *HelloTriangleApplication) createSwapchain() error {
+@@ -471,7 +564,11 @@ func (app *HelloTriangleApplication) createSwapchain() error {
  	app.swapchain = swapchain
  	app.swapchainImageFormat = surfaceFormat.Format
  
@@ -216,7 +216,7 @@ index c960fc0..381e2e8 100644
  	if err != nil {
  		return err
  	}
-@@ -475,7 +572,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
+@@ -482,7 +579,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
  		view, _, err := app.device.CreateImageView(nil, core1_0.ImageViewCreateInfo{
  			ViewType: core1_0.ImageViewType2D,
  			Image:    image,
@@ -225,7 +225,7 @@ index c960fc0..381e2e8 100644
  			Components: core1_0.ComponentMapping{
  				R: core1_0.ComponentSwizzleIdentity,
  				G: core1_0.ComponentSwizzleIdentity,
-@@ -819,13 +916,15 @@ func (app *HelloTriangleApplication) drawFrame() error {
+@@ -826,13 +923,15 @@ func (app *HelloTriangleApplication) drawFrame() error {
  		return err
  	}
  
@@ -244,7 +244,7 @@ index c960fc0..381e2e8 100644
  		if err != nil {
  			return err
  		}
-@@ -849,12 +948,14 @@ func (app *HelloTriangleApplication) drawFrame() error {
+@@ -856,12 +955,14 @@ func (app *HelloTriangleApplication) drawFrame() error {
  		return err
  	}
  

@@ -1,16 +1,16 @@
 diff --git a/../steps/03_physical_device_selection/main.go b/../steps/04_logical_device/main.go
-index 49b3c99..91e740b 100644
+index b368a0e..9c22573 100644
 --- a/../steps/03_physical_device_selection/main.go
 +++ b/../steps/04_logical_device/main.go
-@@ -7,6 +7,7 @@ import (
- 	"github.com/vkngwrapper/core/common"
+@@ -8,6 +8,7 @@ import (
  	"github.com/vkngwrapper/core/core1_0"
  	"github.com/vkngwrapper/extensions/ext_debug_utils"
+ 	"github.com/vkngwrapper/extensions/khr_portability_enumeration"
 +	"github.com/vkngwrapper/extensions/khr_portability_subset"
  	"log"
  )
  
-@@ -30,6 +31,9 @@ type HelloTriangleApplication struct {
+@@ -31,6 +32,9 @@ type HelloTriangleApplication struct {
  	debugMessenger ext_debug_utils.DebugUtilsMessenger
  
  	physicalDevice core1_0.PhysicalDevice
@@ -20,7 +20,7 @@ index 49b3c99..91e740b 100644
  }
  
  func (app *HelloTriangleApplication) Run() error {
-@@ -77,7 +81,12 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -78,7 +82,12 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -34,7 +34,7 @@ index 49b3c99..91e740b 100644
  }
  
  func (app *HelloTriangleApplication) mainLoop() error {
-@@ -95,6 +104,10 @@ appLoop:
+@@ -96,6 +105,10 @@ appLoop:
  }
  
  func (app *HelloTriangleApplication) cleanup() {
@@ -45,7 +45,7 @@ index 49b3c99..91e740b 100644
  	if app.debugMessenger != nil {
  		app.debugMessenger.Destroy(nil)
  	}
-@@ -201,9 +214,52 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
+@@ -208,9 +221,52 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
  	}
  
  	if app.physicalDevice == nil {
@@ -99,7 +99,7 @@ index 49b3c99..91e740b 100644
  	return nil
  }
  
-@@ -239,10 +295,6 @@ func (app *HelloTriangleApplication) logDebug(msgType ext_debug_utils.DebugUtils
+@@ -246,10 +302,6 @@ func (app *HelloTriangleApplication) logDebug(msgType ext_debug_utils.DebugUtils
  	return false
  }
  
