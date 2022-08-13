@@ -8,8 +8,8 @@ require (
 	github.com/go-gl/mathgl v1.0.0
 	github.com/loov/hrtime v1.0.3
 	github.com/veandco/go-sdl2 v0.4.24
-	github.com/vkngwrapper/core v1.0.2
-	github.com/vkngwrapper/extensions v1.0.1
+	github.com/vkngwrapper/core v1.0.5
+	github.com/vkngwrapper/extensions v1.0.4
 	github.com/vkngwrapper/integrations/sdl2 v1.0.2
 )
 
