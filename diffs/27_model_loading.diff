@@ -1,5 +1,5 @@
 diff --git a/../steps/26_depth_buffering/main.go b/../steps/27_model_loading/main.go
-index 4374211..f095b68 100644
+index e9f1d41..e5216f9 100644
 --- a/../steps/26_depth_buffering/main.go
 +++ b/../steps/27_model_loading/main.go
 @@ -5,6 +5,7 @@ import (
@@ -172,7 +172,7 @@ index 4374211..f095b68 100644
 @@ -1677,11 +1726,11 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
  
  		buffer.CmdBindPipeline(core1_0.PipelineBindPointGraphics, app.graphicsPipeline)
- 		buffer.CmdBindVertexBuffers([]core1_0.Buffer{app.vertexBuffer}, []int{0})
+ 		buffer.CmdBindVertexBuffers(0, []core1_0.Buffer{app.vertexBuffer}, []int{0})
 -		buffer.CmdBindIndexBuffer(app.indexBuffer, 0, core1_0.IndexTypeUInt16)
 +		buffer.CmdBindIndexBuffer(app.indexBuffer, 0, core1_0.IndexTypeUInt32)
  		buffer.CmdBindDescriptorSets(core1_0.PipelineBindPointGraphics, app.pipelineLayout, []core1_0.DescriptorSet{

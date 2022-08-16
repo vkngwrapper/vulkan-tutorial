@@ -1,5 +1,5 @@
 diff --git a/../steps/22_descriptor_sets/main.go b/../steps/23_texture_image/main.go
-index 84d8982..6169039 100644
+index 2228d02..4578f77 100644
 --- a/../steps/22_descriptor_sets/main.go
 +++ b/../steps/23_texture_image/main.go
 @@ -17,13 +17,14 @@ import (

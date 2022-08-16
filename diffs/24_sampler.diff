@@ -1,5 +1,5 @@
 diff --git a/../steps/23_texture_image/main.go b/../steps/24_sampler/main.go
-index 6169039..f46b1c2 100644
+index 4578f77..2223dfe 100644
 --- a/../steps/23_texture_image/main.go
 +++ b/../steps/24_sampler/main.go
 @@ -146,6 +146,8 @@ type HelloTriangleApplication struct {

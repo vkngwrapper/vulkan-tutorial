@@ -1,5 +1,5 @@
 diff --git a/../steps/25_texture_mapping/main.go b/../steps/26_depth_buffering/main.go
-index c9e557a..4374211 100644
+index b551444..e9f1d41 100644
 --- a/../steps/25_texture_mapping/main.go
 +++ b/../steps/26_depth_buffering/main.go
 @@ -49,7 +49,7 @@ type SwapChainSupportDetails struct {

@@ -1,5 +1,5 @@
 diff --git a/../steps/17_vertex_input/main.go b/../steps/18_vertex_buffer/main.go
-index cc6d433..db5c733 100644
+index cc6d433..8fbf813 100644
 --- a/../steps/17_vertex_input/main.go
 +++ b/../steps/18_vertex_buffer/main.go
 @@ -1,7 +1,9 @@
@@ -124,7 +124,7 @@ index cc6d433..db5c733 100644
  
  		buffer.CmdBindPipeline(core1_0.PipelineBindPointGraphics, app.graphicsPipeline)
 -		buffer.CmdDraw(3, 1, 0, 0)
-+		buffer.CmdBindVertexBuffers([]core1_0.Buffer{app.vertexBuffer}, []int{0})
++		buffer.CmdBindVertexBuffers(0, []core1_0.Buffer{app.vertexBuffer}, []int{0})
 +		buffer.CmdDraw(len(vertices), 1, 0, 0)
  		buffer.CmdEndRenderPass()
  
