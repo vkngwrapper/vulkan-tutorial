@@ -1,5 +1,5 @@
 diff --git a/../steps/14_command_buffers/main.go b/../steps/15_hello_triangle/main.go
-index 6b7ca30..37eefed 100644
+index c6fa94d..86b4e16 100644
 --- a/../steps/14_command_buffers/main.go
 +++ b/../steps/15_hello_triangle/main.go
 @@ -19,6 +19,8 @@ import (

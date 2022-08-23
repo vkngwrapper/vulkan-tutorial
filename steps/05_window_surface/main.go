@@ -3,14 +3,14 @@ package main
 import (
 	"github.com/cockroachdb/errors"
 	"github.com/veandco/go-sdl2/sdl"
-	"github.com/vkngwrapper/core"
-	"github.com/vkngwrapper/core/common"
-	"github.com/vkngwrapper/core/core1_0"
-	"github.com/vkngwrapper/extensions/ext_debug_utils"
-	"github.com/vkngwrapper/extensions/khr_portability_enumeration"
-	"github.com/vkngwrapper/extensions/khr_portability_subset"
-	"github.com/vkngwrapper/extensions/khr_surface"
-	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2"
+	"github.com/vkngwrapper/core/v2"
+	"github.com/vkngwrapper/core/v2/common"
+	"github.com/vkngwrapper/core/v2/core1_0"
+	"github.com/vkngwrapper/extensions/v2/ext_debug_utils"
+	"github.com/vkngwrapper/extensions/v2/khr_portability_enumeration"
+	"github.com/vkngwrapper/extensions/v2/khr_portability_subset"
+	"github.com/vkngwrapper/extensions/v2/khr_surface"
+	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2/v2"
 	"log"
 )
 

@@ -1,13 +1,13 @@
 diff --git a/../steps/05_window_surface/main.go b/../steps/06_swapchain/main.go
-index 669a260..8de9eb7 100644
+index 35cb968..f533075 100644
 --- a/../steps/05_window_surface/main.go
 +++ b/../steps/06_swapchain/main.go
 @@ -10,11 +10,13 @@ import (
- 	"github.com/vkngwrapper/extensions/khr_portability_enumeration"
- 	"github.com/vkngwrapper/extensions/khr_portability_subset"
- 	"github.com/vkngwrapper/extensions/khr_surface"
-+	"github.com/vkngwrapper/extensions/khr_swapchain"
- 	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2"
+ 	"github.com/vkngwrapper/extensions/v2/khr_portability_enumeration"
+ 	"github.com/vkngwrapper/extensions/v2/khr_portability_subset"
+ 	"github.com/vkngwrapper/extensions/v2/khr_surface"
++	"github.com/vkngwrapper/extensions/v2/khr_swapchain"
+ 	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2/v2"
  	"log"
  )
  

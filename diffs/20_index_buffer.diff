@@ -1,5 +1,5 @@
 diff --git a/../steps/19_staging_buffer/main.go b/../steps/20_index_buffer/main.go
-index e0797b0..45b5e04 100644
+index d0a1442..8823e62 100644
 --- a/../steps/19_staging_buffer/main.go
 +++ b/../steps/20_index_buffer/main.go
 @@ -79,11 +79,14 @@ func getVertexAttributeDescriptions() []core1_0.VertexInputAttributeDescription

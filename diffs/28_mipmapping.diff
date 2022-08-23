@@ -1,5 +1,5 @@
 diff --git a/../steps/27_model_loading/main.go b/../steps/28_mipmapping/main.go
-index e5216f9..087c89a 100644
+index 2fd5cb8..82aa596 100644
 --- a/../steps/27_model_loading/main.go
 +++ b/../steps/28_mipmapping/main.go
 @@ -145,6 +145,7 @@ type HelloTriangleApplication struct {

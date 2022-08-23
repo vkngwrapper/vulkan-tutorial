@@ -1,12 +1,18 @@
 diff --git a/../steps/03_physical_device_selection/main.go b/../steps/04_logical_device/main.go
-index b368a0e..9c22573 100644
+index ee902f6..7a70772 100644
 --- a/../steps/03_physical_device_selection/main.go
 +++ b/../steps/04_logical_device/main.go
-@@ -8,6 +8,7 @@ import (
- 	"github.com/vkngwrapper/core/core1_0"
- 	"github.com/vkngwrapper/extensions/ext_debug_utils"
- 	"github.com/vkngwrapper/extensions/khr_portability_enumeration"
-+	"github.com/vkngwrapper/extensions/khr_portability_subset"
+@@ -3,11 +3,12 @@ package main
+ import (
+ 	"github.com/cockroachdb/errors"
+ 	"github.com/veandco/go-sdl2/sdl"
+-	"github.com/vkngwrapper/core/v2"
+ 	"github.com/vkngwrapper/core/v2/common"
+ 	"github.com/vkngwrapper/core/v2/core1_0"
++	"github.com/vkngwrapper/core/v2"
+ 	"github.com/vkngwrapper/extensions/v2/ext_debug_utils"
+ 	"github.com/vkngwrapper/extensions/v2/khr_portability_enumeration"
++	"github.com/vkngwrapper/extensions/v2/khr_portability_subset"
  	"log"
  )
  
@@ -60,8 +66,8 @@ index b368a0e..9c22573 100644
 +	indices, err := app.findQueueFamilies(app.physicalDevice)
 +	if err != nil {
 +		return err
-+	}
-+
+ 	}
+ 
 +	uniqueQueueFamilies := []int{*indices.GraphicsFamily}
 +
 +	var queueFamilyOptions []core1_0.DeviceQueueCreateInfo
@@ -79,8 +85,8 @@ index b368a0e..9c22573 100644
 +	extensions, _, err := app.physicalDevice.EnumerateDeviceExtensionProperties()
 +	if err != nil {
 +		return err
- 	}
- 
++	}
++
 +	_, supported := extensions[khr_portability_subset.ExtensionName]
 +	if supported {
 +		extensionNames = append(extensionNames, khr_portability_subset.ExtensionName)

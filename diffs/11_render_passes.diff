@@ -1,5 +1,5 @@
 diff --git a/../steps/10_fixed_functions/main.go b/../steps/11_render_passes/main.go
-index 416cd84..51a427a 100644
+index 393be28..870103c 100644
 --- a/../steps/10_fixed_functions/main.go
 +++ b/../steps/11_render_passes/main.go
 @@ -60,6 +60,7 @@ type HelloTriangleApplication struct {

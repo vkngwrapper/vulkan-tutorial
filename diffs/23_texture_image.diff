@@ -1,11 +1,11 @@
 diff --git a/../steps/22_descriptor_sets/main.go b/../steps/23_texture_image/main.go
-index 2228d02..4578f77 100644
+index f6917ca..16143a8 100644
 --- a/../steps/22_descriptor_sets/main.go
 +++ b/../steps/23_texture_image/main.go
 @@ -17,13 +17,14 @@ import (
- 	"github.com/vkngwrapper/extensions/khr_surface"
- 	"github.com/vkngwrapper/extensions/khr_swapchain"
- 	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2"
+ 	"github.com/vkngwrapper/extensions/v2/khr_surface"
+ 	"github.com/vkngwrapper/extensions/v2/khr_swapchain"
+ 	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2/v2"
 +	"image/png"
  	"log"
  	"math"

@@ -1,5 +1,5 @@
 diff --git a/../steps/26_depth_buffering/main.go b/../steps/27_model_loading/main.go
-index e9f1d41..e5216f9 100644
+index 4691486..2fd5cb8 100644
 --- a/../steps/26_depth_buffering/main.go
 +++ b/../steps/27_model_loading/main.go
 @@ -5,6 +5,7 @@ import (
@@ -175,7 +175,7 @@ index e9f1d41..e5216f9 100644
  		buffer.CmdBindVertexBuffers(0, []core1_0.Buffer{app.vertexBuffer}, []int{0})
 -		buffer.CmdBindIndexBuffer(app.indexBuffer, 0, core1_0.IndexTypeUInt16)
 +		buffer.CmdBindIndexBuffer(app.indexBuffer, 0, core1_0.IndexTypeUInt32)
- 		buffer.CmdBindDescriptorSets(core1_0.PipelineBindPointGraphics, app.pipelineLayout, []core1_0.DescriptorSet{
+ 		buffer.CmdBindDescriptorSets(core1_0.PipelineBindPointGraphics, app.pipelineLayout, 0, []core1_0.DescriptorSet{
  			app.descriptorSets[bufferIdx],
  		}, nil)
 -		buffer.CmdDrawIndexed(len(indices), 1, 0, 0, 0)

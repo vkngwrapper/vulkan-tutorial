@@ -1,5 +1,5 @@
 diff --git a/../steps/12_graphics_pipeline_complete/main.go b/../steps/13_framebuffers/main.go
-index 7d1c3a3..1e6d6b7 100644
+index 856a30a..34d50ec 100644
 --- a/../steps/12_graphics_pipeline_complete/main.go
 +++ b/../steps/13_framebuffers/main.go
 @@ -53,12 +53,13 @@ type HelloTriangleApplication struct {

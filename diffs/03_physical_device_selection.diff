@@ -1,5 +1,5 @@
 diff --git a/../steps/02_validation_layers/main.go b/../steps/03_physical_device_selection/main.go
-index 23f91d1..b368a0e 100644
+index 6d77127..ee902f6 100644
 --- a/../steps/02_validation_layers/main.go
 +++ b/../steps/03_physical_device_selection/main.go
 @@ -15,12 +15,22 @@ var validationLayers = []string{"VK_LAYER_KHRONOS_validation"}

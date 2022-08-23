@@ -1,5 +1,5 @@
 diff --git a/../steps/07_image_views/main.go b/../steps/08_graphics_pipeline/main.go
-index 6c17bcd..4ad62c0 100644
+index dc37671..4324125 100644
 --- a/../steps/07_image_views/main.go
 +++ b/../steps/08_graphics_pipeline/main.go
 @@ -117,7 +117,12 @@ func (app *HelloTriangleApplication) initVulkan() error {

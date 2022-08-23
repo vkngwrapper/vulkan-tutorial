@@ -8,15 +8,15 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/loov/hrtime"
 	"github.com/veandco/go-sdl2/sdl"
-	"github.com/vkngwrapper/core"
-	"github.com/vkngwrapper/core/common"
-	"github.com/vkngwrapper/core/core1_0"
-	"github.com/vkngwrapper/extensions/ext_debug_utils"
-	"github.com/vkngwrapper/extensions/khr_portability_enumeration"
-	"github.com/vkngwrapper/extensions/khr_portability_subset"
-	"github.com/vkngwrapper/extensions/khr_surface"
-	"github.com/vkngwrapper/extensions/khr_swapchain"
-	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2"
+	"github.com/vkngwrapper/core/v2"
+	"github.com/vkngwrapper/core/v2/common"
+	"github.com/vkngwrapper/core/v2/core1_0"
+	"github.com/vkngwrapper/extensions/v2/ext_debug_utils"
+	"github.com/vkngwrapper/extensions/v2/khr_portability_enumeration"
+	"github.com/vkngwrapper/extensions/v2/khr_portability_subset"
+	"github.com/vkngwrapper/extensions/v2/khr_surface"
+	"github.com/vkngwrapper/extensions/v2/khr_swapchain"
+	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2/v2"
 	"log"
 	"math"
 	"unsafe"
@@ -1275,7 +1275,7 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
 		buffer.CmdBindPipeline(core1_0.PipelineBindPointGraphics, app.graphicsPipeline)
 		buffer.CmdBindVertexBuffers(0, []core1_0.Buffer{app.vertexBuffer}, []int{0})
 		buffer.CmdBindIndexBuffer(app.indexBuffer, 0, core1_0.IndexTypeUInt16)
-		buffer.CmdBindDescriptorSets(core1_0.PipelineBindPointGraphics, app.pipelineLayout, []core1_0.DescriptorSet{
+		buffer.CmdBindDescriptorSets(core1_0.PipelineBindPointGraphics, app.pipelineLayout, 0, []core1_0.DescriptorSet{
 			app.descriptorSets[bufferIdx],
 		}, nil)
 		buffer.CmdDrawIndexed(len(indices), 1, 0, 0, 0)

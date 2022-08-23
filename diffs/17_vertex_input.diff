@@ -1,10 +1,10 @@
 diff --git a/../steps/16_swap_chain_recreation/main.go b/../steps/17_vertex_input/main.go
-index ac5eb2d..cc6d433 100644
+index 4d47c48..249e800 100644
 --- a/../steps/16_swap_chain_recreation/main.go
 +++ b/../steps/17_vertex_input/main.go
 @@ -14,6 +14,7 @@ import (
- 	"github.com/vkngwrapper/extensions/khr_swapchain"
- 	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2"
+ 	"github.com/vkngwrapper/extensions/v2/khr_swapchain"
+ 	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2/v2"
  	"log"
 +	"unsafe"
  )

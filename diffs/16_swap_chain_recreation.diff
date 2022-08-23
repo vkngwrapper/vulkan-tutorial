@@ -1,5 +1,5 @@
 diff --git a/../steps/15_hello_triangle/main.go b/../steps/16_swap_chain_recreation/main.go
-index 37eefed..ac5eb2d 100644
+index 86b4e16..4d47c48 100644
 --- a/../steps/15_hello_triangle/main.go
 +++ b/../steps/16_swap_chain_recreation/main.go
 @@ -97,7 +97,7 @@ func (app *HelloTriangleApplication) initWindow() error {
