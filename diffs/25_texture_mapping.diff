@@ -1,12 +1,22 @@
 diff --git a/../steps/24_sampler/main.go b/../steps/25_texture_mapping/main.go
-index 61274ab..ba41059 100644
+index d627636..64c04fb 100644
 --- a/../steps/24_sampler/main.go
 +++ b/../steps/25_texture_mapping/main.go
+@@ -16,8 +16,8 @@ import (
+ 	"github.com/vkngwrapper/extensions/v2/khr_surface"
+ 	"github.com/vkngwrapper/extensions/v2/khr_swapchain"
+ 	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2/v2"
+-	"image/png"
+ 	vkngmath "github.com/vkngwrapper/math"
++	"image/png"
+ 	"log"
+ 	"math"
+ 	"unsafe"
 @@ -51,6 +51,7 @@ type SwapChainSupportDetails struct {
  type Vertex struct {
- 	Position mgl32.Vec2
- 	Color    mgl32.Vec3
-+	TexCoord mgl32.Vec2
+ 	Position vkngmath.Vec2[float32]
+ 	Color    vkngmath.Vec3[float32]
++	TexCoord vkngmath.Vec2[float32]
  }
  
  type UniformBufferObject struct {
@@ -24,14 +34,14 @@ index 61274ab..ba41059 100644
  }
  
  var vertices = []Vertex{
--	{Position: mgl32.Vec2{-0.5, -0.5}, Color: mgl32.Vec3{1, 0, 0}},
--	{Position: mgl32.Vec2{0.5, -0.5}, Color: mgl32.Vec3{0, 1, 0}},
--	{Position: mgl32.Vec2{0.5, 0.5}, Color: mgl32.Vec3{0, 0, 1}},
--	{Position: mgl32.Vec2{-0.5, 0.5}, Color: mgl32.Vec3{1, 1, 1}},
-+	{Position: mgl32.Vec2{-0.5, -0.5}, Color: mgl32.Vec3{1, 0, 0}, TexCoord: mgl32.Vec2{1, 0}},
-+	{Position: mgl32.Vec2{0.5, -0.5}, Color: mgl32.Vec3{0, 1, 0}, TexCoord: mgl32.Vec2{0, 0}},
-+	{Position: mgl32.Vec2{0.5, 0.5}, Color: mgl32.Vec3{0, 0, 1}, TexCoord: mgl32.Vec2{0, 1}},
-+	{Position: mgl32.Vec2{-0.5, 0.5}, Color: mgl32.Vec3{1, 1, 1}, TexCoord: mgl32.Vec2{1, 1}},
+-	{Position: vkngmath.Vec2[float32]{X: -0.5, Y: -0.5}, Color: vkngmath.Vec3[float32]{X: 1, Y: 0, Z: 0}},
+-	{Position: vkngmath.Vec2[float32]{X: 0.5, Y: -0.5}, Color: vkngmath.Vec3[float32]{X: 0, Y: 1, Z: 0}},
+-	{Position: vkngmath.Vec2[float32]{X: 0.5, Y: 0.5}, Color: vkngmath.Vec3[float32]{X: 0, Y: 0, Z: 1}},
+-	{Position: vkngmath.Vec2[float32]{X: -0.5, Y: 0.5}, Color: vkngmath.Vec3[float32]{X: 1, Y: 1, Z: 1}},
++	{Position: vkngmath.Vec2[float32]{X: -0.5, Y: -0.5}, Color: vkngmath.Vec3[float32]{X: 1, Y: 0, Z: 0}, TexCoord: vkngmath.Vec2[float32]{X: 1, Y: 0}},
++	{Position: vkngmath.Vec2[float32]{X: 0.5, Y: -0.5}, Color: vkngmath.Vec3[float32]{X: 0, Y: 1, Z: 0}, TexCoord: vkngmath.Vec2[float32]{X: 0, Y: 0}},
++	{Position: vkngmath.Vec2[float32]{X: 0.5, Y: 0.5}, Color: vkngmath.Vec3[float32]{X: 0, Y: 0, Z: 1}, TexCoord: vkngmath.Vec2[float32]{X: 0, Y: 1}},
++	{Position: vkngmath.Vec2[float32]{X: -0.5, Y: 0.5}, Color: vkngmath.Vec3[float32]{X: 1, Y: 1, Z: 1}, TexCoord: vkngmath.Vec2[float32]{X: 1, Y: 1}},
  }
  
  var indices = []uint16{0, 1, 2, 2, 3, 0}

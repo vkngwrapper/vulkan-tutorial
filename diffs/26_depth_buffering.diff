@@ -1,33 +1,33 @@
 diff --git a/../steps/25_texture_mapping/main.go b/../steps/26_depth_buffering/main.go
-index ba41059..4691486 100644
+index 64c04fb..6065855 100644
 --- a/../steps/25_texture_mapping/main.go
 +++ b/../steps/26_depth_buffering/main.go
 @@ -49,7 +49,7 @@ type SwapChainSupportDetails struct {
  }
  
  type Vertex struct {
--	Position mgl32.Vec2
-+	Position mgl32.Vec3
- 	Color    mgl32.Vec3
- 	TexCoord mgl32.Vec2
+-	Position vkngmath.Vec2[float32]
++	Position vkngmath.Vec3[float32]
+ 	Color    vkngmath.Vec3[float32]
+ 	TexCoord vkngmath.Vec2[float32]
  }
 @@ -96,13 +96,21 @@ func getVertexAttributeDescriptions() []core1_0.VertexInputAttributeDescription
  }
  
  var vertices = []Vertex{
--	{Position: mgl32.Vec2{-0.5, -0.5}, Color: mgl32.Vec3{1, 0, 0}, TexCoord: mgl32.Vec2{1, 0}},
--	{Position: mgl32.Vec2{0.5, -0.5}, Color: mgl32.Vec3{0, 1, 0}, TexCoord: mgl32.Vec2{0, 0}},
--	{Position: mgl32.Vec2{0.5, 0.5}, Color: mgl32.Vec3{0, 0, 1}, TexCoord: mgl32.Vec2{0, 1}},
--	{Position: mgl32.Vec2{-0.5, 0.5}, Color: mgl32.Vec3{1, 1, 1}, TexCoord: mgl32.Vec2{1, 1}},
-+	{Position: mgl32.Vec3{-0.5, -0.5, 0}, Color: mgl32.Vec3{1, 0, 0}, TexCoord: mgl32.Vec2{1, 0}},
-+	{Position: mgl32.Vec3{0.5, -0.5, 0}, Color: mgl32.Vec3{0, 1, 0}, TexCoord: mgl32.Vec2{0, 0}},
-+	{Position: mgl32.Vec3{0.5, 0.5, 0}, Color: mgl32.Vec3{0, 0, 1}, TexCoord: mgl32.Vec2{0, 1}},
-+	{Position: mgl32.Vec3{-0.5, 0.5, 0}, Color: mgl32.Vec3{1, 1, 1}, TexCoord: mgl32.Vec2{1, 1}},
+-	{Position: vkngmath.Vec2[float32]{X: -0.5, Y: -0.5}, Color: vkngmath.Vec3[float32]{X: 1, Y: 0, Z: 0}, TexCoord: vkngmath.Vec2[float32]{X: 1, Y: 0}},
+-	{Position: vkngmath.Vec2[float32]{X: 0.5, Y: -0.5}, Color: vkngmath.Vec3[float32]{X: 0, Y: 1, Z: 0}, TexCoord: vkngmath.Vec2[float32]{X: 0, Y: 0}},
+-	{Position: vkngmath.Vec2[float32]{X: 0.5, Y: 0.5}, Color: vkngmath.Vec3[float32]{X: 0, Y: 0, Z: 1}, TexCoord: vkngmath.Vec2[float32]{X: 0, Y: 1}},
+-	{Position: vkngmath.Vec2[float32]{X: -0.5, Y: 0.5}, Color: vkngmath.Vec3[float32]{X: 1, Y: 1, Z: 1}, TexCoord: vkngmath.Vec2[float32]{X: 1, Y: 1}},
++	{Position: vkngmath.Vec3[float32]{X: -0.5, Y: -0.5, Z: 0}, Color: vkngmath.Vec3[float32]{X: 1, Y: 0, Z: 0}, TexCoord: vkngmath.Vec2[float32]{X: 1, Y: 0}},
++	{Position: vkngmath.Vec3[float32]{X: 0.5, Y: -0.5, Z: 0}, Color: vkngmath.Vec3[float32]{X: 0, Y: 1, Z: 0}, TexCoord: vkngmath.Vec2[float32]{X: 0, Y: 0}},
++	{Position: vkngmath.Vec3[float32]{X: 0.5, Y: 0.5, Z: 0}, Color: vkngmath.Vec3[float32]{X: 0, Y: 0, Z: 1}, TexCoord: vkngmath.Vec2[float32]{X: 0, Y: 1}},
++	{Position: vkngmath.Vec3[float32]{X: -0.5, Y: 0.5, Z: 0}, Color: vkngmath.Vec3[float32]{X: 1, Y: 1, Z: 1}, TexCoord: vkngmath.Vec2[float32]{X: 1, Y: 1}},
 +
-+	{Position: mgl32.Vec3{-0.5, -0.5, -0.5}, Color: mgl32.Vec3{1, 0, 0}, TexCoord: mgl32.Vec2{0, 0}},
-+	{Position: mgl32.Vec3{0.5, -0.5, -0.5}, Color: mgl32.Vec3{0, 1, 0}, TexCoord: mgl32.Vec2{1, 0}},
-+	{Position: mgl32.Vec3{0.5, 0.5, -0.5}, Color: mgl32.Vec3{0, 0, 1}, TexCoord: mgl32.Vec2{1, 1}},
-+	{Position: mgl32.Vec3{-0.5, 0.5, -0.5}, Color: mgl32.Vec3{1, 1, 1}, TexCoord: mgl32.Vec2{0, 1}},
++	{Position: vkngmath.Vec3[float32]{X: -0.5, Y: -0.5, Z: -0.5}, Color: vkngmath.Vec3[float32]{X: 1, Y: 0, Z: 0}, TexCoord: vkngmath.Vec2[float32]{X: 0, Y: 0}},
++	{Position: vkngmath.Vec3[float32]{X: 0.5, Y: -0.5, Z: -0.5}, Color: vkngmath.Vec3[float32]{X: 0, Y: 1, Z: 0}, TexCoord: vkngmath.Vec2[float32]{X: 1, Y: 0}},
++	{Position: vkngmath.Vec3[float32]{X: 0.5, Y: 0.5, Z: -0.5}, Color: vkngmath.Vec3[float32]{X: 0, Y: 0, Z: 1}, TexCoord: vkngmath.Vec2[float32]{X: 1, Y: 1}},
++	{Position: vkngmath.Vec3[float32]{X: -0.5, Y: 0.5, Z: -0.5}, Color: vkngmath.Vec3[float32]{X: 1, Y: 1, Z: 1}, TexCoord: vkngmath.Vec2[float32]{X: 0, Y: 1}},
  }
  
 -var indices = []uint16{0, 1, 2, 2, 3, 0}
@@ -279,19 +279,17 @@ index ba41059..4691486 100644
  				},
  			})
  		if err != nil {
-@@ -1687,8 +1795,13 @@ func (app *HelloTriangleApplication) updateUniformBuffer(currentImage int) error
- 	ubo.Model = mgl32.HomogRotate3D(timePeriod*mgl32.DegToRad(90.0), mgl32.Vec3{0, 0, 1})
- 	ubo.View = mgl32.LookAt(2, 2, 2, 0, 0, 0, 0, 0, 1)
+@@ -1691,7 +1799,12 @@ func (app *HelloTriangleApplication) updateUniformBuffer(currentImage int) error
+ 		&vkngmath.Vec3[float32]{X: 0, Y: 0, Z: 1},
+ 	)
  	aspectRatio := float32(app.swapchainExtent.Width) / float32(app.swapchainExtent.Height)
--	ubo.Proj = mgl32.Perspective(mgl32.DegToRad(45), aspectRatio, 0.1, 10)
--	ubo.Proj[5] *= -1
+-	ubo.Proj.SetPerspective(math.Pi/4.0, aspectRatio, 0.1, 10)
 +
-+	near := 0.1
-+	far := 10.0
-+	fovy := mgl32.DegToRad(45)
-+	fmn, f := far-near, float32(1./math.Tan(float64(fovy)/2.0))
++	near := float32(0.1)
++	far := float32(10.0)
++	fovy := math.Pi / 4.0
 +
-+	ubo.Proj = mgl32.Mat4{float32(f / aspectRatio), 0, 0, 0, 0, float32(-f), 0, 0, 0, 0, float32(-far / fmn), -1, 0, 0, float32(-(far * near) / fmn), 0}
++	ubo.Proj.SetPerspective(fovy, aspectRatio, near, far)
  
  	err := writeData(app.uniformBuffersMemory[currentImage], 0, &ubo)
  	return err

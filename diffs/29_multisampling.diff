@@ -1,5 +1,5 @@
 diff --git a/../steps/28_mipmapping/main.go b/../steps/29_multisampling/main.go
-index 82aa596..fbf5e37 100644
+index 4178fd7..3233110 100644
 --- a/../steps/28_mipmapping/main.go
 +++ b/../steps/29_multisampling/main.go
 @@ -21,6 +21,7 @@ import (
@@ -303,7 +303,7 @@ index 82aa596..fbf5e37 100644
  	})
  	if err != nil {
  		return nil, nil, err
-@@ -2106,7 +2217,10 @@ func (app *HelloTriangleApplication) logDebug(msgType ext_debug_utils.DebugUtils
+@@ -2109,7 +2220,10 @@ func (app *HelloTriangleApplication) logDebug(msgType ext_debug_utils.DebugUtils
  }
  
  func main() {

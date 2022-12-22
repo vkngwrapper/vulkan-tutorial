@@ -1,8 +1,16 @@
 diff --git a/../steps/23_texture_image/main.go b/../steps/24_sampler/main.go
-index 16143a8..61274ab 100644
+index 92d4f6d..d627636 100644
 --- a/../steps/23_texture_image/main.go
 +++ b/../steps/24_sampler/main.go
-@@ -146,6 +146,8 @@ type HelloTriangleApplication struct {
+@@ -16,6 +16,7 @@ import (
+ 	"github.com/vkngwrapper/extensions/v2/khr_surface"
+ 	"github.com/vkngwrapper/extensions/v2/khr_swapchain"
+ 	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2/v2"
++	"image/png"
+ 	vkngmath "github.com/vkngwrapper/math"
+ 	"log"
+ 	"math"
+@@ -145,6 +146,8 @@ type HelloTriangleApplication struct {
  
  	textureImage       core1_0.Image
  	textureImageMemory core1_0.DeviceMemory
@@ -11,7 +19,7 @@ index 16143a8..61274ab 100644
  }
  
  func (app *HelloTriangleApplication) Run() error {
-@@ -248,6 +250,16 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -247,6 +250,16 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -28,7 +36,7 @@ index 16143a8..61274ab 100644
  	err = app.createVertexBuffer()
  	if err != nil {
  		return err
-@@ -371,6 +383,14 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
+@@ -370,6 +383,14 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
  func (app *HelloTriangleApplication) cleanup() {
  	app.cleanupSwapChain()
  
@@ -43,7 +51,7 @@ index 16143a8..61274ab 100644
  	if app.textureImage != nil {
  		app.textureImage.Destroy(nil)
  	}
-@@ -657,8 +677,10 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
+@@ -656,8 +677,10 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
  	}
  
  	app.device, _, err = app.physicalDevice.CreateDevice(nil, core1_0.DeviceCreateInfo{
@@ -56,7 +64,7 @@ index 16143a8..61274ab 100644
  		EnabledExtensionNames: extensionNames,
  	})
  	if err != nil {
-@@ -737,24 +759,7 @@ func (app *HelloTriangleApplication) createImageViews() error {
+@@ -736,24 +759,7 @@ func (app *HelloTriangleApplication) createImageViews() error {
  
  	var imageViews []core1_0.ImageView
  	for _, image := range images {
@@ -82,7 +90,7 @@ index 16143a8..61274ab 100644
  		if err != nil {
  			return err
  		}
-@@ -1080,6 +1085,52 @@ func (app *HelloTriangleApplication) createTextureImage() error {
+@@ -1079,6 +1085,52 @@ func (app *HelloTriangleApplication) createTextureImage() error {
  	return nil
  }
  
@@ -135,7 +143,7 @@ index 16143a8..61274ab 100644
  func (app *HelloTriangleApplication) createImage(width, height int, format core1_0.Format, tiling core1_0.ImageTiling, usage core1_0.ImageUsageFlags, memoryProperties core1_0.MemoryPropertyFlags) (core1_0.Image, core1_0.DeviceMemory, error) {
  	image, _, err := app.device.CreateImage(nil, core1_0.ImageCreateInfo{
  		ImageType: core1_0.ImageType2D,
-@@ -1691,7 +1742,8 @@ func (app *HelloTriangleApplication) isDeviceSuitable(device core1_0.PhysicalDev
+@@ -1693,7 +1745,8 @@ func (app *HelloTriangleApplication) isDeviceSuitable(device core1_0.PhysicalDev
  		swapChainAdequate = len(swapChainSupport.Formats) > 0 && len(swapChainSupport.PresentModes) > 0
  	}
  

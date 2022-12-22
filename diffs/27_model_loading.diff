@@ -1,5 +1,5 @@
 diff --git a/../steps/26_depth_buffering/main.go b/../steps/27_model_loading/main.go
-index 4691486..2fd5cb8 100644
+index 6065855..adacdcb 100644
 --- a/../steps/26_depth_buffering/main.go
 +++ b/../steps/27_model_loading/main.go
 @@ -5,6 +5,7 @@ import (
@@ -7,9 +7,9 @@ index 4691486..2fd5cb8 100644
  	"encoding/binary"
  	"github.com/cockroachdb/errors"
 +	"github.com/g3n/engine/loader/obj"
- 	"github.com/go-gl/mathgl/mgl32"
  	"github.com/loov/hrtime"
  	"github.com/veandco/go-sdl2/sdl"
+ 	"github.com/vkngwrapper/core/v2"
 @@ -23,7 +24,7 @@ import (
  	"unsafe"
  )
@@ -24,15 +24,15 @@ index 4691486..2fd5cb8 100644
  }
  
 -var vertices = []Vertex{
--	{Position: mgl32.Vec3{-0.5, -0.5, 0}, Color: mgl32.Vec3{1, 0, 0}, TexCoord: mgl32.Vec2{1, 0}},
--	{Position: mgl32.Vec3{0.5, -0.5, 0}, Color: mgl32.Vec3{0, 1, 0}, TexCoord: mgl32.Vec2{0, 0}},
--	{Position: mgl32.Vec3{0.5, 0.5, 0}, Color: mgl32.Vec3{0, 0, 1}, TexCoord: mgl32.Vec2{0, 1}},
--	{Position: mgl32.Vec3{-0.5, 0.5, 0}, Color: mgl32.Vec3{1, 1, 1}, TexCoord: mgl32.Vec2{1, 1}},
+-	{Position: vkngmath.Vec3[float32]{X: -0.5, Y: -0.5, Z: 0}, Color: vkngmath.Vec3[float32]{X: 1, Y: 0, Z: 0}, TexCoord: vkngmath.Vec2[float32]{X: 1, Y: 0}},
+-	{Position: vkngmath.Vec3[float32]{X: 0.5, Y: -0.5, Z: 0}, Color: vkngmath.Vec3[float32]{X: 0, Y: 1, Z: 0}, TexCoord: vkngmath.Vec2[float32]{X: 0, Y: 0}},
+-	{Position: vkngmath.Vec3[float32]{X: 0.5, Y: 0.5, Z: 0}, Color: vkngmath.Vec3[float32]{X: 0, Y: 0, Z: 1}, TexCoord: vkngmath.Vec2[float32]{X: 0, Y: 1}},
+-	{Position: vkngmath.Vec3[float32]{X: -0.5, Y: 0.5, Z: 0}, Color: vkngmath.Vec3[float32]{X: 1, Y: 1, Z: 1}, TexCoord: vkngmath.Vec2[float32]{X: 1, Y: 1}},
 -
--	{Position: mgl32.Vec3{-0.5, -0.5, -0.5}, Color: mgl32.Vec3{1, 0, 0}, TexCoord: mgl32.Vec2{0, 0}},
--	{Position: mgl32.Vec3{0.5, -0.5, -0.5}, Color: mgl32.Vec3{0, 1, 0}, TexCoord: mgl32.Vec2{1, 0}},
--	{Position: mgl32.Vec3{0.5, 0.5, -0.5}, Color: mgl32.Vec3{0, 0, 1}, TexCoord: mgl32.Vec2{1, 1}},
--	{Position: mgl32.Vec3{-0.5, 0.5, -0.5}, Color: mgl32.Vec3{1, 1, 1}, TexCoord: mgl32.Vec2{0, 1}},
+-	{Position: vkngmath.Vec3[float32]{X: -0.5, Y: -0.5, Z: -0.5}, Color: vkngmath.Vec3[float32]{X: 1, Y: 0, Z: 0}, TexCoord: vkngmath.Vec2[float32]{X: 0, Y: 0}},
+-	{Position: vkngmath.Vec3[float32]{X: 0.5, Y: -0.5, Z: -0.5}, Color: vkngmath.Vec3[float32]{X: 0, Y: 1, Z: 0}, TexCoord: vkngmath.Vec2[float32]{X: 1, Y: 0}},
+-	{Position: vkngmath.Vec3[float32]{X: 0.5, Y: 0.5, Z: -0.5}, Color: vkngmath.Vec3[float32]{X: 0, Y: 0, Z: 1}, TexCoord: vkngmath.Vec2[float32]{X: 1, Y: 1}},
+-	{Position: vkngmath.Vec3[float32]{X: -0.5, Y: 0.5, Z: -0.5}, Color: vkngmath.Vec3[float32]{X: 1, Y: 1, Z: 1}, TexCoord: vkngmath.Vec2[float32]{X: 0, Y: 1}},
 -}
 -
 -var indices = []uint16{
@@ -81,16 +81,16 @@ index 4691486..2fd5cb8 100644
 +	index, vertexExists := uniqueVertices[vertInd]
 +
 +	if !vertexExists {
-+		vert := Vertex{Position: mgl32.Vec3{
-+			decoder.Vertices[vertInd*3],
-+			decoder.Vertices[vertInd*3+1],
-+			decoder.Vertices[vertInd*3+2],
-+		}, Color: mgl32.Vec3{1, 1, 1}}
++		vert := Vertex{Position: vkngmath.Vec3[float32]{
++			X: decoder.Vertices[vertInd*3],
++			Y: decoder.Vertices[vertInd*3+1],
++			Z: decoder.Vertices[vertInd*3+2],
++		}, Color: vkngmath.Vec3[float32]{X: 1, Y: 1, Z: 1}}
 +
 +		uvInd := face.Uvs[faceIndex]
-+		vert.TexCoord = mgl32.Vec2{
-+			decoder.Uvs[uvInd*2],
-+			1.0 - decoder.Uvs[uvInd*2+1],
++		vert.TexCoord = vkngmath.Vec2[float32]{
++			X: decoder.Uvs[uvInd*2],
++			Y: 1.0 - decoder.Uvs[uvInd*2+1],
 +		}
 +
 +		index = uint32(len(app.vertices))

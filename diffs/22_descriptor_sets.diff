@@ -1,5 +1,5 @@
 diff --git a/../steps/21_descriptor_layout/main.go b/../steps/22_descriptor_sets/main.go
-index 41df152..f6917ca 100644
+index 89f92b3..91b5563 100644
 --- a/../steps/21_descriptor_layout/main.go
 +++ b/../steps/22_descriptor_sets/main.go
 @@ -119,6 +119,8 @@ type HelloTriangleApplication struct {
@@ -145,12 +145,3 @@ index 41df152..f6917ca 100644
  		buffer.CmdDrawIndexed(len(indices), 1, 0, 0, 0)
  		buffer.CmdEndRenderPass()
  
-@@ -1306,7 +1385,7 @@ func (app *HelloTriangleApplication) drawFrame() error {
- }
- 
- func (app *HelloTriangleApplication) updateUniformBuffer(currentImage int) error {
--	currentTime := hrtime.NowPrecision()
-+	currentTime := hrtime.Now().Seconds()
- 	timePeriod := float32(math.Mod(currentTime, 4.0))
- 
- 	ubo := UniformBufferObject{}

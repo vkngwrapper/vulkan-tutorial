@@ -1,14 +1,8 @@
 diff --git a/../steps/22_descriptor_sets/main.go b/../steps/23_texture_image/main.go
-index f6917ca..16143a8 100644
+index 91b5563..92d4f6d 100644
 --- a/../steps/22_descriptor_sets/main.go
 +++ b/../steps/23_texture_image/main.go
-@@ -17,13 +17,14 @@ import (
- 	"github.com/vkngwrapper/extensions/v2/khr_surface"
- 	"github.com/vkngwrapper/extensions/v2/khr_swapchain"
- 	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2/v2"
-+	"image/png"
- 	"log"
- 	"math"
+@@ -22,8 +22,8 @@ import (
  	"unsafe"
  )
  
@@ -19,7 +13,7 @@ index f6917ca..16143a8 100644
  
  const MaxFramesInFlight = 2
  
-@@ -142,6 +143,9 @@ type HelloTriangleApplication struct {
+@@ -142,6 +142,9 @@ type HelloTriangleApplication struct {
  
  	uniformBuffers       []core1_0.Buffer
  	uniformBuffersMemory []core1_0.DeviceMemory
@@ -29,7 +23,7 @@ index f6917ca..16143a8 100644
  }
  
  func (app *HelloTriangleApplication) Run() error {
-@@ -239,6 +243,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -239,6 +242,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -41,7 +35,7 @@ index f6917ca..16143a8 100644
  	err = app.createVertexBuffer()
  	if err != nil {
  		return err
-@@ -362,6 +371,14 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
+@@ -362,6 +370,14 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
  func (app *HelloTriangleApplication) cleanup() {
  	app.cleanupSwapChain()
  
@@ -56,7 +50,7 @@ index f6917ca..16143a8 100644
  	if app.descriptorSetLayout != nil {
  		app.descriptorSetLayout.Destroy(nil)
  	}
-@@ -832,7 +849,7 @@ func bytesToBytecode(b []byte) []uint32 {
+@@ -832,7 +848,7 @@ func bytesToBytecode(b []byte) []uint32 {
  
  func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  	// Load vertex shader
@@ -65,7 +59,7 @@ index f6917ca..16143a8 100644
  	if err != nil {
  		return err
  	}
-@@ -846,7 +863,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -846,7 +862,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  	defer vertShader.Destroy(nil)
  
  	// Load fragment shader
@@ -74,7 +68,7 @@ index f6917ca..16143a8 100644
  	if err != nil {
  		return err
  	}
-@@ -1003,6 +1020,183 @@ func (app *HelloTriangleApplication) createCommandPool() error {
+@@ -1003,6 +1019,183 @@ func (app *HelloTriangleApplication) createCommandPool() error {
  	return nil
  }
  
@@ -258,7 +252,7 @@ index f6917ca..16143a8 100644
  func writeData(memory core1_0.DeviceMemory, offset int, data any) error {
  	bufferSize := binary.Size(data)
  
-@@ -1180,49 +1374,66 @@ func (app *HelloTriangleApplication) createBuffer(size int, usage core1_0.Buffer
+@@ -1180,49 +1373,66 @@ func (app *HelloTriangleApplication) createBuffer(size int, usage core1_0.Buffer
  	return buffer, memory, err
  }
  

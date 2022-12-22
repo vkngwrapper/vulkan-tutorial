@@ -5,7 +5,6 @@ import (
 	"embed"
 	"encoding/binary"
 	"github.com/cockroachdb/errors"
-	"github.com/go-gl/mathgl/mgl32"
 	"github.com/loov/hrtime"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/vkngwrapper/core/v2"
@@ -17,6 +16,7 @@ import (
 	"github.com/vkngwrapper/extensions/v2/khr_surface"
 	"github.com/vkngwrapper/extensions/v2/khr_swapchain"
 	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2/v2"
+	vkngmath "github.com/vkngwrapper/math"
 	"log"
 	"math"
 	"unsafe"
@@ -48,14 +48,14 @@ type SwapChainSupportDetails struct {
 }
 
 type Vertex struct {
-	Position mgl32.Vec2
-	Color    mgl32.Vec3
+	Position vkngmath.Vec2[float32]
+	Color    vkngmath.Vec3[float32]
 }
 
 type UniformBufferObject struct {
-	Model mgl32.Mat4
-	View  mgl32.Mat4
-	Proj  mgl32.Mat4
+	Model vkngmath.Mat4x4[float32]
+	View  vkngmath.Mat4x4[float32]
+	Proj  vkngmath.Mat4x4[float32]
 }
 
 func getVertexBindingDescription() []core1_0.VertexInputBindingDescription {
@@ -88,10 +88,10 @@ func getVertexAttributeDescriptions() []core1_0.VertexInputAttributeDescription 
 }
 
 var vertices = []Vertex{
-	{Position: mgl32.Vec2{-0.5, -0.5}, Color: mgl32.Vec3{1, 0, 0}},
-	{Position: mgl32.Vec2{0.5, -0.5}, Color: mgl32.Vec3{0, 1, 0}},
-	{Position: mgl32.Vec2{0.5, 0.5}, Color: mgl32.Vec3{0, 0, 1}},
-	{Position: mgl32.Vec2{-0.5, 0.5}, Color: mgl32.Vec3{1, 1, 1}},
+	{Position: vkngmath.Vec2[float32]{X: -0.5, Y: -0.5}, Color: vkngmath.Vec3[float32]{X: 1, Y: 0, Z: 0}},
+	{Position: vkngmath.Vec2[float32]{X: 0.5, Y: -0.5}, Color: vkngmath.Vec3[float32]{X: 0, Y: 1, Z: 0}},
+	{Position: vkngmath.Vec2[float32]{X: 0.5, Y: 0.5}, Color: vkngmath.Vec3[float32]{X: 0, Y: 0, Z: 1}},
+	{Position: vkngmath.Vec2[float32]{X: -0.5, Y: 0.5}, Color: vkngmath.Vec3[float32]{X: 1, Y: 1, Z: 1}},
 }
 
 var indices = []uint16{0, 1, 2, 2, 3, 0}
@@ -1306,15 +1306,18 @@ func (app *HelloTriangleApplication) drawFrame() error {
 }
 
 func (app *HelloTriangleApplication) updateUniformBuffer(currentImage int) error {
-	currentTime := hrtime.NowPrecision()
-	timePeriod := float32(math.Mod(currentTime, 4.0))
+	currentTime := hrtime.Now().Seconds()
+	timePeriod := math.Mod(currentTime, 4.0)
 
 	ubo := UniformBufferObject{}
-	ubo.Model = mgl32.HomogRotate3D(timePeriod*mgl32.DegToRad(90.0), mgl32.Vec3{0, 0, 1})
-	ubo.View = mgl32.LookAt(2, 2, 2, 0, 0, 0, 0, 0, 1)
+	ubo.Model.SetRotationZ(timePeriod * math.Pi / 2.0)
+	ubo.View.SetLookAt(
+		&vkngmath.Vec3[float32]{X: 2, Y: 2, Z: 2},
+		&vkngmath.Vec3[float32]{X: 0, Y: 0, Z: 0},
+		&vkngmath.Vec3[float32]{X: 0, Y: 0, Z: 1},
+	)
 	aspectRatio := float32(app.swapchainExtent.Width) / float32(app.swapchainExtent.Height)
-	ubo.Proj = mgl32.Perspective(mgl32.DegToRad(45), aspectRatio, 0.1, 10)
-	ubo.Proj[5] *= -1
+	ubo.Proj.SetPerspective(math.Pi/4.0, aspectRatio, 0.1, 10)
 
 	err := writeData(app.uniformBuffersMemory[currentImage], 0, &ubo)
 	return err
