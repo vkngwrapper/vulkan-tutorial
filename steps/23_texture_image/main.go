@@ -4,6 +4,11 @@ import (
 	"bytes"
 	"embed"
 	"encoding/binary"
+	"image/png"
+	"log"
+	"math"
+	"unsafe"
+
 	"github.com/cockroachdb/errors"
 	"github.com/loov/hrtime"
 	"github.com/veandco/go-sdl2/sdl"
@@ -17,9 +22,6 @@ import (
 	"github.com/vkngwrapper/extensions/v2/khr_swapchain"
 	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2/v2"
 	vkngmath "github.com/vkngwrapper/math"
-	"log"
-	"math"
-	"unsafe"
 )
 
 //go:embed shaders images
