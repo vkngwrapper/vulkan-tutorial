@@ -1,5 +1,5 @@
 diff --git a/../steps/08_graphics_pipeline/main.go b/../steps/09_shader_modules/main.go
-index 4324125..9c32b99 100644
+index ae130ab..11fdb21 100644
 --- a/../steps/08_graphics_pipeline/main.go
 +++ b/../steps/09_shader_modules/main.go
 @@ -1,6 +1,7 @@
@@ -7,7 +7,7 @@ index 4324125..9c32b99 100644
  
  import (
 +	"embed"
- 	"github.com/cockroachdb/errors"
+ 	"github.com/pkg/errors"
  	"github.com/veandco/go-sdl2/sdl"
  	"github.com/vkngwrapper/core/v2"
 @@ -15,6 +16,9 @@ import (

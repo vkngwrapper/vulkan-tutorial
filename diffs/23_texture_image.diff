@@ -1,5 +1,5 @@
 diff --git a/../steps/22_descriptor_sets/main.go b/../steps/23_texture_image/main.go
-index 91b5563..4a3531c 100644
+index 2f38dae..f0f4c23 100644
 --- a/../steps/22_descriptor_sets/main.go
 +++ b/../steps/23_texture_image/main.go
 @@ -4,6 +4,11 @@ import (
@@ -11,8 +11,8 @@ index 91b5563..4a3531c 100644
 +	"math"
 +	"unsafe"
 +
- 	"github.com/cockroachdb/errors"
  	"github.com/loov/hrtime"
+ 	"github.com/pkg/errors"
  	"github.com/veandco/go-sdl2/sdl"
 @@ -17,13 +22,10 @@ import (
  	"github.com/vkngwrapper/extensions/v2/khr_swapchain"
@@ -209,7 +209,7 @@ index 91b5563..4a3531c 100644
 +		sourceStage = core1_0.PipelineStageTransfer
 +		destStage = core1_0.PipelineStageFragmentShader
 +	} else {
-+		return errors.Newf("unexpected layout transition: %s -> %s", oldLayout, newLayout)
++		return errors.Errorf("unexpected layout transition: %s -> %s", oldLayout, newLayout)
 +	}
 +
 +	err = buffer.CmdPipelineBarrier(sourceStage, destStage, 0, nil, nil, []core1_0.ImageMemoryBarrier{

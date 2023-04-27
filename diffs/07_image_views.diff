@@ -1,5 +1,5 @@
 diff --git a/../steps/06_swapchain/main.go b/../steps/07_image_views/main.go
-index f533075..dc37671 100644
+index 5536e3b..e03d590 100644
 --- a/../steps/06_swapchain/main.go
 +++ b/../steps/07_image_views/main.go
 @@ -54,6 +54,7 @@ type HelloTriangleApplication struct {
@@ -26,7 +26,7 @@ index f533075..dc37671 100644
  
  	if app.physicalDevice == nil {
 -		return errors.New("failed to find a suitable GPU!")
-+		return errors.Newf("failed to find a suitable GPU!")
++		return errors.Errorf("failed to find a suitable GPU!")
  	}
  
  	return nil

@@ -9,8 +9,8 @@ import (
 	"math"
 	"unsafe"
 
-	"github.com/cockroachdb/errors"
 	"github.com/loov/hrtime"
+	"github.com/pkg/errors"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/vkngwrapper/core/v2"
 	"github.com/vkngwrapper/core/v2/common"
@@ -526,7 +526,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 	for _, ext := range sdlExtensions {
 		_, hasExt := extensions[ext]
 		if !hasExt {
-			return errors.Newf("createinstance: cannot initialize sdl: missing extension %s", ext)
+			return errors.Errorf("createinstance: cannot initialize sdl: missing extension %s", ext)
 		}
 		instanceOptions.EnabledExtensionNames = append(instanceOptions.EnabledExtensionNames, ext)
 	}
@@ -551,7 +551,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		for _, layer := range validationLayers {
 			_, hasValidation := layers[layer]
 			if !hasValidation {
-				return errors.Newf("createInstance: cannot add validation- layer %s not available- install LunarG Vulkan SDK", layer)
+				return errors.Errorf("createInstance: cannot add validation- layer %s not available- install LunarG Vulkan SDK", layer)
 			}
 			instanceOptions.EnabledLayerNames = append(instanceOptions.EnabledLayerNames, layer)
 		}
@@ -617,7 +617,7 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
 	}
 
 	if app.physicalDevice == nil {
-		return errors.Newf("failed to find a suitable GPU!")
+		return errors.Errorf("failed to find a suitable GPU!")
 	}
 
 	return nil
@@ -1141,7 +1141,7 @@ func (app *HelloTriangleApplication) transitionImageLayout(image core1_0.Image, 
 		sourceStage = core1_0.PipelineStageTransfer
 		destStage = core1_0.PipelineStageFragmentShader
 	} else {
-		return errors.Newf("unexpected layout transition: %s -> %s", oldLayout, newLayout)
+		return errors.Errorf("unexpected layout transition: %s -> %s", oldLayout, newLayout)
 	}
 
 	err = buffer.CmdPipelineBarrier(sourceStage, destStage, 0, nil, nil, []core1_0.ImageMemoryBarrier{
@@ -1447,7 +1447,7 @@ func (app *HelloTriangleApplication) findMemoryType(typeFilter uint32, propertie
 		}
 	}
 
-	return 0, errors.Newf("failed to find any suitable memory type!")
+	return 0, errors.Errorf("failed to find any suitable memory type!")
 }
 
 func (app *HelloTriangleApplication) createCommandBuffers() error {

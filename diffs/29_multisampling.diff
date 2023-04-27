@@ -1,5 +1,5 @@
 diff --git a/../steps/28_mipmapping/main.go b/../steps/29_multisampling/main.go
-index 4178fd7..3233110 100644
+index 0e76d03..1389f9e 100644
 --- a/../steps/28_mipmapping/main.go
 +++ b/../steps/29_multisampling/main.go
 @@ -21,6 +21,7 @@ import (

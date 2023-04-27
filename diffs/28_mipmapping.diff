@@ -1,5 +1,5 @@
 diff --git a/../steps/27_model_loading/main.go b/../steps/28_mipmapping/main.go
-index adacdcb..4178fd7 100644
+index 62d5314..0e76d03 100644
 --- a/../steps/27_model_loading/main.go
 +++ b/../steps/28_mipmapping/main.go
 @@ -145,6 +145,7 @@ type HelloTriangleApplication struct {
@@ -80,7 +80,7 @@ index adacdcb..4178fd7 100644
 +	properties := app.physicalDevice.FormatProperties(imageFormat)
 +
 +	if (properties.OptimalTilingFeatures & core1_0.FormatFeatureSampledImageFilterLinear) == 0 {
-+		return errors.Newf("texture image format %s does not support linear blitting", imageFormat)
++		return errors.Errorf("texture image format %s does not support linear blitting", imageFormat)
 +	}
 +
 +	commandBuffer, err := app.beginSingleTimeCommands()

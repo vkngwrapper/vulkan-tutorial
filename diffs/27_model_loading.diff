@@ -1,15 +1,15 @@
 diff --git a/../steps/26_depth_buffering/main.go b/../steps/27_model_loading/main.go
-index 6065855..adacdcb 100644
+index 54a71f4..62d5314 100644
 --- a/../steps/26_depth_buffering/main.go
 +++ b/../steps/27_model_loading/main.go
-@@ -5,6 +5,7 @@ import (
+@@ -4,6 +4,7 @@ import (
+ 	"bytes"
  	"embed"
  	"encoding/binary"
- 	"github.com/cockroachdb/errors"
 +	"github.com/g3n/engine/loader/obj"
  	"github.com/loov/hrtime"
+ 	"github.com/pkg/errors"
  	"github.com/veandco/go-sdl2/sdl"
- 	"github.com/vkngwrapper/core/v2"
 @@ -23,7 +24,7 @@ import (
  	"unsafe"
  )

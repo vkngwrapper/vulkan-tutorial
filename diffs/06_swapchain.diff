@@ -1,5 +1,5 @@
 diff --git a/../steps/05_window_surface/main.go b/../steps/06_swapchain/main.go
-index 35cb968..f533075 100644
+index 9f11115..5536e3b 100644
 --- a/../steps/05_window_surface/main.go
 +++ b/../steps/06_swapchain/main.go
 @@ -10,11 +10,13 @@ import (
@@ -71,7 +71,7 @@ index 35cb968..f533075 100644
  	}
  
  	if app.physicalDevice == nil {
--		return errors.Newf("failed to find a suitable GPU!")
+-		return errors.Errorf("failed to find a suitable GPU!")
 +		return errors.New("failed to find a suitable GPU!")
  	}
  

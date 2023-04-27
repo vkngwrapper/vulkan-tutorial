@@ -1,5 +1,5 @@
 diff --git a/../steps/25_texture_mapping/main.go b/../steps/26_depth_buffering/main.go
-index 64c04fb..6065855 100644
+index ef55839..54a71f4 100644
 --- a/../steps/25_texture_mapping/main.go
 +++ b/../steps/26_depth_buffering/main.go
 @@ -49,7 +49,7 @@ type SwapChainSupportDetails struct {
@@ -230,7 +230,7 @@ index 64c04fb..6065855 100644
 +		}
 +	}
 +
-+	return 0, errors.Newf("failed to find supported format for tiling %s, featureset %s", tiling, features)
++	return 0, errors.Errorf("failed to find supported format for tiling %s, featureset %s", tiling, features)
 +}
 +
 +func (app *HelloTriangleApplication) findDepthFormat() (core1_0.Format, error) {

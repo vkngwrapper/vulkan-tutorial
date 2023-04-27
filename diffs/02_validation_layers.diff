@@ -1,5 +1,5 @@
 diff --git a/../steps/01_instance_creation/main.go b/../steps/02_validation_layers/main.go
-index fc30f18..6d77127 100644
+index c5ea41a..a9bf827 100644
 --- a/../steps/01_instance_creation/main.go
 +++ b/../steps/02_validation_layers/main.go
 @@ -6,15 +6,21 @@ import (
@@ -75,7 +75,7 @@ index fc30f18..6d77127 100644
 +		for _, layer := range validationLayers {
 +			_, hasValidation := layers[layer]
 +			if !hasValidation {
-+				return errors.Newf("createInstance: cannot add validation- layer %s not available- install LunarG Vulkan SDK", layer)
++				return errors.Errorf("createInstance: cannot add validation- layer %s not available- install LunarG Vulkan SDK", layer)
 +			}
 +			instanceOptions.EnabledLayerNames = append(instanceOptions.EnabledLayerNames, layer)
 +		}

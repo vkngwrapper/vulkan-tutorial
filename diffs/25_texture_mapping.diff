@@ -1,17 +1,7 @@
 diff --git a/../steps/24_sampler/main.go b/../steps/25_texture_mapping/main.go
-index d627636..64c04fb 100644
+index f1f0d5a..ef55839 100644
 --- a/../steps/24_sampler/main.go
 +++ b/../steps/25_texture_mapping/main.go
-@@ -16,8 +16,8 @@ import (
- 	"github.com/vkngwrapper/extensions/v2/khr_surface"
- 	"github.com/vkngwrapper/extensions/v2/khr_swapchain"
- 	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2/v2"
--	"image/png"
- 	vkngmath "github.com/vkngwrapper/math"
-+	"image/png"
- 	"log"
- 	"math"
- 	"unsafe"
 @@ -51,6 +51,7 @@ type SwapChainSupportDetails struct {
  type Vertex struct {
  	Position vkngmath.Vec2[float32]

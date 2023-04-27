@@ -1,5 +1,5 @@
 diff --git a/../steps/21_descriptor_layout/main.go b/../steps/22_descriptor_sets/main.go
-index 89f92b3..91b5563 100644
+index 7bd6a0b..2f38dae 100644
 --- a/../steps/21_descriptor_layout/main.go
 +++ b/../steps/22_descriptor_sets/main.go
 @@ -119,6 +119,8 @@ type HelloTriangleApplication struct {

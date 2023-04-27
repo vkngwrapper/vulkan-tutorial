@@ -1,5 +1,5 @@
 diff --git a/../steps/23_texture_image/main.go b/../steps/24_sampler/main.go
-index 4a3531c..d627636 100644
+index f0f4c23..f1f0d5a 100644
 --- a/../steps/23_texture_image/main.go
 +++ b/../steps/24_sampler/main.go
 @@ -4,11 +4,6 @@ import (
@@ -11,15 +11,14 @@ index 4a3531c..d627636 100644
 -	"math"
 -	"unsafe"
 -
- 	"github.com/cockroachdb/errors"
  	"github.com/loov/hrtime"
+ 	"github.com/pkg/errors"
  	"github.com/veandco/go-sdl2/sdl"
-@@ -21,7 +16,11 @@ import (
- 	"github.com/vkngwrapper/extensions/v2/khr_surface"
+@@ -22,6 +17,10 @@ import (
  	"github.com/vkngwrapper/extensions/v2/khr_swapchain"
  	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2/v2"
-+	"image/png"
  	vkngmath "github.com/vkngwrapper/math"
++	"image/png"
 +	"log"
 +	"math"
 +	"unsafe"

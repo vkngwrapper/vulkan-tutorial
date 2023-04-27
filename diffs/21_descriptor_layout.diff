@@ -1,15 +1,15 @@
 diff --git a/../steps/20_index_buffer/main.go b/../steps/21_descriptor_layout/main.go
-index 8823e62..89f92b3 100644
+index 071d37b..7bd6a0b 100644
 --- a/../steps/20_index_buffer/main.go
 +++ b/../steps/21_descriptor_layout/main.go
-@@ -5,6 +5,7 @@ import (
+@@ -4,6 +4,7 @@ import (
+ 	"bytes"
  	"embed"
  	"encoding/binary"
- 	"github.com/cockroachdb/errors"
 +	"github.com/loov/hrtime"
+ 	"github.com/pkg/errors"
  	"github.com/veandco/go-sdl2/sdl"
  	"github.com/vkngwrapper/core/v2"
- 	"github.com/vkngwrapper/core/v2/common"
 @@ -15,7 +16,9 @@ import (
  	"github.com/vkngwrapper/extensions/v2/khr_surface"
  	"github.com/vkngwrapper/extensions/v2/khr_swapchain"

@@ -1,5 +1,5 @@
 diff --git a/../steps/16_swap_chain_recreation/main.go b/../steps/17_vertex_input/main.go
-index 4d47c48..249e800 100644
+index 57739a8..84e3c8d 100644
 --- a/../steps/16_swap_chain_recreation/main.go
 +++ b/../steps/17_vertex_input/main.go
 @@ -14,6 +14,7 @@ import (

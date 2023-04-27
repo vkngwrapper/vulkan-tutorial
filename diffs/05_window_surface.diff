@@ -1,15 +1,8 @@
 diff --git a/../steps/04_logical_device/main.go b/../steps/05_window_surface/main.go
-index 7a70772..35cb968 100644
+index 297c8d3..9f11115 100644
 --- a/../steps/04_logical_device/main.go
 +++ b/../steps/05_window_surface/main.go
-@@ -3,12 +3,14 @@ package main
- import (
- 	"github.com/cockroachdb/errors"
- 	"github.com/veandco/go-sdl2/sdl"
-+	"github.com/vkngwrapper/core/v2"
- 	"github.com/vkngwrapper/core/v2/common"
- 	"github.com/vkngwrapper/core/v2/core1_0"
--	"github.com/vkngwrapper/core/v2"
+@@ -9,6 +9,8 @@ import (
  	"github.com/vkngwrapper/extensions/v2/ext_debug_utils"
  	"github.com/vkngwrapper/extensions/v2/khr_portability_enumeration"
  	"github.com/vkngwrapper/extensions/v2/khr_portability_subset"
