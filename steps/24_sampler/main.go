@@ -4,6 +4,11 @@ import (
 	"bytes"
 	"embed"
 	"encoding/binary"
+	"image/png"
+	"log"
+	"math"
+	"unsafe"
+
 	"github.com/loov/hrtime"
 	"github.com/pkg/errors"
 	"github.com/veandco/go-sdl2/sdl"
@@ -17,10 +22,6 @@ import (
 	"github.com/vkngwrapper/extensions/v2/khr_swapchain"
 	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2/v2"
 	vkngmath "github.com/vkngwrapper/math"
-	"image/png"
-	"log"
-	"math"
-	"unsafe"
 )
 
 //go:embed shaders images
@@ -294,36 +295,17 @@ func (app *HelloTriangleApplication) initVulkan() error {
 }
 
 func (app *HelloTriangleApplication) mainLoop() error {
-	rendering := true
-
 appLoop:
-	for true {
+	for {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
-			switch e := event.(type) {
+			switch event.(type) {
 			case *sdl.QuitEvent:
 				break appLoop
-			case *sdl.WindowEvent:
-				switch e.Event {
-				case sdl.WINDOWEVENT_MINIMIZED:
-					rendering = false
-				case sdl.WINDOWEVENT_RESTORED:
-					rendering = true
-				case sdl.WINDOWEVENT_RESIZED:
-					w, h := app.window.GetSize()
-					if w > 0 && h > 0 {
-						rendering = true
-						app.recreateSwapChain()
-					} else {
-						rendering = false
-					}
-				}
 			}
 		}
-		if rendering {
-			err := app.drawFrame()
-			if err != nil {
-				return err
-			}
+		err := app.drawFrame()
+		if err != nil {
+			return err
 		}
 	}
 
@@ -1553,20 +1535,13 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
 }
 
 func (app *HelloTriangleApplication) createSyncObjects() error {
-	for i := 0; i < MaxFramesInFlight; i++ {
+	for i := 0; i < len(app.swapchainImages); i++ {
 		semaphore, _, err := app.device.CreateSemaphore(nil, core1_0.SemaphoreCreateInfo{})
 		if err != nil {
 			return err
 		}
 
 		app.imageAvailableSemaphore = append(app.imageAvailableSemaphore, semaphore)
-
-		semaphore, _, err = app.device.CreateSemaphore(nil, core1_0.SemaphoreCreateInfo{})
-		if err != nil {
-			return err
-		}
-
-		app.renderFinishedSemaphore = append(app.renderFinishedSemaphore, semaphore)
 
 		fence, _, err := app.device.CreateFence(nil, core1_0.FenceCreateInfo{
 			Flags: core1_0.FenceCreateSignaled,
@@ -1579,6 +1554,13 @@ func (app *HelloTriangleApplication) createSyncObjects() error {
 	}
 
 	for i := 0; i < len(app.swapchainImages); i++ {
+		semaphore, _, err := app.device.CreateSemaphore(nil, core1_0.SemaphoreCreateInfo{})
+		if err != nil {
+			return err
+		}
+
+		app.renderFinishedSemaphore = append(app.renderFinishedSemaphore, semaphore)
+
 		app.imagesInFlight = append(app.imagesInFlight, nil)
 	}
 
@@ -1623,21 +1605,19 @@ func (app *HelloTriangleApplication) drawFrame() error {
 			WaitSemaphores:   []core1_0.Semaphore{app.imageAvailableSemaphore[app.currentFrame]},
 			WaitDstStageMask: []core1_0.PipelineStageFlags{core1_0.PipelineStageColorAttachmentOutput},
 			CommandBuffers:   []core1_0.CommandBuffer{app.commandBuffers[imageIndex]},
-			SignalSemaphores: []core1_0.Semaphore{app.renderFinishedSemaphore[app.currentFrame]},
+			SignalSemaphores: []core1_0.Semaphore{app.renderFinishedSemaphore[imageIndex]},
 		},
 	})
 	if err != nil {
 		return err
 	}
 
-	res, err = app.swapchainExtension.QueuePresent(app.presentQueue, khr_swapchain.PresentInfo{
-		WaitSemaphores: []core1_0.Semaphore{app.renderFinishedSemaphore[app.currentFrame]},
+	_, err = app.swapchainExtension.QueuePresent(app.presentQueue, khr_swapchain.PresentInfo{
+		WaitSemaphores: []core1_0.Semaphore{app.renderFinishedSemaphore[imageIndex]},
 		Swapchains:     []khr_swapchain.Swapchain{app.swapchain},
 		ImageIndices:   []int{imageIndex},
 	})
-	if res == khr_swapchain.VKErrorOutOfDate || res == khr_swapchain.VKSuboptimal {
-		return app.recreateSwapChain()
-	} else if err != nil {
+	if err != nil {
 		return err
 	}
 

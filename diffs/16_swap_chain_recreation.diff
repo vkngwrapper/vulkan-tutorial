@@ -1,8 +1,8 @@
 diff --git a/../steps/15_hello_triangle/main.go b/../steps/16_swap_chain_recreation/main.go
-index c49b689..57739a8 100644
+index 172ae82..d70332e 100644
 --- a/../steps/15_hello_triangle/main.go
 +++ b/../steps/16_swap_chain_recreation/main.go
-@@ -97,7 +97,7 @@ func (app *HelloTriangleApplication) initWindow() error {
+@@ -98,7 +98,7 @@ func (app *HelloTriangleApplication) initWindow() error {
  		return err
  	}
  
@@ -11,7 +11,7 @@ index c49b689..57739a8 100644
  	if err != nil {
  		return err
  	}
-@@ -142,6 +142,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -143,6 +143,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -23,48 +23,7 @@ index c49b689..57739a8 100644
  	err = app.createRenderPass()
  	if err != nil {
  		return err
-@@ -171,17 +176,36 @@ func (app *HelloTriangleApplication) initVulkan() error {
- }
- 
- func (app *HelloTriangleApplication) mainLoop() error {
-+	rendering := true
-+
- appLoop:
- 	for true {
- 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
--			switch event.(type) {
-+			switch e := event.(type) {
- 			case *sdl.QuitEvent:
- 				break appLoop
-+			case *sdl.WindowEvent:
-+				switch e.Event {
-+				case sdl.WINDOWEVENT_MINIMIZED:
-+					rendering = false
-+				case sdl.WINDOWEVENT_RESTORED:
-+					rendering = true
-+				case sdl.WINDOWEVENT_RESIZED:
-+					w, h := app.window.GetSize()
-+					if w > 0 && h > 0 {
-+						rendering = true
-+						app.recreateSwapChain()
-+					} else {
-+						rendering = false
-+					}
-+				}
- 			}
- 		}
--		err := app.drawFrame()
--		if err != nil {
--			return err
-+		if rendering {
-+			err := app.drawFrame()
-+			if err != nil {
-+				return err
-+			}
- 		}
- 	}
- 
-@@ -189,45 +213,60 @@ appLoop:
+@@ -190,45 +195,60 @@ appLoop:
  	return err
  }
  
@@ -142,7 +101,7 @@ index c49b689..57739a8 100644
  	}
  
  	if app.device != nil {
-@@ -252,6 +291,60 @@ func (app *HelloTriangleApplication) cleanup() {
+@@ -253,6 +273,60 @@ func (app *HelloTriangleApplication) cleanup() {
  	sdl.Quit()
  }
  
@@ -203,7 +162,7 @@ index c49b689..57739a8 100644
  func (app *HelloTriangleApplication) createInstance() error {
  	instanceOptions := core1_0.InstanceCreateInfo{
  		ApplicationName:    "Hello Triangle",
-@@ -471,7 +564,11 @@ func (app *HelloTriangleApplication) createSwapchain() error {
+@@ -472,7 +546,11 @@ func (app *HelloTriangleApplication) createSwapchain() error {
  	app.swapchain = swapchain
  	app.swapchainImageFormat = surfaceFormat.Format
  
@@ -216,7 +175,7 @@ index c49b689..57739a8 100644
  	if err != nil {
  		return err
  	}
-@@ -482,7 +579,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
+@@ -483,7 +561,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
  		view, _, err := app.device.CreateImageView(nil, core1_0.ImageViewCreateInfo{
  			ViewType: core1_0.ImageViewType2D,
  			Image:    image,
@@ -225,7 +184,7 @@ index c49b689..57739a8 100644
  			Components: core1_0.ComponentMapping{
  				R: core1_0.ComponentSwizzleIdentity,
  				G: core1_0.ComponentSwizzleIdentity,
-@@ -826,13 +923,15 @@ func (app *HelloTriangleApplication) drawFrame() error {
+@@ -827,13 +905,15 @@ func (app *HelloTriangleApplication) drawFrame() error {
  		return err
  	}
  
@@ -244,20 +203,3 @@ index c49b689..57739a8 100644
  		if err != nil {
  			return err
  		}
-@@ -856,12 +955,14 @@ func (app *HelloTriangleApplication) drawFrame() error {
- 		return err
- 	}
- 
--	_, err = app.swapchainExtension.QueuePresent(app.presentQueue, khr_swapchain.PresentInfo{
-+	res, err = app.swapchainExtension.QueuePresent(app.presentQueue, khr_swapchain.PresentInfo{
- 		WaitSemaphores: []core1_0.Semaphore{app.renderFinishedSemaphore[app.currentFrame]},
- 		Swapchains:     []khr_swapchain.Swapchain{app.swapchain},
- 		ImageIndices:   []int{imageIndex},
- 	})
--	if err != nil {
-+	if res == khr_swapchain.VKErrorOutOfDate || res == khr_swapchain.VKSuboptimal {
-+		return app.recreateSwapChain()
-+	} else if err != nil {
- 		return err
- 	}
- 

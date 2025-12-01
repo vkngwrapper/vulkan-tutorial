@@ -1,8 +1,8 @@
 diff --git a/../steps/24_sampler/main.go b/../steps/25_texture_mapping/main.go
-index f1f0d5a..ef55839 100644
+index 7995521..f1ab2d7 100644
 --- a/../steps/24_sampler/main.go
 +++ b/../steps/25_texture_mapping/main.go
-@@ -51,6 +51,7 @@ type SwapChainSupportDetails struct {
+@@ -52,6 +52,7 @@ type SwapChainSupportDetails struct {
  type Vertex struct {
  	Position vkngmath.Vec2[float32]
  	Color    vkngmath.Vec3[float32]
@@ -10,7 +10,7 @@ index f1f0d5a..ef55839 100644
  }
  
  type UniformBufferObject struct {
-@@ -85,14 +86,20 @@ func getVertexAttributeDescriptions() []core1_0.VertexInputAttributeDescription
+@@ -86,14 +87,20 @@ func getVertexAttributeDescriptions() []core1_0.VertexInputAttributeDescription
  			Format:   core1_0.FormatR32G32B32SignedFloat,
  			Offset:   int(unsafe.Offsetof(v.Color)),
  		},
@@ -35,7 +35,7 @@ index f1f0d5a..ef55839 100644
  }
  
  var indices = []uint16{0, 1, 2, 2, 3, 0}
-@@ -829,6 +836,13 @@ func (app *HelloTriangleApplication) createDescriptorSetLayout() error {
+@@ -811,6 +818,13 @@ func (app *HelloTriangleApplication) createDescriptorSetLayout() error {
  
  				StageFlags: core1_0.StageVertex,
  			},
@@ -49,7 +49,7 @@ index f1f0d5a..ef55839 100644
  		},
  	})
  	if err != nil {
-@@ -1351,6 +1365,10 @@ func (app *HelloTriangleApplication) createDescriptorPool() error {
+@@ -1333,6 +1347,10 @@ func (app *HelloTriangleApplication) createDescriptorPool() error {
  				Type:            core1_0.DescriptorTypeUniformBuffer,
  				DescriptorCount: len(app.swapchainImages),
  			},
@@ -60,7 +60,7 @@ index f1f0d5a..ef55839 100644
  		},
  	})
  	return err
-@@ -1388,6 +1406,21 @@ func (app *HelloTriangleApplication) createDescriptorSets() error {
+@@ -1370,6 +1388,21 @@ func (app *HelloTriangleApplication) createDescriptorSets() error {
  					},
  				},
  			},

@@ -1,31 +1,8 @@
 diff --git a/../steps/23_texture_image/main.go b/../steps/24_sampler/main.go
-index f0f4c23..f1f0d5a 100644
+index f17fbfc..7995521 100644
 --- a/../steps/23_texture_image/main.go
 +++ b/../steps/24_sampler/main.go
-@@ -4,11 +4,6 @@ import (
- 	"bytes"
- 	"embed"
- 	"encoding/binary"
--	"image/png"
--	"log"
--	"math"
--	"unsafe"
--
- 	"github.com/loov/hrtime"
- 	"github.com/pkg/errors"
- 	"github.com/veandco/go-sdl2/sdl"
-@@ -22,6 +17,10 @@ import (
- 	"github.com/vkngwrapper/extensions/v2/khr_swapchain"
- 	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2/v2"
- 	vkngmath "github.com/vkngwrapper/math"
-+	"image/png"
-+	"log"
-+	"math"
-+	"unsafe"
- )
- 
- //go:embed shaders images
-@@ -147,6 +146,8 @@ type HelloTriangleApplication struct {
+@@ -147,6 +147,8 @@ type HelloTriangleApplication struct {
  
  	textureImage       core1_0.Image
  	textureImageMemory core1_0.DeviceMemory
@@ -34,7 +11,7 @@ index f0f4c23..f1f0d5a 100644
  }
  
  func (app *HelloTriangleApplication) Run() error {
-@@ -249,6 +250,16 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -249,6 +251,16 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -51,7 +28,7 @@ index f0f4c23..f1f0d5a 100644
  	err = app.createVertexBuffer()
  	if err != nil {
  		return err
-@@ -372,6 +383,14 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
+@@ -353,6 +365,14 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
  func (app *HelloTriangleApplication) cleanup() {
  	app.cleanupSwapChain()
  
@@ -66,7 +43,7 @@ index f0f4c23..f1f0d5a 100644
  	if app.textureImage != nil {
  		app.textureImage.Destroy(nil)
  	}
-@@ -658,8 +677,10 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
+@@ -639,8 +659,10 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
  	}
  
  	app.device, _, err = app.physicalDevice.CreateDevice(nil, core1_0.DeviceCreateInfo{
@@ -79,7 +56,7 @@ index f0f4c23..f1f0d5a 100644
  		EnabledExtensionNames: extensionNames,
  	})
  	if err != nil {
-@@ -738,24 +759,7 @@ func (app *HelloTriangleApplication) createImageViews() error {
+@@ -719,24 +741,7 @@ func (app *HelloTriangleApplication) createImageViews() error {
  
  	var imageViews []core1_0.ImageView
  	for _, image := range images {
@@ -105,7 +82,7 @@ index f0f4c23..f1f0d5a 100644
  		if err != nil {
  			return err
  		}
-@@ -1081,6 +1085,52 @@ func (app *HelloTriangleApplication) createTextureImage() error {
+@@ -1062,6 +1067,52 @@ func (app *HelloTriangleApplication) createTextureImage() error {
  	return nil
  }
  
@@ -158,7 +135,7 @@ index f0f4c23..f1f0d5a 100644
  func (app *HelloTriangleApplication) createImage(width, height int, format core1_0.Format, tiling core1_0.ImageTiling, usage core1_0.ImageUsageFlags, memoryProperties core1_0.MemoryPropertyFlags) (core1_0.Image, core1_0.DeviceMemory, error) {
  	image, _, err := app.device.CreateImage(nil, core1_0.ImageCreateInfo{
  		ImageType: core1_0.ImageType2D,
-@@ -1695,7 +1745,8 @@ func (app *HelloTriangleApplication) isDeviceSuitable(device core1_0.PhysicalDev
+@@ -1674,7 +1725,8 @@ func (app *HelloTriangleApplication) isDeviceSuitable(device core1_0.PhysicalDev
  		swapChainAdequate = len(swapChainSupport.Formats) > 0 && len(swapChainSupport.PresentModes) > 0
  	}
  

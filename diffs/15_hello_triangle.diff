@@ -1,8 +1,23 @@
 diff --git a/../steps/14_command_buffers/main.go b/../steps/15_hello_triangle/main.go
-index f3f8d35..c49b689 100644
+index f3f8d35..172ae82 100644
 --- a/../steps/14_command_buffers/main.go
 +++ b/../steps/15_hello_triangle/main.go
-@@ -19,6 +19,8 @@ import (
+@@ -2,6 +2,8 @@ package main
+ 
+ import (
+ 	"embed"
++	"log"
++
+ 	"github.com/pkg/errors"
+ 	"github.com/veandco/go-sdl2/sdl"
+ 	"github.com/vkngwrapper/core/v2"
+@@ -13,12 +15,13 @@ import (
+ 	"github.com/vkngwrapper/extensions/v2/khr_surface"
+ 	"github.com/vkngwrapper/extensions/v2/khr_swapchain"
+ 	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2/v2"
+-	"log"
+ )
+ 
  //go:embed shaders
  var shaders embed.FS
  
@@ -11,7 +26,7 @@ index f3f8d35..c49b689 100644
  var validationLayers = []string{"VK_LAYER_KHRONOS_validation"}
  var deviceExtensions = []string{khr_swapchain.ExtensionName}
  
-@@ -67,6 +69,12 @@ type HelloTriangleApplication struct {
+@@ -67,6 +70,12 @@ type HelloTriangleApplication struct {
  
  	commandPool    core1_0.CommandPool
  	commandBuffers []core1_0.CommandBuffer
@@ -24,7 +39,7 @@ index f3f8d35..c49b689 100644
  }
  
  func (app *HelloTriangleApplication) Run() error {
-@@ -154,7 +162,12 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -154,24 +163,46 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -38,7 +53,12 @@ index f3f8d35..c49b689 100644
  }
  
  func (app *HelloTriangleApplication) mainLoop() error {
-@@ -166,12 +179,29 @@ appLoop:
+ appLoop:
+-	for true {
++	for {
+ 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
+ 			switch event.(type) {
+ 			case *sdl.QuitEvent:
  				break appLoop
  			}
  		}
@@ -69,7 +89,7 @@ index f3f8d35..c49b689 100644
  	if app.commandPool != nil {
  		app.commandPool.Destroy(nil)
  	}
-@@ -439,6 +469,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
+@@ -439,6 +470,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
  	}
  	app.swapchainExtent = extent
  	app.swapchain = swapchain
@@ -77,7 +97,7 @@ index f3f8d35..c49b689 100644
  
  	images, _, err := swapchain.SwapchainImages()
  	if err != nil {
-@@ -473,7 +504,6 @@ func (app *HelloTriangleApplication) createSwapchain() error {
+@@ -473,7 +505,6 @@ func (app *HelloTriangleApplication) createSwapchain() error {
  		imageViews = append(imageViews, view)
  	}
  	app.swapchainImageViews = imageViews
@@ -85,25 +105,18 @@ index f3f8d35..c49b689 100644
  
  	return nil
  }
-@@ -755,6 +785,91 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
+@@ -755,6 +786,91 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
  	return nil
  }
  
 +func (app *HelloTriangleApplication) createSyncObjects() error {
-+	for i := 0; i < MaxFramesInFlight; i++ {
++	for i := 0; i < len(app.swapchainImages); i++ {
 +		semaphore, _, err := app.device.CreateSemaphore(nil, core1_0.SemaphoreCreateInfo{})
 +		if err != nil {
 +			return err
 +		}
 +
 +		app.imageAvailableSemaphore = append(app.imageAvailableSemaphore, semaphore)
-+
-+		semaphore, _, err = app.device.CreateSemaphore(nil, core1_0.SemaphoreCreateInfo{})
-+		if err != nil {
-+			return err
-+		}
-+
-+		app.renderFinishedSemaphore = append(app.renderFinishedSemaphore, semaphore)
 +
 +		fence, _, err := app.device.CreateFence(nil, core1_0.FenceCreateInfo{
 +			Flags: core1_0.FenceCreateSignaled,
@@ -116,6 +129,13 @@ index f3f8d35..c49b689 100644
 +	}
 +
 +	for i := 0; i < len(app.swapchainImages); i++ {
++		semaphore, _, err := app.device.CreateSemaphore(nil, core1_0.SemaphoreCreateInfo{})
++		if err != nil {
++			return err
++		}
++
++		app.renderFinishedSemaphore = append(app.renderFinishedSemaphore, semaphore)
++
 +		app.imagesInFlight = append(app.imagesInFlight, nil)
 +	}
 +
@@ -153,7 +173,7 @@ index f3f8d35..c49b689 100644
 +			WaitSemaphores:   []core1_0.Semaphore{app.imageAvailableSemaphore[app.currentFrame]},
 +			WaitDstStageMask: []core1_0.PipelineStageFlags{core1_0.PipelineStageColorAttachmentOutput},
 +			CommandBuffers:   []core1_0.CommandBuffer{app.commandBuffers[imageIndex]},
-+			SignalSemaphores: []core1_0.Semaphore{app.renderFinishedSemaphore[app.currentFrame]},
++			SignalSemaphores: []core1_0.Semaphore{app.renderFinishedSemaphore[imageIndex]},
 +		},
 +	})
 +	if err != nil {
@@ -161,7 +181,7 @@ index f3f8d35..c49b689 100644
 +	}
 +
 +	_, err = app.swapchainExtension.QueuePresent(app.presentQueue, khr_swapchain.PresentInfo{
-+		WaitSemaphores: []core1_0.Semaphore{app.renderFinishedSemaphore[app.currentFrame]},
++		WaitSemaphores: []core1_0.Semaphore{app.renderFinishedSemaphore[imageIndex]},
 +		Swapchains:     []khr_swapchain.Swapchain{app.swapchain},
 +		ImageIndices:   []int{imageIndex},
 +	})
