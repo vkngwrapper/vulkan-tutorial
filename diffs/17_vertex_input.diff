@@ -1,5 +1,5 @@
 diff --git a/../steps/16_swap_chain_recreation/main.go b/../steps/17_vertex_input/main.go
-index d70332e..2624cb6 100644
+index 3371308..73caa9f 100644
 --- a/../steps/16_swap_chain_recreation/main.go
 +++ b/../steps/17_vertex_input/main.go
 @@ -3,6 +3,7 @@ package main
@@ -57,7 +57,7 @@ index d70332e..2624cb6 100644
  type HelloTriangleApplication struct {
  	window *sdl.Window
  	loader core.Loader
-@@ -677,7 +718,10 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -696,7 +737,10 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  	}
  	defer fragShader.Destroy(nil)
  

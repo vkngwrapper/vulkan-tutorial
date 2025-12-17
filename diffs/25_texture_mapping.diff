@@ -1,5 +1,5 @@
 diff --git a/../steps/24_sampler/main.go b/../steps/25_texture_mapping/main.go
-index 7995521..f1ab2d7 100644
+index 5fdfdf0..706f57c 100644
 --- a/../steps/24_sampler/main.go
 +++ b/../steps/25_texture_mapping/main.go
 @@ -52,6 +52,7 @@ type SwapChainSupportDetails struct {
@@ -35,7 +35,7 @@ index 7995521..f1ab2d7 100644
  }
  
  var indices = []uint16{0, 1, 2, 2, 3, 0}
-@@ -811,6 +818,13 @@ func (app *HelloTriangleApplication) createDescriptorSetLayout() error {
+@@ -830,6 +837,13 @@ func (app *HelloTriangleApplication) createDescriptorSetLayout() error {
  
  				StageFlags: core1_0.StageVertex,
  			},
@@ -49,7 +49,7 @@ index 7995521..f1ab2d7 100644
  		},
  	})
  	if err != nil {
-@@ -1333,6 +1347,10 @@ func (app *HelloTriangleApplication) createDescriptorPool() error {
+@@ -1352,6 +1366,10 @@ func (app *HelloTriangleApplication) createDescriptorPool() error {
  				Type:            core1_0.DescriptorTypeUniformBuffer,
  				DescriptorCount: len(app.swapchainImages),
  			},
@@ -60,7 +60,7 @@ index 7995521..f1ab2d7 100644
  		},
  	})
  	return err
-@@ -1370,6 +1388,21 @@ func (app *HelloTriangleApplication) createDescriptorSets() error {
+@@ -1389,6 +1407,21 @@ func (app *HelloTriangleApplication) createDescriptorSets() error {
  					},
  				},
  			},

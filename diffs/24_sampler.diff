@@ -1,5 +1,5 @@
 diff --git a/../steps/23_texture_image/main.go b/../steps/24_sampler/main.go
-index f17fbfc..7995521 100644
+index 38e9db5..5fdfdf0 100644
 --- a/../steps/23_texture_image/main.go
 +++ b/../steps/24_sampler/main.go
 @@ -147,6 +147,8 @@ type HelloTriangleApplication struct {
@@ -28,7 +28,7 @@ index f17fbfc..7995521 100644
  	err = app.createVertexBuffer()
  	if err != nil {
  		return err
-@@ -353,6 +365,14 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
+@@ -372,6 +384,14 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
  func (app *HelloTriangleApplication) cleanup() {
  	app.cleanupSwapChain()
  
@@ -43,7 +43,7 @@ index f17fbfc..7995521 100644
  	if app.textureImage != nil {
  		app.textureImage.Destroy(nil)
  	}
-@@ -639,8 +659,10 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
+@@ -658,8 +678,10 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
  	}
  
  	app.device, _, err = app.physicalDevice.CreateDevice(nil, core1_0.DeviceCreateInfo{
@@ -56,7 +56,7 @@ index f17fbfc..7995521 100644
  		EnabledExtensionNames: extensionNames,
  	})
  	if err != nil {
-@@ -719,24 +741,7 @@ func (app *HelloTriangleApplication) createImageViews() error {
+@@ -738,24 +760,7 @@ func (app *HelloTriangleApplication) createImageViews() error {
  
  	var imageViews []core1_0.ImageView
  	for _, image := range images {
@@ -82,7 +82,7 @@ index f17fbfc..7995521 100644
  		if err != nil {
  			return err
  		}
-@@ -1062,6 +1067,52 @@ func (app *HelloTriangleApplication) createTextureImage() error {
+@@ -1081,6 +1086,52 @@ func (app *HelloTriangleApplication) createTextureImage() error {
  	return nil
  }
  
@@ -135,7 +135,7 @@ index f17fbfc..7995521 100644
  func (app *HelloTriangleApplication) createImage(width, height int, format core1_0.Format, tiling core1_0.ImageTiling, usage core1_0.ImageUsageFlags, memoryProperties core1_0.MemoryPropertyFlags) (core1_0.Image, core1_0.DeviceMemory, error) {
  	image, _, err := app.device.CreateImage(nil, core1_0.ImageCreateInfo{
  		ImageType: core1_0.ImageType2D,
-@@ -1674,7 +1725,8 @@ func (app *HelloTriangleApplication) isDeviceSuitable(device core1_0.PhysicalDev
+@@ -1695,7 +1746,8 @@ func (app *HelloTriangleApplication) isDeviceSuitable(device core1_0.PhysicalDev
  		swapChainAdequate = len(swapChainSupport.Formats) > 0 && len(swapChainSupport.PresentModes) > 0
  	}
  

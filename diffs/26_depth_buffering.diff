@@ -1,5 +1,5 @@
 diff --git a/../steps/25_texture_mapping/main.go b/../steps/26_depth_buffering/main.go
-index f1ab2d7..b774e57 100644
+index 706f57c..36d46dc 100644
 --- a/../steps/25_texture_mapping/main.go
 +++ b/../steps/26_depth_buffering/main.go
 @@ -50,7 +50,7 @@ type SwapChainSupportDetails struct {
@@ -69,7 +69,7 @@ index f1ab2d7..b774e57 100644
  	if err != nil {
  		return err
  	}
-@@ -321,6 +338,21 @@ appLoop:
+@@ -340,6 +357,21 @@ appLoop:
  }
  
  func (app *HelloTriangleApplication) cleanupSwapChain() {
@@ -91,7 +91,7 @@ index f1ab2d7..b774e57 100644
  	for _, framebuffer := range app.swapchainFramebuffers {
  		framebuffer.Destroy(nil)
  	}
-@@ -482,6 +514,11 @@ func (app *HelloTriangleApplication) recreateSwapChain() error {
+@@ -501,6 +533,11 @@ func (app *HelloTriangleApplication) recreateSwapChain() error {
  		return err
  	}
  
@@ -103,7 +103,7 @@ index f1ab2d7..b774e57 100644
  	err = app.createFramebuffers()
  	if err != nil {
  		return err
-@@ -748,7 +785,7 @@ func (app *HelloTriangleApplication) createImageViews() error {
+@@ -767,7 +804,7 @@ func (app *HelloTriangleApplication) createImageViews() error {
  
  	var imageViews []core1_0.ImageView
  	for _, image := range images {
@@ -112,7 +112,7 @@ index f1ab2d7..b774e57 100644
  		if err != nil {
  			return err
  		}
-@@ -761,6 +798,11 @@ func (app *HelloTriangleApplication) createImageViews() error {
+@@ -780,6 +817,11 @@ func (app *HelloTriangleApplication) createImageViews() error {
  }
  
  func (app *HelloTriangleApplication) createRenderPass() error {
@@ -124,7 +124,7 @@ index f1ab2d7..b774e57 100644
  	renderPass, _, err := app.device.CreateRenderPass(nil, core1_0.RenderPassCreateInfo{
  		Attachments: []core1_0.AttachmentDescription{
  			{
-@@ -773,6 +815,16 @@ func (app *HelloTriangleApplication) createRenderPass() error {
+@@ -792,6 +834,16 @@ func (app *HelloTriangleApplication) createRenderPass() error {
  				InitialLayout:  core1_0.ImageLayoutUndefined,
  				FinalLayout:    khr_swapchain.ImageLayoutPresentSrc,
  			},
@@ -141,7 +141,7 @@ index f1ab2d7..b774e57 100644
  		},
  		Subpasses: []core1_0.SubpassDescription{
  			{
-@@ -783,6 +835,10 @@ func (app *HelloTriangleApplication) createRenderPass() error {
+@@ -802,6 +854,10 @@ func (app *HelloTriangleApplication) createRenderPass() error {
  						Layout:     core1_0.ImageLayoutColorAttachmentOptimal,
  					},
  				},
@@ -152,7 +152,7 @@ index f1ab2d7..b774e57 100644
  			},
  		},
  		SubpassDependencies: []core1_0.SubpassDependency{
-@@ -790,11 +846,11 @@ func (app *HelloTriangleApplication) createRenderPass() error {
+@@ -809,11 +865,11 @@ func (app *HelloTriangleApplication) createRenderPass() error {
  				SrcSubpass: core1_0.SubpassExternal,
  				DstSubpass: 0,
  
@@ -167,7 +167,7 @@ index f1ab2d7..b774e57 100644
  			},
  		},
  	})
-@@ -937,6 +993,12 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -956,6 +1012,12 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  		MinSampleShading:     1.0,
  	}
  
@@ -180,7 +180,7 @@ index f1ab2d7..b774e57 100644
  	colorBlend := &core1_0.PipelineColorBlendStateCreateInfo{
  		LogicOpEnabled: false,
  		LogicOp:        core1_0.LogicOpCopy,
-@@ -967,6 +1029,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -986,6 +1048,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  			ViewportState:      viewport,
  			RasterizationState: rasterization,
  			MultisampleState:   multisample,
@@ -188,7 +188,7 @@ index f1ab2d7..b774e57 100644
  			ColorBlendState:    colorBlend,
  			Layout:             app.pipelineLayout,
  			RenderPass:         app.renderPass,
-@@ -989,6 +1052,7 @@ func (app *HelloTriangleApplication) createFramebuffers() error {
+@@ -1008,6 +1071,7 @@ func (app *HelloTriangleApplication) createFramebuffers() error {
  			Layers:     1,
  			Attachments: []core1_0.ImageView{
  				imageView,
@@ -196,7 +196,7 @@ index f1ab2d7..b774e57 100644
  			},
  			Width:  app.swapchainExtent.Width,
  			Height: app.swapchainExtent.Height,
-@@ -1021,6 +1085,49 @@ func (app *HelloTriangleApplication) createCommandPool() error {
+@@ -1040,6 +1104,49 @@ func (app *HelloTriangleApplication) createCommandPool() error {
  	return nil
  }
  
@@ -246,7 +246,7 @@ index f1ab2d7..b774e57 100644
  func (app *HelloTriangleApplication) createTextureImage() error {
  	//Put image data into staging buffer
  	imageBytes, err := fileSystem.ReadFile("images/texture.png")
-@@ -1083,7 +1190,7 @@ func (app *HelloTriangleApplication) createTextureImage() error {
+@@ -1102,7 +1209,7 @@ func (app *HelloTriangleApplication) createTextureImage() error {
  
  func (app *HelloTriangleApplication) createTextureImageView() error {
  	var err error
@@ -255,7 +255,7 @@ index f1ab2d7..b774e57 100644
  	return err
  }
  
-@@ -1111,13 +1218,13 @@ func (app *HelloTriangleApplication) createSampler() error {
+@@ -1130,13 +1237,13 @@ func (app *HelloTriangleApplication) createSampler() error {
  	return err
  }
  
@@ -271,7 +271,7 @@ index f1ab2d7..b774e57 100644
  			BaseMipLevel:   0,
  			LevelCount:     1,
  			BaseArrayLayer: 0,
-@@ -1543,6 +1650,7 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
+@@ -1562,6 +1669,7 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
  				},
  				ClearValues: []core1_0.ClearValue{
  					core1_0.ClearValueFloat{0, 0, 0, 1},
@@ -279,7 +279,7 @@ index f1ab2d7..b774e57 100644
  				},
  			})
  		if err != nil {
-@@ -1671,7 +1779,12 @@ func (app *HelloTriangleApplication) updateUniformBuffer(currentImage int) error
+@@ -1692,7 +1800,12 @@ func (app *HelloTriangleApplication) updateUniformBuffer(currentImage int) error
  		&vkngmath.Vec3[float32]{X: 0, Y: 0, Z: 1},
  	)
  	aspectRatio := float32(app.swapchainExtent.Width) / float32(app.swapchainExtent.Height)

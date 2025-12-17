@@ -238,17 +238,36 @@ func (app *HelloTriangleApplication) initVulkan() error {
 }
 
 func (app *HelloTriangleApplication) mainLoop() error {
+	rendering := true
+
 appLoop:
 	for {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
-			switch event.(type) {
+			switch e := event.(type) {
 			case *sdl.QuitEvent:
 				break appLoop
+			case *sdl.WindowEvent:
+				switch e.Event {
+				case sdl.WINDOWEVENT_MINIMIZED:
+					rendering = false
+				case sdl.WINDOWEVENT_RESTORED:
+					rendering = true
+				case sdl.WINDOWEVENT_RESIZED:
+					w, h := app.window.GetSize()
+					if w > 0 && h > 0 {
+						rendering = true
+						app.recreateSwapChain()
+					} else {
+						rendering = false
+					}
+				}
 			}
 		}
-		err := app.drawFrame()
-		if err != nil {
-			return err
+		if rendering {
+			err := app.drawFrame()
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -1183,12 +1202,14 @@ func (app *HelloTriangleApplication) drawFrame() error {
 		return err
 	}
 
-	_, err = app.swapchainExtension.QueuePresent(app.presentQueue, khr_swapchain.PresentInfo{
+	res, err = app.swapchainExtension.QueuePresent(app.presentQueue, khr_swapchain.PresentInfo{
 		WaitSemaphores: []core1_0.Semaphore{app.renderFinishedSemaphore[imageIndex]},
 		Swapchains:     []khr_swapchain.Swapchain{app.swapchain},
 		ImageIndices:   []int{imageIndex},
 	})
-	if err != nil {
+	if res == khr_swapchain.VKErrorOutOfDate || res == khr_swapchain.VKSuboptimal {
+		return app.recreateSwapChain()
+	} else if err != nil {
 		return err
 	}
 

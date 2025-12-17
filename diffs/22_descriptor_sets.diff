@@ -1,5 +1,5 @@
 diff --git a/../steps/21_descriptor_layout/main.go b/../steps/22_descriptor_sets/main.go
-index e0522d1..83b76cd 100644
+index ec5b67b..40dd122 100644
 --- a/../steps/21_descriptor_layout/main.go
 +++ b/../steps/22_descriptor_sets/main.go
 @@ -54,9 +54,9 @@ type Vertex struct {
@@ -41,7 +41,7 @@ index e0522d1..83b76cd 100644
  	err = app.createCommandBuffers()
  	if err != nil {
  		return err
-@@ -325,6 +337,8 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
+@@ -344,6 +356,8 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
  		app.uniformBuffersMemory[i].Free(nil)
  	}
  	app.uniformBuffersMemory = app.uniformBuffersMemory[:0]
@@ -50,7 +50,7 @@ index e0522d1..83b76cd 100644
  }
  
  func (app *HelloTriangleApplication) cleanup() {
-@@ -434,6 +448,16 @@ func (app *HelloTriangleApplication) recreateSwapChain() error {
+@@ -453,6 +467,16 @@ func (app *HelloTriangleApplication) recreateSwapChain() error {
  		return err
  	}
  
@@ -67,7 +67,7 @@ index e0522d1..83b76cd 100644
  	err = app.createCommandBuffers()
  	if err != nil {
  		return err
-@@ -864,7 +888,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -883,7 +907,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  
  		PolygonMode: core1_0.PolygonModeFill,
  		CullMode:    core1_0.CullModeBack,
@@ -76,7 +76,7 @@ index e0522d1..83b76cd 100644
  
  		DepthBiasEnable: false,
  
-@@ -895,9 +919,6 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -914,9 +938,6 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  			app.descriptorSetLayout,
  		},
  	})
@@ -86,7 +86,7 @@ index e0522d1..83b76cd 100644
  
  	pipelines, _, err := app.device.CreateGraphicsPipelines(nil, nil, []core1_0.GraphicsPipelineCreateInfo{
  		{
-@@ -1058,6 +1079,61 @@ func (app *HelloTriangleApplication) createUniformBuffers() error {
+@@ -1077,6 +1098,61 @@ func (app *HelloTriangleApplication) createUniformBuffers() error {
  	return nil
  }
  
@@ -148,7 +148,7 @@ index e0522d1..83b76cd 100644
  func (app *HelloTriangleApplication) createBuffer(size int, usage core1_0.BufferUsageFlags, properties core1_0.MemoryPropertyFlags) (core1_0.Buffer, core1_0.DeviceMemory, error) {
  	buffer, _, err := app.device.CreateBuffer(nil, core1_0.BufferCreateInfo{
  		Size:        size,
-@@ -1181,6 +1257,9 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
+@@ -1200,6 +1276,9 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
  		buffer.CmdBindPipeline(core1_0.PipelineBindPointGraphics, app.graphicsPipeline)
  		buffer.CmdBindVertexBuffers(0, []core1_0.Buffer{app.vertexBuffer}, []int{0})
  		buffer.CmdBindIndexBuffer(app.indexBuffer, 0, core1_0.IndexTypeUInt16)

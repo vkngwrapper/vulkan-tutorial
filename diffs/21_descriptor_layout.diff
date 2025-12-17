@@ -1,5 +1,5 @@
 diff --git a/../steps/20_index_buffer/main.go b/../steps/21_descriptor_layout/main.go
-index 02e216b..e0522d1 100644
+index 2cda176..ec5b67b 100644
 --- a/../steps/20_index_buffer/main.go
 +++ b/../steps/21_descriptor_layout/main.go
 @@ -5,8 +5,10 @@ import (
@@ -123,7 +123,7 @@ index 02e216b..e0522d1 100644
  	err = app.createCommandBuffers()
  	if err != nil {
  		return err
-@@ -291,11 +315,25 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
+@@ -310,11 +334,25 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
  		app.swapchain.Destroy(nil)
  		app.swapchain = nil
  	}
@@ -149,7 +149,7 @@ index 02e216b..e0522d1 100644
  	if app.indexBuffer != nil {
  		app.indexBuffer.Destroy(nil)
  	}
-@@ -391,6 +429,11 @@ func (app *HelloTriangleApplication) recreateSwapChain() error {
+@@ -410,6 +448,11 @@ func (app *HelloTriangleApplication) recreateSwapChain() error {
  		return err
  	}
  
@@ -161,7 +161,7 @@ index 02e216b..e0522d1 100644
  	err = app.createCommandBuffers()
  	if err != nil {
  		return err
-@@ -711,6 +754,26 @@ func (app *HelloTriangleApplication) createRenderPass() error {
+@@ -730,6 +773,26 @@ func (app *HelloTriangleApplication) createRenderPass() error {
  	return nil
  }
  
@@ -188,7 +188,7 @@ index 02e216b..e0522d1 100644
  func bytesToBytecode(b []byte) []uint32 {
  	byteCode := make([]uint32, len(b)/4)
  	for i := 0; i < len(byteCode); i++ {
-@@ -827,7 +890,11 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -846,7 +909,11 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  		},
  	}
  
@@ -201,7 +201,7 @@ index 02e216b..e0522d1 100644
  	if err != nil {
  		return err
  	}
-@@ -975,6 +1042,22 @@ func (app *HelloTriangleApplication) createIndexBuffer() error {
+@@ -994,6 +1061,22 @@ func (app *HelloTriangleApplication) createIndexBuffer() error {
  	return app.copyBuffer(stagingBuffer, app.indexBuffer, bufferSize)
  }
  
@@ -224,7 +224,7 @@ index 02e216b..e0522d1 100644
  func (app *HelloTriangleApplication) createBuffer(size int, usage core1_0.BufferUsageFlags, properties core1_0.MemoryPropertyFlags) (core1_0.Buffer, core1_0.DeviceMemory, error) {
  	buffer, _, err := app.device.CreateBuffer(nil, core1_0.BufferCreateInfo{
  		Size:        size,
-@@ -1171,6 +1254,11 @@ func (app *HelloTriangleApplication) drawFrame() error {
+@@ -1190,6 +1273,11 @@ func (app *HelloTriangleApplication) drawFrame() error {
  		return err
  	}
  
@@ -236,7 +236,7 @@ index 02e216b..e0522d1 100644
  	_, err = app.graphicsQueue.Submit(app.inFlightFence[app.currentFrame], []core1_0.SubmitInfo{
  		{
  			WaitSemaphores:   []core1_0.Semaphore{app.imageAvailableSemaphore[app.currentFrame]},
-@@ -1197,6 +1285,24 @@ func (app *HelloTriangleApplication) drawFrame() error {
+@@ -1218,6 +1306,24 @@ func (app *HelloTriangleApplication) drawFrame() error {
  	return nil
  }
  

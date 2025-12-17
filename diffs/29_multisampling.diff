@@ -1,5 +1,5 @@
 diff --git a/../steps/28_mipmapping/main.go b/../steps/29_multisampling/main.go
-index fc9131b..9000109 100644
+index 1d51e80..0765dc8 100644
 --- a/../steps/28_mipmapping/main.go
 +++ b/../steps/29_multisampling/main.go
 @@ -7,6 +7,7 @@ import (
@@ -34,7 +34,15 @@ index fc9131b..9000109 100644
  	err = app.createDepthResources()
  	if err != nil {
  		return err
-@@ -329,6 +340,21 @@ appLoop:
+@@ -318,7 +329,6 @@ appLoop:
+ 			switch e := event.(type) {
+ 			case *sdl.QuitEvent:
+ 				break appLoop
+-
+ 			case *sdl.WindowEvent:
+ 				switch e.Event {
+ 				case sdl.WINDOWEVENT_MINIMIZED:
+@@ -349,6 +359,21 @@ appLoop:
  }
  
  func (app *HelloTriangleApplication) cleanupSwapChain() {
@@ -56,7 +64,7 @@ index fc9131b..9000109 100644
  	if app.depthImageView != nil {
  		app.depthImageView.Destroy(nil)
  		app.depthImageView = nil
-@@ -467,6 +493,8 @@ func (app *HelloTriangleApplication) cleanup() {
+@@ -487,6 +512,8 @@ func (app *HelloTriangleApplication) cleanup() {
  		app.window.Destroy()
  	}
  	sdl.Quit()
@@ -65,7 +73,7 @@ index fc9131b..9000109 100644
  }
  
  func (app *HelloTriangleApplication) recreateSwapChain() error {
-@@ -505,6 +533,11 @@ func (app *HelloTriangleApplication) recreateSwapChain() error {
+@@ -525,6 +552,11 @@ func (app *HelloTriangleApplication) recreateSwapChain() error {
  		return err
  	}
  
@@ -77,7 +85,7 @@ index fc9131b..9000109 100644
  	err = app.createDepthResources()
  	if err != nil {
  		return err
-@@ -648,6 +681,10 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
+@@ -668,6 +700,10 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
  	for _, device := range physicalDevices {
  		if app.isDeviceSuitable(device) {
  			app.physicalDevice = device
@@ -88,7 +96,7 @@ index fc9131b..9000109 100644
  			break
  		}
  	}
-@@ -798,17 +835,17 @@ func (app *HelloTriangleApplication) createRenderPass() error {
+@@ -818,17 +854,17 @@ func (app *HelloTriangleApplication) createRenderPass() error {
  		Attachments: []core1_0.AttachmentDescription{
  			{
  				Format:         app.swapchainImageFormat,
@@ -109,7 +117,7 @@ index fc9131b..9000109 100644
  				LoadOp:         core1_0.AttachmentLoadOpClear,
  				StoreOp:        core1_0.AttachmentStoreOpDontCare,
  				StencilLoadOp:  core1_0.AttachmentLoadOpDontCare,
-@@ -816,6 +853,16 @@ func (app *HelloTriangleApplication) createRenderPass() error {
+@@ -836,6 +872,16 @@ func (app *HelloTriangleApplication) createRenderPass() error {
  				InitialLayout:  core1_0.ImageLayoutUndefined,
  				FinalLayout:    core1_0.ImageLayoutDepthStencilAttachmentOptimal,
  			},
@@ -126,7 +134,7 @@ index fc9131b..9000109 100644
  		},
  		Subpasses: []core1_0.SubpassDescription{
  			{
-@@ -826,6 +873,12 @@ func (app *HelloTriangleApplication) createRenderPass() error {
+@@ -846,6 +892,12 @@ func (app *HelloTriangleApplication) createRenderPass() error {
  						Layout:     core1_0.ImageLayoutColorAttachmentOptimal,
  					},
  				},
@@ -139,7 +147,7 @@ index fc9131b..9000109 100644
  				DepthStencilAttachment: &core1_0.AttachmentReference{
  					Attachment: 1,
  					Layout:     core1_0.ImageLayoutDepthStencilAttachmentOptimal,
-@@ -980,7 +1033,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -1000,7 +1052,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  
  	multisample := &core1_0.PipelineMultisampleStateCreateInfo{
  		SampleShadingEnable:  false,
@@ -148,7 +156,7 @@ index fc9131b..9000109 100644
  		MinSampleShading:     1.0,
  	}
  
-@@ -1042,8 +1095,9 @@ func (app *HelloTriangleApplication) createFramebuffers() error {
+@@ -1062,8 +1114,9 @@ func (app *HelloTriangleApplication) createFramebuffers() error {
  			RenderPass: app.renderPass,
  			Layers:     1,
  			Attachments: []core1_0.ImageView{
@@ -159,7 +167,7 @@ index fc9131b..9000109 100644
  			},
  			Width:  app.swapchainExtent.Width,
  			Height: app.swapchainExtent.Height,
-@@ -1076,6 +1130,29 @@ func (app *HelloTriangleApplication) createCommandPool() error {
+@@ -1096,6 +1149,29 @@ func (app *HelloTriangleApplication) createCommandPool() error {
  	return nil
  }
  
@@ -189,7 +197,7 @@ index fc9131b..9000109 100644
  func (app *HelloTriangleApplication) createDepthResources() error {
  	depthFormat, err := app.findDepthFormat()
  	if err != nil {
-@@ -1085,6 +1162,7 @@ func (app *HelloTriangleApplication) createDepthResources() error {
+@@ -1105,6 +1181,7 @@ func (app *HelloTriangleApplication) createDepthResources() error {
  	app.depthImage, app.depthImageMemory, err = app.createImage(app.swapchainExtent.Width,
  		app.swapchainExtent.Height,
  		1,
@@ -197,7 +205,7 @@ index fc9131b..9000109 100644
  		depthFormat,
  		core1_0.ImageTilingOptimal,
  		core1_0.ImageUsageDepthStencilAttachment,
-@@ -1142,6 +1220,9 @@ func (app *HelloTriangleApplication) createTextureImage() error {
+@@ -1162,6 +1239,9 @@ func (app *HelloTriangleApplication) createTextureImage() error {
  		return err
  	}
  
@@ -207,7 +215,7 @@ index fc9131b..9000109 100644
  	var pixelData []byte
  
  	for y := imageBounds.Min.Y; y < imageBounds.Max.Y; y++ {
-@@ -1157,7 +1238,14 @@ func (app *HelloTriangleApplication) createTextureImage() error {
+@@ -1177,7 +1257,14 @@ func (app *HelloTriangleApplication) createTextureImage() error {
  	}
  
  	//Create final image
@@ -223,7 +231,7 @@ index fc9131b..9000109 100644
  	if err != nil {
  		return err
  	}
-@@ -1172,15 +1260,7 @@ func (app *HelloTriangleApplication) createTextureImage() error {
+@@ -1192,15 +1279,7 @@ func (app *HelloTriangleApplication) createTextureImage() error {
  		return err
  	}
  
@@ -240,7 +248,7 @@ index fc9131b..9000109 100644
  }
  
  func (app *HelloTriangleApplication) generateMipmaps(image core1_0.Image, imageFormat core1_0.Format, width, height int, mipLevels int) error {
-@@ -1264,6 +1344,8 @@ func (app *HelloTriangleApplication) generateMipmaps(image core1_0.Image, imageF
+@@ -1284,6 +1363,8 @@ func (app *HelloTriangleApplication) generateMipmaps(image core1_0.Image, imageF
  		barrier.NewLayout = core1_0.ImageLayoutShaderReadOnlyOptimal
  		barrier.SrcAccessMask = core1_0.AccessTransferRead
  		barrier.DstAccessMask = core1_0.AccessShaderRead
@@ -249,7 +257,7 @@ index fc9131b..9000109 100644
  		err = commandBuffer.CmdPipelineBarrier(core1_0.PipelineStageTransfer, core1_0.PipelineStageFragmentShader, 0, nil, nil, []core1_0.ImageMemoryBarrier{barrier})
  		if err != nil {
  			return err
-@@ -1291,6 +1373,35 @@ func (app *HelloTriangleApplication) generateMipmaps(image core1_0.Image, imageF
+@@ -1311,6 +1392,35 @@ func (app *HelloTriangleApplication) generateMipmaps(image core1_0.Image, imageF
  	return app.endSingleTimeCommands(commandBuffer)
  }
  
@@ -285,7 +293,7 @@ index fc9131b..9000109 100644
  func (app *HelloTriangleApplication) createTextureImageView() error {
  	var err error
  	app.textureImageView, err = app.createImageView(app.textureImage, core1_0.FormatR8G8B8A8SRGB, core1_0.ImageAspectColor, app.mipLevels)
-@@ -1339,7 +1450,7 @@ func (app *HelloTriangleApplication) createImageView(image core1_0.Image, format
+@@ -1359,7 +1469,7 @@ func (app *HelloTriangleApplication) createImageView(image core1_0.Image, format
  	return imageView, err
  }
  
@@ -294,7 +302,7 @@ index fc9131b..9000109 100644
  	image, _, err := app.device.CreateImage(nil, core1_0.ImageCreateInfo{
  		ImageType: core1_0.ImageType2D,
  		Extent: core1_0.Extent3D{
-@@ -1354,7 +1465,7 @@ func (app *HelloTriangleApplication) createImage(width, height int, mipLevels in
+@@ -1374,7 +1484,7 @@ func (app *HelloTriangleApplication) createImage(width, height int, mipLevels in
  		InitialLayout: core1_0.ImageLayoutUndefined,
  		Usage:         usage,
  		SharingMode:   core1_0.SharingModeExclusive,
@@ -303,7 +311,21 @@ index fc9131b..9000109 100644
  	})
  	if err != nil {
  		return nil, nil, err
-@@ -2089,7 +2200,10 @@ func (app *HelloTriangleApplication) logDebug(msgType ext_debug_utils.DebugUtils
+@@ -1942,12 +2052,12 @@ func (app *HelloTriangleApplication) drawFrame() error {
+ 		Swapchains:     []khr_swapchain.Swapchain{app.swapchain},
+ 		ImageIndices:   []int{imageIndex},
+ 	})
++
+ 	if res == khr_swapchain.VKErrorOutOfDate || res == khr_swapchain.VKSuboptimal {
+ 		return app.recreateSwapChain()
+ 	} else if err != nil {
+ 		return err
+ 	}
+-
+ 	app.currentFrame = (app.currentFrame + 1) % MaxFramesInFlight
+ 
+ 	return nil
+@@ -2111,7 +2221,10 @@ func (app *HelloTriangleApplication) logDebug(msgType ext_debug_utils.DebugUtils
  }
  
  func main() {

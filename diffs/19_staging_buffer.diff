@@ -1,8 +1,8 @@
 diff --git a/../steps/18_vertex_buffer/main.go b/../steps/19_staging_buffer/main.go
-index f4bc0a5..f26fcc6 100644
+index 78746a7..6c65f99 100644
 --- a/../steps/18_vertex_buffer/main.go
 +++ b/../steps/19_staging_buffer/main.go
-@@ -879,54 +879,128 @@ func (app *HelloTriangleApplication) createCommandPool() error {
+@@ -898,54 +898,128 @@ func (app *HelloTriangleApplication) createCommandPool() error {
  	return nil
  }
  

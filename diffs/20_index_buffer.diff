@@ -1,5 +1,5 @@
 diff --git a/../steps/19_staging_buffer/main.go b/../steps/20_index_buffer/main.go
-index f26fcc6..02e216b 100644
+index 6c65f99..2cda176 100644
 --- a/../steps/19_staging_buffer/main.go
 +++ b/../steps/20_index_buffer/main.go
 @@ -80,11 +80,14 @@ func getVertexAttributeDescriptions() []core1_0.VertexInputAttributeDescription
@@ -41,7 +41,7 @@ index f26fcc6..02e216b 100644
  	err = app.createCommandBuffers()
  	if err != nil {
  		return err
-@@ -286,6 +296,14 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
+@@ -305,6 +315,14 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
  func (app *HelloTriangleApplication) cleanup() {
  	app.cleanupSwapChain()
  
@@ -56,7 +56,7 @@ index f26fcc6..02e216b 100644
  	if app.vertexBuffer != nil {
  		app.vertexBuffer.Destroy(nil)
  	}
-@@ -496,7 +514,7 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
+@@ -515,7 +533,7 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
  	}
  
  	if app.physicalDevice == nil {
@@ -65,7 +65,7 @@ index f26fcc6..02e216b 100644
  	}
  
  	return nil
-@@ -929,6 +947,34 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
+@@ -948,6 +966,34 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
  	return app.copyBuffer(stagingBuffer, app.vertexBuffer, bufferSize)
  }
  
@@ -100,7 +100,7 @@ index f26fcc6..02e216b 100644
  func (app *HelloTriangleApplication) createBuffer(size int, usage core1_0.BufferUsageFlags, properties core1_0.MemoryPropertyFlags) (core1_0.Buffer, core1_0.DeviceMemory, error) {
  	buffer, _, err := app.device.CreateBuffer(nil, core1_0.BufferCreateInfo{
  		Size:        size,
-@@ -940,7 +986,6 @@ func (app *HelloTriangleApplication) createBuffer(size int, usage core1_0.Buffer
+@@ -959,7 +1005,6 @@ func (app *HelloTriangleApplication) createBuffer(size int, usage core1_0.Buffer
  	}
  
  	memRequirements := buffer.MemoryRequirements()
@@ -108,7 +108,7 @@ index f26fcc6..02e216b 100644
  	memoryTypeIndex, err := app.findMemoryType(memRequirements.MemoryTypeBits, properties)
  	if err != nil {
  		return buffer, nil, err
-@@ -1013,7 +1058,7 @@ func (app *HelloTriangleApplication) findMemoryType(typeFilter uint32, propertie
+@@ -1032,7 +1077,7 @@ func (app *HelloTriangleApplication) findMemoryType(typeFilter uint32, propertie
  		}
  	}
  
@@ -117,7 +117,7 @@ index f26fcc6..02e216b 100644
  }
  
  func (app *HelloTriangleApplication) createCommandBuffers() error {
-@@ -1052,7 +1097,8 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
+@@ -1071,7 +1116,8 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
  
  		buffer.CmdBindPipeline(core1_0.PipelineBindPointGraphics, app.graphicsPipeline)
  		buffer.CmdBindVertexBuffers(0, []core1_0.Buffer{app.vertexBuffer}, []int{0})

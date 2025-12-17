@@ -1,5 +1,5 @@
 diff --git a/../steps/26_depth_buffering/main.go b/../steps/27_model_loading/main.go
-index b774e57..fb27a73 100644
+index 36d46dc..4c7ae66 100644
 --- a/../steps/26_depth_buffering/main.go
 +++ b/../steps/27_model_loading/main.go
 @@ -9,6 +9,7 @@ import (
@@ -63,7 +63,7 @@ index b774e57..fb27a73 100644
  	err = app.createVertexBuffer()
  	if err != nil {
  		return err
-@@ -1130,7 +1120,7 @@ func hasStencilComponent(format core1_0.Format) bool {
+@@ -1149,7 +1139,7 @@ func hasStencilComponent(format core1_0.Format) bool {
  
  func (app *HelloTriangleApplication) createTextureImage() error {
  	//Put image data into staging buffer
@@ -72,7 +72,7 @@ index b774e57..fb27a73 100644
  	if err != nil {
  		return err
  	}
-@@ -1372,9 +1362,68 @@ func writeData(memory core1_0.DeviceMemory, offset int, data any) error {
+@@ -1391,9 +1381,68 @@ func writeData(memory core1_0.DeviceMemory, offset int, data any) error {
  	return nil
  }
  
@@ -142,7 +142,7 @@ index b774e57..fb27a73 100644
  
  	stagingBuffer, stagingBufferMemory, err := app.createBuffer(bufferSize, core1_0.BufferUsageTransferSrc, core1_0.MemoryPropertyHostVisible|core1_0.MemoryPropertyHostCoherent)
  	if stagingBuffer != nil {
-@@ -1388,7 +1437,7 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
+@@ -1407,7 +1456,7 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
  		return err
  	}
  
@@ -151,7 +151,7 @@ index b774e57..fb27a73 100644
  	if err != nil {
  		return err
  	}
-@@ -1402,7 +1451,7 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
+@@ -1421,7 +1470,7 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
  }
  
  func (app *HelloTriangleApplication) createIndexBuffer() error {
@@ -160,7 +160,7 @@ index b774e57..fb27a73 100644
  
  	stagingBuffer, stagingBufferMemory, err := app.createBuffer(bufferSize, core1_0.BufferUsageTransferSrc, core1_0.MemoryPropertyHostVisible|core1_0.MemoryPropertyHostCoherent)
  	if stagingBuffer != nil {
-@@ -1416,7 +1465,7 @@ func (app *HelloTriangleApplication) createIndexBuffer() error {
+@@ -1435,7 +1484,7 @@ func (app *HelloTriangleApplication) createIndexBuffer() error {
  		return err
  	}
  
@@ -169,7 +169,7 @@ index b774e57..fb27a73 100644
  	if err != nil {
  		return err
  	}
-@@ -1659,11 +1708,11 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
+@@ -1678,11 +1727,11 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
  
  		buffer.CmdBindPipeline(core1_0.PipelineBindPointGraphics, app.graphicsPipeline)
  		buffer.CmdBindVertexBuffers(0, []core1_0.Buffer{app.vertexBuffer}, []int{0})
