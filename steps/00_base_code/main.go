@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/veandco/go-sdl2/sdl"
 	"log"
+
+	"github.com/veandco/go-sdl2/sdl"
 )
 
 type HelloTriangleApplication struct {
@@ -58,7 +59,7 @@ appLoop:
 
 func (app *HelloTriangleApplication) cleanup() {
 	if app.window != nil {
-		app.window.Destroy()
+		_ = app.window.Destroy()
 	}
 	sdl.Quit()
 }

@@ -1,5 +1,5 @@
 diff --git a/../steps/16_swap_chain_recreation/main.go b/../steps/17_vertex_input/main.go
-index 3371308..73caa9f 100644
+index dcd17be..50e7fcc 100644
 --- a/../steps/16_swap_chain_recreation/main.go
 +++ b/../steps/17_vertex_input/main.go
 @@ -3,6 +3,7 @@ package main
@@ -55,11 +55,11 @@ index 3371308..73caa9f 100644
 +}
 +
  type HelloTriangleApplication struct {
- 	window *sdl.Window
- 	loader core.Loader
-@@ -696,7 +737,10 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+ 	globalDriver     core1_0.GlobalDriver
+ 	instanceDriver   core1_0.CoreInstanceDriver
+@@ -700,7 +741,10 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  	}
- 	defer fragShader.Destroy(nil)
+ 	defer app.deviceDriver.DestroyShaderModule(fragShader, nil)
  
 -	vertexInput := &core1_0.PipelineVertexInputStateCreateInfo{}
 +	vertexInput := &core1_0.PipelineVertexInputStateCreateInfo{

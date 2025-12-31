@@ -1,5 +1,5 @@
 diff --git a/../steps/26_depth_buffering/main.go b/../steps/27_model_loading/main.go
-index 36d46dc..4c7ae66 100644
+index bb0d40d..0b08b76 100644
 --- a/../steps/26_depth_buffering/main.go
 +++ b/../steps/27_model_loading/main.go
 @@ -9,6 +9,7 @@ import (
@@ -41,9 +41,9 @@ index 36d46dc..4c7ae66 100644
 -}
 -
  type HelloTriangleApplication struct {
- 	window *sdl.Window
- 	loader core.Loader
-@@ -152,6 +136,8 @@ type HelloTriangleApplication struct {
+ 	globalDriver     core1_0.GlobalDriver
+ 	instanceDriver   core1_0.CoreInstanceDriver
+@@ -153,6 +137,8 @@ type HelloTriangleApplication struct {
  	currentFrame            int
  	frameStart              float64
  
@@ -52,7 +52,7 @@ index 36d46dc..4c7ae66 100644
  	vertexBuffer       core1_0.Buffer
  	vertexBufferMemory core1_0.DeviceMemory
  	indexBuffer        core1_0.Buffer
-@@ -285,6 +271,10 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -286,6 +272,10 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -63,7 +63,7 @@ index 36d46dc..4c7ae66 100644
  	err = app.createVertexBuffer()
  	if err != nil {
  		return err
-@@ -1149,7 +1139,7 @@ func hasStencilComponent(format core1_0.Format) bool {
+@@ -1154,7 +1144,7 @@ func (app *HelloTriangleApplication) findDepthFormat() (core1_0.Format, error) {
  
  func (app *HelloTriangleApplication) createTextureImage() error {
  	//Put image data into staging buffer
@@ -72,7 +72,7 @@ index 36d46dc..4c7ae66 100644
  	if err != nil {
  		return err
  	}
-@@ -1391,9 +1381,68 @@ func writeData(memory core1_0.DeviceMemory, offset int, data any) error {
+@@ -1395,9 +1385,68 @@ func writeData(driver core1_0.DeviceDriver, memory core1_0.DeviceMemory, offset
  	return nil
  }
  
@@ -141,17 +141,17 @@ index 36d46dc..4c7ae66 100644
 +	bufferSize := binary.Size(app.vertices)
  
  	stagingBuffer, stagingBufferMemory, err := app.createBuffer(bufferSize, core1_0.BufferUsageTransferSrc, core1_0.MemoryPropertyHostVisible|core1_0.MemoryPropertyHostCoherent)
- 	if stagingBuffer != nil {
-@@ -1407,7 +1456,7 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
+ 	if stagingBuffer.Initialized() {
+@@ -1411,7 +1460,7 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
  		return err
  	}
  
--	err = writeData(stagingBufferMemory, 0, vertices)
-+	err = writeData(stagingBufferMemory, 0, app.vertices)
+-	err = writeData(app.deviceDriver, stagingBufferMemory, 0, vertices)
++	err = writeData(app.deviceDriver, stagingBufferMemory, 0, app.vertices)
  	if err != nil {
  		return err
  	}
-@@ -1421,7 +1470,7 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
+@@ -1425,7 +1474,7 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
  }
  
  func (app *HelloTriangleApplication) createIndexBuffer() error {
@@ -159,27 +159,27 @@ index 36d46dc..4c7ae66 100644
 +	bufferSize := binary.Size(app.indices)
  
  	stagingBuffer, stagingBufferMemory, err := app.createBuffer(bufferSize, core1_0.BufferUsageTransferSrc, core1_0.MemoryPropertyHostVisible|core1_0.MemoryPropertyHostCoherent)
- 	if stagingBuffer != nil {
-@@ -1435,7 +1484,7 @@ func (app *HelloTriangleApplication) createIndexBuffer() error {
+ 	if stagingBuffer.Initialized() {
+@@ -1439,7 +1488,7 @@ func (app *HelloTriangleApplication) createIndexBuffer() error {
  		return err
  	}
  
--	err = writeData(stagingBufferMemory, 0, indices)
-+	err = writeData(stagingBufferMemory, 0, app.indices)
+-	err = writeData(app.deviceDriver, stagingBufferMemory, 0, indices)
++	err = writeData(app.deviceDriver, stagingBufferMemory, 0, app.indices)
  	if err != nil {
  		return err
  	}
-@@ -1678,11 +1727,11 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
+@@ -1681,11 +1730,11 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
  
- 		buffer.CmdBindPipeline(core1_0.PipelineBindPointGraphics, app.graphicsPipeline)
- 		buffer.CmdBindVertexBuffers(0, []core1_0.Buffer{app.vertexBuffer}, []int{0})
--		buffer.CmdBindIndexBuffer(app.indexBuffer, 0, core1_0.IndexTypeUInt16)
-+		buffer.CmdBindIndexBuffer(app.indexBuffer, 0, core1_0.IndexTypeUInt32)
- 		buffer.CmdBindDescriptorSets(core1_0.PipelineBindPointGraphics, app.pipelineLayout, 0, []core1_0.DescriptorSet{
+ 		app.deviceDriver.CmdBindPipeline(buffer, core1_0.PipelineBindPointGraphics, app.graphicsPipeline)
+ 		app.deviceDriver.CmdBindVertexBuffers(buffer, 0, []core1_0.Buffer{app.vertexBuffer}, []int{0})
+-		app.deviceDriver.CmdBindIndexBuffer(buffer, app.indexBuffer, 0, core1_0.IndexTypeUInt16)
++		app.deviceDriver.CmdBindIndexBuffer(buffer, app.indexBuffer, 0, core1_0.IndexTypeUInt32)
+ 		app.deviceDriver.CmdBindDescriptorSets(buffer, core1_0.PipelineBindPointGraphics, app.pipelineLayout, 0, []core1_0.DescriptorSet{
  			app.descriptorSets[bufferIdx],
  		}, nil)
--		buffer.CmdDrawIndexed(len(indices), 1, 0, 0, 0)
-+		buffer.CmdDrawIndexed(len(app.indices), 1, 0, 0, 0)
- 		buffer.CmdEndRenderPass()
+-		app.deviceDriver.CmdDrawIndexed(buffer, len(indices), 1, 0, 0, 0)
++		app.deviceDriver.CmdDrawIndexed(buffer, len(app.indices), 1, 0, 0, 0)
+ 		app.deviceDriver.CmdEndRenderPass(buffer)
  
- 		_, err = buffer.End()
+ 		_, err = app.deviceDriver.EndCommandBuffer(buffer)

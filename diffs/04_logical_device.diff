@@ -1,26 +1,31 @@
 diff --git a/../steps/03_physical_device_selection/main.go b/../steps/04_logical_device/main.go
-index d3ac8e6..297c8d3 100644
+index 27e4f73..9992741 100644
 --- a/../steps/03_physical_device_selection/main.go
 +++ b/../steps/04_logical_device/main.go
-@@ -8,6 +8,7 @@ import (
- 	"github.com/vkngwrapper/core/v2/core1_0"
- 	"github.com/vkngwrapper/extensions/v2/ext_debug_utils"
- 	"github.com/vkngwrapper/extensions/v2/khr_portability_enumeration"
-+	"github.com/vkngwrapper/extensions/v2/khr_portability_subset"
- 	"log"
+@@ -10,6 +10,7 @@ import (
+ 	"github.com/vkngwrapper/core/v3/core1_0"
+ 	"github.com/vkngwrapper/extensions/v3/ext_debug_utils"
+ 	"github.com/vkngwrapper/extensions/v3/khr_portability_enumeration"
++	"github.com/vkngwrapper/extensions/v3/khr_portability_subset"
  )
  
-@@ -31,6 +32,9 @@ type HelloTriangleApplication struct {
- 	debugMessenger ext_debug_utils.DebugUtilsMessenger
+ var validationLayers = []string{"VK_LAYER_KHRONOS_validation"}
+@@ -27,11 +28,14 @@ func (i *QueueFamilyIndices) IsComplete() bool {
+ type HelloTriangleApplication struct {
+ 	globalDriver   core1_0.GlobalDriver
+ 	instanceDriver core1_0.CoreInstanceDriver
++	deviceDriver   core1_0.DeviceDriver
+ 	debugExtension ext_debug_utils.ExtensionDriver
+ 	window         *sdl.Window
  
+ 	debugMessenger ext_debug_utils.DebugUtilsMessenger
  	physicalDevice core1_0.PhysicalDevice
-+	device         core1_0.Device
 +
 +	graphicsQueue core1_0.Queue
  }
  
  func (app *HelloTriangleApplication) Run() error {
-@@ -78,7 +82,12 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -79,7 +83,12 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -34,28 +39,21 @@ index d3ac8e6..297c8d3 100644
  }
  
  func (app *HelloTriangleApplication) mainLoop() error {
-@@ -96,6 +105,10 @@ appLoop:
+@@ -97,6 +106,10 @@ appLoop:
  }
  
  func (app *HelloTriangleApplication) cleanup() {
-+	if app.device != nil {
-+		app.device.Destroy(nil)
++	if app.deviceDriver != nil {
++		app.deviceDriver.DestroyDevice(nil)
 +	}
 +
- 	if app.debugMessenger != nil {
- 		app.debugMessenger.Destroy(nil)
+ 	if app.debugMessenger.Initialized() {
+ 		app.debugExtension.DestroyDebugUtilsMessenger(app.debugMessenger, nil)
  	}
-@@ -208,9 +221,52 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
- 	}
+@@ -215,6 +228,49 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
+ 	return nil
+ }
  
- 	if app.physicalDevice == nil {
--		return errors.New("failed to find a suitable GPU!")
-+		return errors.Errorf("failed to find a suitable GPU!")
-+	}
-+
-+	return nil
-+}
-+
 +func (app *HelloTriangleApplication) createLogicalDevice() error {
 +	indices, err := app.findQueueFamilies(app.physicalDevice)
 +	if err != nil {
@@ -76,17 +74,17 @@ index d3ac8e6..297c8d3 100644
 +	var extensionNames []string
 +
 +	// Makes this example compatible with vulkan portability, necessary to run on mobile & mac
-+	extensions, _, err := app.physicalDevice.EnumerateDeviceExtensionProperties()
++	extensions, _, err := app.instanceDriver.EnumerateDeviceExtensionProperties(app.physicalDevice)
 +	if err != nil {
 +		return err
- 	}
- 
++	}
++
 +	_, supported := extensions[khr_portability_subset.ExtensionName]
 +	if supported {
 +		extensionNames = append(extensionNames, khr_portability_subset.ExtensionName)
 +	}
 +
-+	app.device, _, err = app.physicalDevice.CreateDevice(nil, core1_0.DeviceCreateInfo{
++	app.deviceDriver, _, err = app.instanceDriver.CreateDevice(app.physicalDevice, nil, core1_0.DeviceCreateInfo{
 +		QueueCreateInfos:      queueFamilyOptions,
 +		EnabledFeatures:       &core1_0.PhysicalDeviceFeatures{},
 +		EnabledExtensionNames: extensionNames,
@@ -95,11 +93,14 @@ index d3ac8e6..297c8d3 100644
 +		return err
 +	}
 +
-+	app.graphicsQueue = app.device.GetQueue(*indices.GraphicsFamily, 0)
- 	return nil
- }
- 
-@@ -246,10 +302,6 @@ func (app *HelloTriangleApplication) logDebug(msgType ext_debug_utils.DebugUtils
++	app.graphicsQueue = app.deviceDriver.GetQueue(*indices.GraphicsFamily, 0)
++	return nil
++}
++
+ func (app *HelloTriangleApplication) isDeviceSuitable(device core1_0.PhysicalDevice) bool {
+ 	indices, err := app.findQueueFamilies(device)
+ 	if err != nil {
+@@ -247,10 +303,6 @@ func (app *HelloTriangleApplication) logDebug(msgType ext_debug_utils.DebugUtils
  	return false
  }
  

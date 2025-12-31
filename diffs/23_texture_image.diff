@@ -1,5 +1,5 @@
 diff --git a/../steps/22_descriptor_sets/main.go b/../steps/23_texture_image/main.go
-index 40dd122..38e9db5 100644
+index 3bcdab9..979c6db 100644
 --- a/../steps/22_descriptor_sets/main.go
 +++ b/../steps/23_texture_image/main.go
 @@ -4,6 +4,7 @@ import (
@@ -21,7 +21,7 @@ index 40dd122..38e9db5 100644
  
  const MaxFramesInFlight = 2
  
-@@ -143,6 +144,9 @@ type HelloTriangleApplication struct {
+@@ -144,6 +145,9 @@ type HelloTriangleApplication struct {
  
  	uniformBuffers       []core1_0.Buffer
  	uniformBuffersMemory []core1_0.DeviceMemory
@@ -31,7 +31,7 @@ index 40dd122..38e9db5 100644
  }
  
  func (app *HelloTriangleApplication) Run() error {
-@@ -240,6 +244,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -241,6 +245,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -43,22 +43,22 @@ index 40dd122..38e9db5 100644
  	err = app.createVertexBuffer()
  	if err != nil {
  		return err
-@@ -363,6 +372,14 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
+@@ -369,6 +378,14 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
  func (app *HelloTriangleApplication) cleanup() {
  	app.cleanupSwapChain()
  
-+	if app.textureImage != nil {
-+		app.textureImage.Destroy(nil)
++	if app.textureImage.Initialized() {
++		app.deviceDriver.DestroyImage(app.textureImage, nil)
 +	}
 +
-+	if app.textureImageMemory != nil {
-+		app.textureImageMemory.Free(nil)
++	if app.textureImageMemory.Initialized() {
++		app.deviceDriver.FreeMemory(app.textureImageMemory, nil)
 +	}
 +
- 	if app.descriptorSetLayout != nil {
- 		app.descriptorSetLayout.Destroy(nil)
+ 	if app.descriptorSetLayout.Initialized() {
+ 		app.deviceDriver.DestroyDescriptorSetLayout(app.descriptorSetLayout, nil)
  	}
-@@ -833,7 +850,7 @@ func bytesToBytecode(b []byte) []uint32 {
+@@ -839,7 +856,7 @@ func bytesToBytecode(b []byte) []uint32 {
  
  func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  	// Load vertex shader
@@ -67,8 +67,8 @@ index 40dd122..38e9db5 100644
  	if err != nil {
  		return err
  	}
-@@ -847,7 +864,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
- 	defer vertShader.Destroy(nil)
+@@ -853,7 +870,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+ 	defer app.deviceDriver.DestroyShaderModule(vertShader, nil)
  
  	// Load fragment shader
 -	fragShaderBytes, err := shaders.ReadFile("shaders/frag.spv")
@@ -76,7 +76,7 @@ index 40dd122..38e9db5 100644
  	if err != nil {
  		return err
  	}
-@@ -1004,6 +1021,183 @@ func (app *HelloTriangleApplication) createCommandPool() error {
+@@ -1013,6 +1030,182 @@ func (app *HelloTriangleApplication) createCommandPool() error {
  	return nil
  }
  
@@ -109,7 +109,7 @@ index 40dd122..38e9db5 100644
 +		}
 +	}
 +
-+	err = writeData(stagingMemory, 0, pixelData)
++	err = writeData(app.deviceDriver, stagingMemory, 0, pixelData)
 +	if err != nil {
 +		return err
 +	}
@@ -134,14 +134,14 @@ index 40dd122..38e9db5 100644
 +		return err
 +	}
 +
-+	stagingBuffer.Destroy(nil)
-+	stagingMemory.Free(nil)
++	app.deviceDriver.DestroyBuffer(stagingBuffer, nil)
++	app.deviceDriver.FreeMemory(stagingMemory, nil)
 +
 +	return nil
 +}
 +
 +func (app *HelloTriangleApplication) createImage(width, height int, format core1_0.Format, tiling core1_0.ImageTiling, usage core1_0.ImageUsageFlags, memoryProperties core1_0.MemoryPropertyFlags) (core1_0.Image, core1_0.DeviceMemory, error) {
-+	image, _, err := app.device.CreateImage(nil, core1_0.ImageCreateInfo{
++	image, _, err := app.deviceDriver.CreateImage(nil, core1_0.ImageCreateInfo{
 +		ImageType: core1_0.ImageType2D,
 +		Extent: core1_0.Extent3D{
 +			Width:  width,
@@ -158,23 +158,23 @@ index 40dd122..38e9db5 100644
 +		Samples:       core1_0.Samples1,
 +	})
 +	if err != nil {
-+		return nil, nil, err
++		return core1_0.Image{}, core1_0.DeviceMemory{}, err
 +	}
 +
-+	memReqs := image.MemoryRequirements()
++	memReqs := app.deviceDriver.GetImageMemoryRequirements(image)
 +	memoryIndex, err := app.findMemoryType(memReqs.MemoryTypeBits, memoryProperties)
 +	if err != nil {
-+		return nil, nil, err
++		return core1_0.Image{}, core1_0.DeviceMemory{}, err
 +	}
 +
-+	imageMemory, _, err := app.device.AllocateMemory(nil, core1_0.MemoryAllocateInfo{
++	imageMemory, _, err := app.deviceDriver.AllocateMemory(nil, core1_0.MemoryAllocateInfo{
 +		AllocationSize:  memReqs.Size,
 +		MemoryTypeIndex: memoryIndex,
 +	})
 +
-+	_, err = image.BindImageMemory(imageMemory, 0)
++	_, err = app.deviceDriver.BindImageMemory(image, imageMemory, 0)
 +	if err != nil {
-+		return nil, nil, err
++		return core1_0.Image{}, core1_0.DeviceMemory{}, err
 +	}
 +
 +	return image, imageMemory, nil
@@ -203,7 +203,7 @@ index 40dd122..38e9db5 100644
 +		return errors.Errorf("unexpected layout transition: %s -> %s", oldLayout, newLayout)
 +	}
 +
-+	err = buffer.CmdPipelineBarrier(sourceStage, destStage, 0, nil, nil, []core1_0.ImageMemoryBarrier{
++	err = app.deviceDriver.CmdPipelineBarrier(buffer, sourceStage, destStage, 0, nil, nil, []core1_0.ImageMemoryBarrier{
 +		{
 +			OldLayout:           oldLayout,
 +			NewLayout:           newLayout,
@@ -234,8 +234,8 @@ index 40dd122..38e9db5 100644
 +		return err
 +	}
 +
-+	err = cmdBuffer.CmdCopyBufferToImage(buffer, image, core1_0.ImageLayoutTransferDstOptimal, []core1_0.BufferImageCopy{
-+		{
++	err = app.deviceDriver.CmdCopyBufferToImage(cmdBuffer, buffer, image, core1_0.ImageLayoutTransferDstOptimal,
++		core1_0.BufferImageCopy{
 +			BufferOffset:      0,
 +			BufferRowLength:   0,
 +			BufferImageHeight: 0,
@@ -248,8 +248,7 @@ index 40dd122..38e9db5 100644
 +			},
 +			ImageOffset: core1_0.Offset3D{X: 0, Y: 0, Z: 0},
 +			ImageExtent: core1_0.Extent3D{Width: width, Height: height, Depth: 1},
-+		},
-+	})
++		})
 +	if err != nil {
 +		return err
 +	}
@@ -257,61 +256,63 @@ index 40dd122..38e9db5 100644
 +	return app.endSingleTimeCommands(cmdBuffer)
 +}
 +
- func writeData(memory core1_0.DeviceMemory, offset int, data any) error {
+ func writeData(driver core1_0.DeviceDriver, memory core1_0.DeviceMemory, offset int, data any) error {
  	bufferSize := binary.Size(data)
  
-@@ -1181,49 +1375,66 @@ func (app *HelloTriangleApplication) createBuffer(size int, usage core1_0.Buffer
+@@ -1191,50 +1384,64 @@ func (app *HelloTriangleApplication) createBuffer(size int, usage core1_0.Buffer
  	return buffer, memory, err
  }
  
 -func (app *HelloTriangleApplication) copyBuffer(srcBuffer core1_0.Buffer, dstBuffer core1_0.Buffer, size int) error {
 +func (app *HelloTriangleApplication) beginSingleTimeCommands() (core1_0.CommandBuffer, error) {
- 	buffers, _, err := app.device.AllocateCommandBuffers(core1_0.CommandBufferAllocateInfo{
+ 	buffers, _, err := app.deviceDriver.AllocateCommandBuffers(core1_0.CommandBufferAllocateInfo{
  		CommandPool:        app.commandPool,
  		Level:              core1_0.CommandBufferLevelPrimary,
  		CommandBufferCount: 1,
  	})
  	if err != nil {
 -		return err
-+		return nil, err
++		return core1_0.CommandBuffer{}, err
  	}
  
  	buffer := buffers[0]
- 	_, err = buffer.Begin(core1_0.CommandBufferBeginInfo{
+ 	_, err = app.deviceDriver.BeginCommandBuffer(buffer, core1_0.CommandBufferBeginInfo{
  		Flags: core1_0.CommandBufferUsageOneTimeSubmit,
  	})
 +	return buffer, err
 +}
 +
 +func (app *HelloTriangleApplication) endSingleTimeCommands(buffer core1_0.CommandBuffer) error {
-+	_, err := buffer.End()
++	_, err := app.deviceDriver.EndCommandBuffer(buffer)
  	if err != nil {
  		return err
  	}
--	defer app.device.FreeCommandBuffers(buffers)
+-	defer app.deviceDriver.FreeCommandBuffers(buffers...)
  
--	buffer.CmdCopyBuffer(srcBuffer, dstBuffer, []core1_0.BufferCopy{
-+	_, err = app.graphicsQueue.Submit(nil, []core1_0.SubmitInfo{
- 		{
+-	err = app.deviceDriver.CmdCopyBuffer(buffer, srcBuffer, dstBuffer,
+-		core1_0.BufferCopy{
 -			SrcOffset: 0,
 -			DstOffset: 0,
 -			Size:      size,
++	_, err = app.deviceDriver.QueueSubmit(app.graphicsQueue, nil,
++		core1_0.SubmitInfo{
 +			CommandBuffers: []core1_0.CommandBuffer{buffer},
- 		},
- 	})
- 
--	_, err = buffer.End()
+ 		})
++
  	if err != nil {
  		return err
  	}
  
--	_, err = app.graphicsQueue.Submit(nil, []core1_0.SubmitInfo{
-+	_, err = app.graphicsQueue.WaitIdle()
-+	if err != nil {
-+		return err
-+	}
-+
-+	app.device.FreeCommandBuffers([]core1_0.CommandBuffer{buffer})
+-	_, err = app.deviceDriver.EndCommandBuffer(buffer)
++	_, err = app.deviceDriver.QueueWaitIdle(app.graphicsQueue)
+ 	if err != nil {
+ 		return err
+ 	}
+ 
+-	_, err = app.deviceDriver.QueueSubmit(app.graphicsQueue, nil,
+-		core1_0.SubmitInfo{
+-			CommandBuffers: []core1_0.CommandBuffer{buffer},
++	app.deviceDriver.FreeCommandBuffers(buffer)
 +	return nil
 +}
 +
@@ -321,19 +322,17 @@ index 40dd122..38e9db5 100644
 +		return err
 +	}
 +
-+	err = buffer.CmdCopyBuffer(srcBuffer, dstBuffer, []core1_0.BufferCopy{
- 		{
--			CommandBuffers: []core1_0.CommandBuffer{buffer},
++	err = app.deviceDriver.CmdCopyBuffer(buffer, srcBuffer, dstBuffer,
++		core1_0.BufferCopy{
 +			SrcOffset: 0,
 +			DstOffset: 0,
 +			Size:      size,
- 		},
- 	})
+ 		})
  	if err != nil {
  		return err
  	}
  
--	_, err = app.graphicsQueue.WaitIdle()
+-	_, err = app.deviceDriver.QueueWaitIdle(app.graphicsQueue)
 -	return err
 +	return app.endSingleTimeCommands(buffer)
  }

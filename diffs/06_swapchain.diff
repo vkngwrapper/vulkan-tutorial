@@ -1,14 +1,13 @@
 diff --git a/../steps/05_window_surface/main.go b/../steps/06_swapchain/main.go
-index 9f11115..5536e3b 100644
+index 9072fd8..24159b3 100644
 --- a/../steps/05_window_surface/main.go
 +++ b/../steps/06_swapchain/main.go
-@@ -10,11 +10,13 @@ import (
- 	"github.com/vkngwrapper/extensions/v2/khr_portability_enumeration"
- 	"github.com/vkngwrapper/extensions/v2/khr_portability_subset"
- 	"github.com/vkngwrapper/extensions/v2/khr_surface"
-+	"github.com/vkngwrapper/extensions/v2/khr_swapchain"
- 	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2/v2"
- 	"log"
+@@ -12,10 +12,12 @@ import (
+ 	"github.com/vkngwrapper/extensions/v3/khr_portability_enumeration"
+ 	"github.com/vkngwrapper/extensions/v3/khr_portability_subset"
+ 	"github.com/vkngwrapper/extensions/v3/khr_surface"
++	"github.com/vkngwrapper/extensions/v3/khr_swapchain"
+ 	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2/v3"
  )
  
  var validationLayers = []string{"VK_LAYER_KHRONOS_validation"}
@@ -16,7 +15,7 @@ index 9f11115..5536e3b 100644
  
  const enableValidationLayers = true
  
-@@ -27,6 +29,12 @@ func (i *QueueFamilyIndices) IsComplete() bool {
+@@ -28,6 +30,12 @@ func (i *QueueFamilyIndices) IsComplete() bool {
  	return i.GraphicsFamily != nil && i.PresentFamily != nil
  }
  
@@ -27,14 +26,14 @@ index 9f11115..5536e3b 100644
 +}
 +
  type HelloTriangleApplication struct {
- 	window *sdl.Window
- 	loader core.Loader
-@@ -40,6 +48,12 @@ type HelloTriangleApplication struct {
+ 	globalDriver     core1_0.GlobalDriver
+ 	instanceDriver   core1_0.CoreInstanceDriver
+@@ -42,6 +50,12 @@ type HelloTriangleApplication struct {
  
  	graphicsQueue core1_0.Queue
  	presentQueue  core1_0.Queue
 +
-+	swapchainExtension   khr_swapchain.Extension
++	swapchainExtension   khr_swapchain.ExtensionDriver
 +	swapchain            khr_swapchain.Swapchain
 +	swapchainImages      []core1_0.Image
 +	swapchainImageFormat core1_0.Format
@@ -42,7 +41,7 @@ index 9f11115..5536e3b 100644
  }
  
  func (app *HelloTriangleApplication) Run() error {
-@@ -97,7 +111,12 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -99,7 +113,12 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -56,40 +55,35 @@ index 9f11115..5536e3b 100644
  }
  
  func (app *HelloTriangleApplication) mainLoop() error {
-@@ -115,6 +134,10 @@ appLoop:
+@@ -117,6 +136,10 @@ appLoop:
  }
  
  func (app *HelloTriangleApplication) cleanup() {
-+	if app.swapchain != nil {
-+		app.swapchain.Destroy(nil)
++	if app.swapchain.Initialized() {
++		app.swapchainExtension.DestroySwapchain(app.swapchain, nil)
 +	}
 +
- 	if app.device != nil {
- 		app.device.Destroy(nil)
+ 	if app.deviceDriver != nil {
+ 		app.deviceDriver.DestroyDevice(nil)
  	}
-@@ -247,7 +270,7 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
- 	}
- 
- 	if app.physicalDevice == nil {
--		return errors.Errorf("failed to find a suitable GPU!")
-+		return errors.New("failed to find a suitable GPU!")
- 	}
- 
- 	return nil
-@@ -274,6 +297,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
+@@ -276,6 +299,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
  	}
  
  	var extensionNames []string
 +	extensionNames = append(extensionNames, deviceExtensions...)
  
  	// Makes this example compatible with vulkan portability, necessary to run on mobile & mac
- 	extensions, _, err := app.physicalDevice.EnumerateDeviceExtensionProperties()
-@@ -300,13 +324,163 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
+ 	extensions, _, err := app.instanceDriver.EnumerateDeviceExtensionProperties(app.physicalDevice)
+@@ -298,16 +322,167 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
+ 	}
+ 
+ 	app.graphicsQueue = app.deviceDriver.GetQueue(*indices.GraphicsFamily, 0)
++	app.presentQueue = app.deviceDriver.GetQueue(*indices.PresentFamily, 0)
  	return nil
  }
  
 +func (app *HelloTriangleApplication) createSwapchain() error {
-+	app.swapchainExtension = khr_swapchain.CreateExtensionFromDevice(app.device)
++	app.swapchainExtension = khr_swapchain.CreateExtensionDriverFromCoreDriver(app.deviceDriver)
 +
 +	swapchainSupport, err := app.querySwapChainSupport(app.physicalDevice)
 +	if err != nil {
@@ -118,7 +112,7 @@ index 9f11115..5536e3b 100644
 +		queueFamilyIndices = append(queueFamilyIndices, *indices.GraphicsFamily, *indices.PresentFamily)
 +	}
 +
-+	swapchain, _, err := app.swapchainExtension.CreateSwapchain(app.device, nil, khr_swapchain.SwapchainCreateInfo{
++	swapchain, _, err := app.swapchainExtension.CreateSwapchain(nil, khr_swapchain.SwapchainCreateInfo{
 +		Surface: app.surface,
 +
 +		MinImageCount:    imageCount,
@@ -196,17 +190,17 @@ index 9f11115..5536e3b 100644
 +	var details SwapChainSupportDetails
 +	var err error
 +
-+	details.Capabilities, _, err = app.surface.PhysicalDeviceSurfaceCapabilities(device)
++	details.Capabilities, _, err = app.surfaceExtension.GetPhysicalDeviceSurfaceCapabilities(app.surface, device)
 +	if err != nil {
 +		return details, err
 +	}
 +
-+	details.Formats, _, err = app.surface.PhysicalDeviceSurfaceFormats(device)
++	details.Formats, _, err = app.surfaceExtension.GetPhysicalDeviceSurfaceFormats(app.surface, device)
 +	if err != nil {
 +		return details, err
 +	}
 +
-+	details.PresentModes, _, err = app.surface.PhysicalDeviceSurfacePresentModes(device)
++	details.PresentModes, _, err = app.surfaceExtension.GetPhysicalDeviceSurfacePresentModes(app.surface, device)
 +	return details, err
 +}
 +
@@ -233,7 +227,7 @@ index 9f11115..5536e3b 100644
 +}
 +
 +func (app *HelloTriangleApplication) checkDeviceExtensionSupport(device core1_0.PhysicalDevice) bool {
-+	extensions, _, err := device.EnumerateDeviceExtensionProperties()
++	extensions, _, err := app.instanceDriver.EnumerateDeviceExtensionProperties(device)
 +	if err != nil {
 +		return false
 +	}

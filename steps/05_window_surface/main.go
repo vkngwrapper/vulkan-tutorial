@@ -1,17 +1,18 @@
 package main
 
 import (
+	"log"
+
 	"github.com/pkg/errors"
 	"github.com/veandco/go-sdl2/sdl"
-	"github.com/vkngwrapper/core/v2"
-	"github.com/vkngwrapper/core/v2/common"
-	"github.com/vkngwrapper/core/v2/core1_0"
-	"github.com/vkngwrapper/extensions/v2/ext_debug_utils"
-	"github.com/vkngwrapper/extensions/v2/khr_portability_enumeration"
-	"github.com/vkngwrapper/extensions/v2/khr_portability_subset"
-	"github.com/vkngwrapper/extensions/v2/khr_surface"
-	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2/v2"
-	"log"
+	"github.com/vkngwrapper/core/v3"
+	"github.com/vkngwrapper/core/v3/common"
+	"github.com/vkngwrapper/core/v3/core1_0"
+	"github.com/vkngwrapper/extensions/v3/ext_debug_utils"
+	"github.com/vkngwrapper/extensions/v3/khr_portability_enumeration"
+	"github.com/vkngwrapper/extensions/v3/khr_portability_subset"
+	"github.com/vkngwrapper/extensions/v3/khr_surface"
+	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2/v3"
 )
 
 var validationLayers = []string{"VK_LAYER_KHRONOS_validation"}
@@ -28,15 +29,16 @@ func (i *QueueFamilyIndices) IsComplete() bool {
 }
 
 type HelloTriangleApplication struct {
-	window *sdl.Window
-	loader core.Loader
+	globalDriver     core1_0.GlobalDriver
+	instanceDriver   core1_0.CoreInstanceDriver
+	deviceDriver     core1_0.DeviceDriver
+	debugExtension   ext_debug_utils.ExtensionDriver
+	surfaceExtension khr_surface.ExtensionDriver
+	window           *sdl.Window
 
-	instance       core1_0.Instance
 	debugMessenger ext_debug_utils.DebugUtilsMessenger
 	surface        khr_surface.Surface
-
 	physicalDevice core1_0.PhysicalDevice
-	device         core1_0.Device
 
 	graphicsQueue core1_0.Queue
 	presentQueue  core1_0.Queue
@@ -68,7 +70,7 @@ func (app *HelloTriangleApplication) initWindow() error {
 	}
 	app.window = window
 
-	app.loader, err = core.CreateLoaderFromProcAddr(sdl.VulkanGetVkGetInstanceProcAddr())
+	app.globalDriver, err = core.CreateDriverFromProcAddr(sdl.VulkanGetVkGetInstanceProcAddr())
 	if err != nil {
 		return err
 	}
@@ -115,24 +117,24 @@ appLoop:
 }
 
 func (app *HelloTriangleApplication) cleanup() {
-	if app.device != nil {
-		app.device.Destroy(nil)
+	if app.deviceDriver != nil {
+		app.deviceDriver.DestroyDevice(nil)
 	}
 
-	if app.debugMessenger != nil {
-		app.debugMessenger.Destroy(nil)
+	if app.debugMessenger.Initialized() {
+		app.debugExtension.DestroyDebugUtilsMessenger(app.debugMessenger, nil)
 	}
 
-	if app.surface != nil {
-		app.surface.Destroy(nil)
+	if app.surface.Initialized() {
+		app.surfaceExtension.DestroySurface(app.surface, nil)
 	}
 
-	if app.instance != nil {
-		app.instance.Destroy(nil)
+	if app.instanceDriver != nil {
+		app.instanceDriver.DestroyInstance(nil)
 	}
 
 	if app.window != nil {
-		app.window.Destroy()
+		_ = app.window.Destroy()
 	}
 	sdl.Quit()
 }
@@ -148,7 +150,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 
 	// Add extensions
 	sdlExtensions := app.window.VulkanGetInstanceExtensions()
-	extensions, _, err := app.loader.AvailableExtensions()
+	extensions, _, err := app.globalDriver.AvailableExtensions()
 	if err != nil {
 		return err
 	}
@@ -172,7 +174,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 	}
 
 	// Add layers
-	layers, _, err := app.loader.AvailableLayers()
+	layers, _, err := app.globalDriver.AvailableLayers()
 	if err != nil {
 		return err
 	}
@@ -190,7 +192,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		instanceOptions.Next = app.debugMessengerOptions()
 	}
 
-	app.instance, _, err = app.loader.CreateInstance(nil, instanceOptions)
+	app.instanceDriver, _, err = app.globalDriver.CreateInstance(nil, instanceOptions)
 	if err != nil {
 		return err
 	}
@@ -212,8 +214,8 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 	}
 
 	var err error
-	debugLoader := ext_debug_utils.CreateExtensionFromInstance(app.instance)
-	app.debugMessenger, _, err = debugLoader.CreateDebugUtilsMessenger(app.instance, nil, app.debugMessengerOptions())
+	app.debugExtension = ext_debug_utils.CreateExtensionDriverFromCoreDriver(app.instanceDriver)
+	app.debugMessenger, _, err = app.debugExtension.CreateDebugUtilsMessenger(nil, app.debugMessengerOptions())
 	if err != nil {
 		return err
 	}
@@ -222,9 +224,9 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 }
 
 func (app *HelloTriangleApplication) createSurface() error {
-	surfaceLoader := khr_surface.CreateExtensionFromInstance(app.instance)
+	app.surfaceExtension = khr_surface.CreateExtensionDriverFromCoreDriver(app.instanceDriver)
 
-	surface, err := vkng_sdl2.CreateSurface(app.instance, surfaceLoader, app.window)
+	surface, err := vkng_sdl2.CreateSurface(app.instanceDriver.Instance(), app.surfaceExtension, app.window)
 	if err != nil {
 		return err
 	}
@@ -234,7 +236,7 @@ func (app *HelloTriangleApplication) createSurface() error {
 }
 
 func (app *HelloTriangleApplication) pickPhysicalDevice() error {
-	physicalDevices, _, err := app.instance.EnumeratePhysicalDevices()
+	physicalDevices, _, err := app.instanceDriver.EnumeratePhysicalDevices()
 	if err != nil {
 		return err
 	}
@@ -246,8 +248,8 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
 		}
 	}
 
-	if app.physicalDevice == nil {
-		return errors.Errorf("failed to find a suitable GPU!")
+	if !app.physicalDevice.Initialized() {
+		return errors.New("failed to find a suitable GPU!")
 	}
 
 	return nil
@@ -276,7 +278,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 	var extensionNames []string
 
 	// Makes this example compatible with vulkan portability, necessary to run on mobile & mac
-	extensions, _, err := app.physicalDevice.EnumerateDeviceExtensionProperties()
+	extensions, _, err := app.instanceDriver.EnumerateDeviceExtensionProperties(app.physicalDevice)
 	if err != nil {
 		return err
 	}
@@ -286,7 +288,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		extensionNames = append(extensionNames, khr_portability_subset.ExtensionName)
 	}
 
-	app.device, _, err = app.physicalDevice.CreateDevice(nil, core1_0.DeviceCreateInfo{
+	app.deviceDriver, _, err = app.instanceDriver.CreateDevice(app.physicalDevice, nil, core1_0.DeviceCreateInfo{
 		QueueCreateInfos:      queueFamilyOptions,
 		EnabledFeatures:       &core1_0.PhysicalDeviceFeatures{},
 		EnabledExtensionNames: extensionNames,
@@ -295,8 +297,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		return err
 	}
 
-	app.graphicsQueue = app.device.GetQueue(*indices.GraphicsFamily, 0)
-	app.presentQueue = app.device.GetQueue(*indices.PresentFamily, 0)
+	app.graphicsQueue = app.deviceDriver.GetQueue(*indices.GraphicsFamily, 0)
 	return nil
 }
 
@@ -311,7 +312,7 @@ func (app *HelloTriangleApplication) isDeviceSuitable(device core1_0.PhysicalDev
 
 func (app *HelloTriangleApplication) findQueueFamilies(device core1_0.PhysicalDevice) (QueueFamilyIndices, error) {
 	indices := QueueFamilyIndices{}
-	queueFamilies := device.QueueFamilyProperties()
+	queueFamilies := app.instanceDriver.GetPhysicalDeviceQueueFamilyProperties(device)
 
 	for queueFamilyIdx, queueFamily := range queueFamilies {
 		if (queueFamily.QueueFlags & core1_0.QueueGraphics) != 0 {
@@ -319,7 +320,7 @@ func (app *HelloTriangleApplication) findQueueFamilies(device core1_0.PhysicalDe
 			*indices.GraphicsFamily = queueFamilyIdx
 		}
 
-		supported, _, err := app.surface.PhysicalDeviceSurfaceSupport(device, queueFamilyIdx)
+		supported, _, err := app.surfaceExtension.GetPhysicalDeviceSurfaceSupport(app.surface, device, queueFamilyIdx)
 		if err != nil {
 			return indices, err
 		}

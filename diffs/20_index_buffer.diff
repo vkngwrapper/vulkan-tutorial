@@ -1,5 +1,5 @@
 diff --git a/../steps/19_staging_buffer/main.go b/../steps/20_index_buffer/main.go
-index 6c65f99..2cda176 100644
+index ddb8bcf..9fbfac7 100644
 --- a/../steps/19_staging_buffer/main.go
 +++ b/../steps/20_index_buffer/main.go
 @@ -80,11 +80,14 @@ func getVertexAttributeDescriptions() []core1_0.VertexInputAttributeDescription
@@ -18,9 +18,9 @@ index 6c65f99..2cda176 100644
 +var indices = []uint16{0, 1, 2, 2, 3, 0}
 +
  type HelloTriangleApplication struct {
- 	window *sdl.Window
- 	loader core.Loader
-@@ -122,6 +125,8 @@ type HelloTriangleApplication struct {
+ 	globalDriver     core1_0.GlobalDriver
+ 	instanceDriver   core1_0.CoreInstanceDriver
+@@ -123,6 +126,8 @@ type HelloTriangleApplication struct {
  
  	vertexBuffer       core1_0.Buffer
  	vertexBufferMemory core1_0.DeviceMemory
@@ -29,7 +29,7 @@ index 6c65f99..2cda176 100644
  }
  
  func (app *HelloTriangleApplication) Run() error {
-@@ -219,6 +224,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -220,6 +225,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -41,31 +41,22 @@ index 6c65f99..2cda176 100644
  	err = app.createCommandBuffers()
  	if err != nil {
  		return err
-@@ -305,6 +315,14 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
+@@ -309,6 +319,14 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
  func (app *HelloTriangleApplication) cleanup() {
  	app.cleanupSwapChain()
  
-+	if app.indexBuffer != nil {
-+		app.indexBuffer.Destroy(nil)
++	if app.indexBuffer.Initialized() {
++		app.deviceDriver.DestroyBuffer(app.indexBuffer, nil)
 +	}
 +
-+	if app.indexBufferMemory != nil {
-+		app.indexBufferMemory.Free(nil)
++	if app.indexBufferMemory.Initialized() {
++		app.deviceDriver.FreeMemory(app.indexBufferMemory, nil)
 +	}
 +
- 	if app.vertexBuffer != nil {
- 		app.vertexBuffer.Destroy(nil)
+ 	if app.vertexBuffer.Initialized() {
+ 		app.deviceDriver.DestroyBuffer(app.vertexBuffer, nil)
  	}
-@@ -515,7 +533,7 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
- 	}
- 
- 	if app.physicalDevice == nil {
--		return errors.New("failed to find a suitable GPU!")
-+		return errors.Errorf("failed to find a suitable GPU!")
- 	}
- 
- 	return nil
-@@ -948,6 +966,34 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
+@@ -952,6 +970,34 @@ func (app *HelloTriangleApplication) createVertexBuffer() error {
  	return app.copyBuffer(stagingBuffer, app.vertexBuffer, bufferSize)
  }
  
@@ -73,18 +64,18 @@ index 6c65f99..2cda176 100644
 +	bufferSize := binary.Size(indices)
 +
 +	stagingBuffer, stagingBufferMemory, err := app.createBuffer(bufferSize, core1_0.BufferUsageTransferSrc, core1_0.MemoryPropertyHostVisible|core1_0.MemoryPropertyHostCoherent)
-+	if stagingBuffer != nil {
-+		defer stagingBuffer.Destroy(nil)
++	if stagingBuffer.Initialized() {
++		defer app.deviceDriver.DestroyBuffer(stagingBuffer, nil)
 +	}
-+	if stagingBufferMemory != nil {
-+		defer stagingBufferMemory.Free(nil)
++	if stagingBufferMemory.Initialized() {
++		defer app.deviceDriver.FreeMemory(stagingBufferMemory, nil)
 +	}
 +
 +	if err != nil {
 +		return err
 +	}
 +
-+	err = writeData(stagingBufferMemory, 0, indices)
++	err = writeData(app.deviceDriver, stagingBufferMemory, 0, indices)
 +	if err != nil {
 +		return err
 +	}
@@ -98,32 +89,15 @@ index 6c65f99..2cda176 100644
 +}
 +
  func (app *HelloTriangleApplication) createBuffer(size int, usage core1_0.BufferUsageFlags, properties core1_0.MemoryPropertyFlags) (core1_0.Buffer, core1_0.DeviceMemory, error) {
- 	buffer, _, err := app.device.CreateBuffer(nil, core1_0.BufferCreateInfo{
+ 	buffer, _, err := app.deviceDriver.CreateBuffer(nil, core1_0.BufferCreateInfo{
  		Size:        size,
-@@ -959,7 +1005,6 @@ func (app *HelloTriangleApplication) createBuffer(size int, usage core1_0.Buffer
- 	}
+@@ -1076,7 +1122,8 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
  
- 	memRequirements := buffer.MemoryRequirements()
--
- 	memoryTypeIndex, err := app.findMemoryType(memRequirements.MemoryTypeBits, properties)
- 	if err != nil {
- 		return buffer, nil, err
-@@ -1032,7 +1077,7 @@ func (app *HelloTriangleApplication) findMemoryType(typeFilter uint32, propertie
- 		}
- 	}
+ 		app.deviceDriver.CmdBindPipeline(buffer, core1_0.PipelineBindPointGraphics, app.graphicsPipeline)
+ 		app.deviceDriver.CmdBindVertexBuffers(buffer, 0, []core1_0.Buffer{app.vertexBuffer}, []int{0})
+-		app.deviceDriver.CmdDraw(buffer, 3, 1, 0, 0)
++		app.deviceDriver.CmdBindIndexBuffer(buffer, app.indexBuffer, 0, core1_0.IndexTypeUInt16)
++		app.deviceDriver.CmdDrawIndexed(buffer, len(indices), 1, 0, 0, 0)
+ 		app.deviceDriver.CmdEndRenderPass(buffer)
  
--	return 0, errors.New("failed to find any suitable memory type!")
-+	return 0, errors.Errorf("failed to find any suitable memory type!")
- }
- 
- func (app *HelloTriangleApplication) createCommandBuffers() error {
-@@ -1071,7 +1116,8 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
- 
- 		buffer.CmdBindPipeline(core1_0.PipelineBindPointGraphics, app.graphicsPipeline)
- 		buffer.CmdBindVertexBuffers(0, []core1_0.Buffer{app.vertexBuffer}, []int{0})
--		buffer.CmdDraw(len(vertices), 1, 0, 0)
-+		buffer.CmdBindIndexBuffer(app.indexBuffer, 0, core1_0.IndexTypeUInt16)
-+		buffer.CmdDrawIndexed(len(indices), 1, 0, 0, 0)
- 		buffer.CmdEndRenderPass()
- 
- 		_, err = buffer.End()
+ 		_, err = app.deviceDriver.EndCommandBuffer(buffer)

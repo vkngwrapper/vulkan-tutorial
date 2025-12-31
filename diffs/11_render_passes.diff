@@ -1,8 +1,8 @@
 diff --git a/../steps/10_fixed_functions/main.go b/../steps/11_render_passes/main.go
-index 76e61c8..81b6945 100644
+index 93ea3e0..c2a12b7 100644
 --- a/../steps/10_fixed_functions/main.go
 +++ b/../steps/11_render_passes/main.go
-@@ -60,6 +60,7 @@ type HelloTriangleApplication struct {
+@@ -62,6 +62,7 @@ type HelloTriangleApplication struct {
  	swapchainExtent      core1_0.Extent2D
  	swapchainImageViews  []core1_0.ImageView
  
@@ -10,7 +10,7 @@ index 76e61c8..81b6945 100644
  	pipelineLayout core1_0.PipelineLayout
  }
  
-@@ -128,6 +129,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -130,6 +131,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -22,23 +22,23 @@ index 76e61c8..81b6945 100644
  	return app.createGraphicsPipeline()
  }
  
-@@ -150,6 +156,10 @@ func (app *HelloTriangleApplication) cleanup() {
- 		app.pipelineLayout.Destroy(nil)
+@@ -152,6 +158,10 @@ func (app *HelloTriangleApplication) cleanup() {
+ 		app.deviceDriver.DestroyPipelineLayout(app.pipelineLayout, nil)
  	}
  
-+	if app.renderPass != nil {
-+		app.renderPass.Destroy(nil)
++	if app.renderPass.Initialized() {
++		app.deviceDriver.DestroyRenderPass(app.renderPass, nil)
 +	}
 +
  	for _, imageView := range app.swapchainImageViews {
- 		imageView.Destroy(nil)
+ 		app.deviceDriver.DestroyImageView(imageView, nil)
  	}
-@@ -436,6 +446,53 @@ func (app *HelloTriangleApplication) createSwapchain() error {
+@@ -438,6 +448,53 @@ func (app *HelloTriangleApplication) createSwapchain() error {
  	return nil
  }
  
 +func (app *HelloTriangleApplication) createRenderPass() error {
-+	renderPass, _, err := app.device.CreateRenderPass(nil, core1_0.RenderPassCreateInfo{
++	renderPass, _, err := app.deviceDriver.CreateRenderPass(nil, core1_0.RenderPassCreateInfo{
 +		Attachments: []core1_0.AttachmentDescription{
 +			{
 +				Format:         app.swapchainImageFormat,

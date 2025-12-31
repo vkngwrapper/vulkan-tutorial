@@ -1,18 +1,18 @@
 diff --git a/../steps/12_graphics_pipeline_complete/main.go b/../steps/13_framebuffers/main.go
-index 00e5503..f04de7b 100644
+index 3fd08fa..2d95a15 100644
 --- a/../steps/12_graphics_pipeline_complete/main.go
 +++ b/../steps/13_framebuffers/main.go
-@@ -53,12 +53,13 @@ type HelloTriangleApplication struct {
+@@ -55,12 +55,13 @@ type HelloTriangleApplication struct {
  	graphicsQueue core1_0.Queue
  	presentQueue  core1_0.Queue
  
--	swapchainExtension   khr_swapchain.Extension
+-	swapchainExtension   khr_swapchain.ExtensionDriver
 -	swapchain            khr_swapchain.Swapchain
 -	swapchainImages      []core1_0.Image
 -	swapchainImageFormat core1_0.Format
 -	swapchainExtent      core1_0.Extent2D
 -	swapchainImageViews  []core1_0.ImageView
-+	swapchainExtension    khr_swapchain.Extension
++	swapchainExtension    khr_swapchain.ExtensionDriver
 +	swapchain             khr_swapchain.Swapchain
 +	swapchainImages       []core1_0.Image
 +	swapchainImageFormat  core1_0.Format
@@ -22,7 +22,7 @@ index 00e5503..f04de7b 100644
  
  	renderPass       core1_0.RenderPass
  	pipelineLayout   core1_0.PipelineLayout
-@@ -135,7 +136,12 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -137,7 +138,12 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -36,24 +36,24 @@ index 00e5503..f04de7b 100644
  }
  
  func (app *HelloTriangleApplication) mainLoop() error {
-@@ -153,6 +159,10 @@ appLoop:
+@@ -155,6 +161,10 @@ appLoop:
  }
  
  func (app *HelloTriangleApplication) cleanup() {
 +	for _, framebuffer := range app.swapchainFramebuffers {
-+		framebuffer.Destroy(nil)
++		app.deviceDriver.DestroyFramebuffer(framebuffer, nil)
 +	}
 +
- 	if app.graphicsPipeline != nil {
- 		app.graphicsPipeline.Destroy(nil)
+ 	if app.graphicsPipeline.Initialized() {
+ 		app.deviceDriver.DestroyPipeline(app.graphicsPipeline, nil)
  	}
-@@ -642,6 +652,27 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -644,6 +654,27 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  	return nil
  }
  
 +func (app *HelloTriangleApplication) createFramebuffers() error {
 +	for _, imageView := range app.swapchainImageViews {
-+		framebuffer, _, err := app.device.CreateFramebuffer(nil, core1_0.FramebufferCreateInfo{
++		framebuffer, _, err := app.deviceDriver.CreateFramebuffer(nil, core1_0.FramebufferCreateInfo{
 +			RenderPass: app.renderPass,
 +			Layers:     1,
 +			Attachments: []core1_0.ImageView{

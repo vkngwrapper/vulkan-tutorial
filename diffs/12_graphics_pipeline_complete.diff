@@ -1,8 +1,8 @@
 diff --git a/../steps/11_render_passes/main.go b/../steps/12_graphics_pipeline_complete/main.go
-index 81b6945..00e5503 100644
+index c2a12b7..3fd08fa 100644
 --- a/../steps/11_render_passes/main.go
 +++ b/../steps/12_graphics_pipeline_complete/main.go
-@@ -60,8 +60,9 @@ type HelloTriangleApplication struct {
+@@ -62,8 +62,9 @@ type HelloTriangleApplication struct {
  	swapchainExtent      core1_0.Extent2D
  	swapchainImageViews  []core1_0.ImageView
  
@@ -14,20 +14,20 @@ index 81b6945..00e5503 100644
  }
  
  func (app *HelloTriangleApplication) Run() error {
-@@ -152,6 +153,10 @@ appLoop:
+@@ -154,6 +155,10 @@ appLoop:
  }
  
  func (app *HelloTriangleApplication) cleanup() {
-+	if app.graphicsPipeline != nil {
-+		app.graphicsPipeline.Destroy(nil)
++	if app.graphicsPipeline.Initialized() {
++		app.deviceDriver.DestroyPipeline(app.graphicsPipeline, nil)
 +	}
 +
- 	if app.pipelineLayout != nil {
- 		app.pipelineLayout.Destroy(nil)
+ 	if app.pipelineLayout.Initialized() {
+ 		app.deviceDriver.DestroyPipelineLayout(app.pipelineLayout, nil)
  	}
-@@ -536,26 +541,26 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -538,26 +543,26 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  	}
- 	defer fragShader.Destroy(nil)
+ 	defer app.deviceDriver.DestroyShaderModule(fragShader, nil)
  
 -	_ = &core1_0.PipelineVertexInputStateCreateInfo{}
 +	vertexInput := &core1_0.PipelineVertexInputStateCreateInfo{}
@@ -38,14 +38,14 @@ index 81b6945..00e5503 100644
  		PrimitiveRestartEnable: false,
  	}
  
--	_ = &core1_0.PipelineShaderStageCreateInfo{
+-	_ = core1_0.PipelineShaderStageCreateInfo{
 +	vertStage := core1_0.PipelineShaderStageCreateInfo{
  		Stage:  core1_0.StageVertex,
  		Module: vertShader,
  		Name:   "main",
  	}
  
--	_ = &core1_0.PipelineShaderStageCreateInfo{
+-	_ = core1_0.PipelineShaderStageCreateInfo{
 +	fragStage := core1_0.PipelineShaderStageCreateInfo{
  		Stage:  core1_0.StageFragment,
  		Module: fragShader,
@@ -57,7 +57,7 @@ index 81b6945..00e5503 100644
  		Viewports: []core1_0.Viewport{
  			{
  				X:        0,
-@@ -574,7 +579,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -576,7 +581,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  		},
  	}
  
@@ -66,7 +66,7 @@ index 81b6945..00e5503 100644
  		DepthClampEnable:        false,
  		RasterizerDiscardEnable: false,
  
-@@ -587,13 +592,13 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -589,13 +594,13 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  		LineWidth: 1.0,
  	}
  
@@ -82,12 +82,12 @@ index 81b6945..00e5503 100644
  		LogicOpEnabled: false,
  		LogicOp:        core1_0.LogicOpCopy,
  
-@@ -611,6 +616,29 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -613,6 +618,29 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  		return err
  	}
  
-+	pipelines, _, err := app.device.CreateGraphicsPipelines(nil, nil, []core1_0.GraphicsPipelineCreateInfo{
-+		{
++	pipelines, _, err := app.deviceDriver.CreateGraphicsPipelines(nil, nil,
++		core1_0.GraphicsPipelineCreateInfo{
 +			Stages: []core1_0.PipelineShaderStageCreateInfo{
 +				vertStage,
 +				fragStage,
@@ -103,7 +103,7 @@ index 81b6945..00e5503 100644
 +			Subpass:            0,
 +			BasePipelineIndex:  -1,
 +		},
-+	})
++	)
 +	if err != nil {
 +		return err
 +	}

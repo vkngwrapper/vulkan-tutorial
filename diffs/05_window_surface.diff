@@ -1,17 +1,17 @@
 diff --git a/../steps/04_logical_device/main.go b/../steps/05_window_surface/main.go
-index 297c8d3..9f11115 100644
+index 9992741..9072fd8 100644
 --- a/../steps/04_logical_device/main.go
 +++ b/../steps/05_window_surface/main.go
-@@ -9,6 +9,8 @@ import (
- 	"github.com/vkngwrapper/extensions/v2/ext_debug_utils"
- 	"github.com/vkngwrapper/extensions/v2/khr_portability_enumeration"
- 	"github.com/vkngwrapper/extensions/v2/khr_portability_subset"
-+	"github.com/vkngwrapper/extensions/v2/khr_surface"
-+	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2/v2"
- 	"log"
+@@ -11,6 +11,8 @@ import (
+ 	"github.com/vkngwrapper/extensions/v3/ext_debug_utils"
+ 	"github.com/vkngwrapper/extensions/v3/khr_portability_enumeration"
+ 	"github.com/vkngwrapper/extensions/v3/khr_portability_subset"
++	"github.com/vkngwrapper/extensions/v3/khr_surface"
++	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2/v3"
  )
  
-@@ -18,10 +20,11 @@ const enableValidationLayers = true
+ var validationLayers = []string{"VK_LAYER_KHRONOS_validation"}
+@@ -19,23 +21,27 @@ const enableValidationLayers = true
  
  type QueueFamilyIndices struct {
  	GraphicsFamily *int
@@ -24,21 +24,28 @@ index 297c8d3..9f11115 100644
  }
  
  type HelloTriangleApplication struct {
-@@ -30,11 +33,13 @@ type HelloTriangleApplication struct {
+-	globalDriver   core1_0.GlobalDriver
+-	instanceDriver core1_0.CoreInstanceDriver
+-	deviceDriver   core1_0.DeviceDriver
+-	debugExtension ext_debug_utils.ExtensionDriver
+-	window         *sdl.Window
++	globalDriver     core1_0.GlobalDriver
++	instanceDriver   core1_0.CoreInstanceDriver
++	deviceDriver     core1_0.DeviceDriver
++	debugExtension   ext_debug_utils.ExtensionDriver
++	surfaceExtension khr_surface.ExtensionDriver
++	window           *sdl.Window
  
- 	instance       core1_0.Instance
  	debugMessenger ext_debug_utils.DebugUtilsMessenger
 +	surface        khr_surface.Surface
- 
  	physicalDevice core1_0.PhysicalDevice
- 	device         core1_0.Device
  
  	graphicsQueue core1_0.Queue
 +	presentQueue  core1_0.Queue
  }
  
  func (app *HelloTriangleApplication) Run() error {
-@@ -82,6 +87,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -83,6 +89,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -50,25 +57,25 @@ index 297c8d3..9f11115 100644
  	err = app.pickPhysicalDevice()
  	if err != nil {
  		return err
-@@ -113,6 +123,10 @@ func (app *HelloTriangleApplication) cleanup() {
- 		app.debugMessenger.Destroy(nil)
+@@ -114,6 +125,10 @@ func (app *HelloTriangleApplication) cleanup() {
+ 		app.debugExtension.DestroyDebugUtilsMessenger(app.debugMessenger, nil)
  	}
  
-+	if app.surface != nil {
-+		app.surface.Destroy(nil)
++	if app.surface.Initialized() {
++		app.surfaceExtension.DestroySurface(app.surface, nil)
 +	}
 +
- 	if app.instance != nil {
- 		app.instance.Destroy(nil)
+ 	if app.instanceDriver != nil {
+ 		app.instanceDriver.DestroyInstance(nil)
  	}
-@@ -207,6 +221,18 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
+@@ -208,6 +223,18 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
  	return nil
  }
  
 +func (app *HelloTriangleApplication) createSurface() error {
-+	surfaceLoader := khr_surface.CreateExtensionFromInstance(app.instance)
++	app.surfaceExtension = khr_surface.CreateExtensionDriverFromCoreDriver(app.instanceDriver)
 +
-+	surface, err := vkng_sdl2.CreateSurface(app.instance, surfaceLoader, app.window)
++	surface, err := vkng_sdl2.CreateSurface(app.instanceDriver.Instance(), app.surfaceExtension, app.window)
 +	if err != nil {
 +		return err
 +	}
@@ -78,9 +85,9 @@ index 297c8d3..9f11115 100644
 +}
 +
  func (app *HelloTriangleApplication) pickPhysicalDevice() error {
- 	physicalDevices, _, err := app.instance.EnumeratePhysicalDevices()
+ 	physicalDevices, _, err := app.instanceDriver.EnumeratePhysicalDevices()
  	if err != nil {
-@@ -234,6 +260,9 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
+@@ -235,6 +262,9 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
  	}
  
  	uniqueQueueFamilies := []int{*indices.GraphicsFamily}
@@ -90,19 +97,11 @@ index 297c8d3..9f11115 100644
  
  	var queueFamilyOptions []core1_0.DeviceQueueCreateInfo
  	queuePriority := float32(1.0)
-@@ -267,6 +296,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
- 	}
- 
- 	app.graphicsQueue = app.device.GetQueue(*indices.GraphicsFamily, 0)
-+	app.presentQueue = app.device.GetQueue(*indices.PresentFamily, 0)
- 	return nil
- }
- 
-@@ -289,6 +319,16 @@ func (app *HelloTriangleApplication) findQueueFamilies(device core1_0.PhysicalDe
+@@ -290,6 +320,16 @@ func (app *HelloTriangleApplication) findQueueFamilies(device core1_0.PhysicalDe
  			*indices.GraphicsFamily = queueFamilyIdx
  		}
  
-+		supported, _, err := app.surface.PhysicalDeviceSurfaceSupport(device, queueFamilyIdx)
++		supported, _, err := app.surfaceExtension.GetPhysicalDeviceSurfaceSupport(app.surface, device, queueFamilyIdx)
 +		if err != nil {
 +			return indices, err
 +		}

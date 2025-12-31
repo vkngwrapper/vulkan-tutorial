@@ -1,8 +1,8 @@
 diff --git a/../steps/15_hello_triangle/main.go b/../steps/16_swap_chain_recreation/main.go
-index 172ae82..3371308 100644
+index 9f935f2..dcd17be 100644
 --- a/../steps/15_hello_triangle/main.go
 +++ b/../steps/16_swap_chain_recreation/main.go
-@@ -98,7 +98,7 @@ func (app *HelloTriangleApplication) initWindow() error {
+@@ -99,7 +99,7 @@ func (app *HelloTriangleApplication) initWindow() error {
  		return err
  	}
  
@@ -11,7 +11,7 @@ index 172ae82..3371308 100644
  	if err != nil {
  		return err
  	}
-@@ -143,6 +143,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -144,6 +144,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -23,7 +23,7 @@ index 172ae82..3371308 100644
  	err = app.createRenderPass()
  	if err != nil {
  		return err
-@@ -172,17 +177,36 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -173,17 +178,39 @@ func (app *HelloTriangleApplication) initVulkan() error {
  }
  
  func (app *HelloTriangleApplication) mainLoop() error {
@@ -46,7 +46,10 @@ index 172ae82..3371308 100644
 +					w, h := app.window.GetSize()
 +					if w > 0 && h > 0 {
 +						rendering = true
-+						app.recreateSwapChain()
++						err := app.recreateSwapChain()
++						if err != nil {
++							return err
++						}
 +					} else {
 +						rendering = false
 +					}
@@ -64,61 +67,61 @@ index 172ae82..3371308 100644
  		}
  	}
  
-@@ -190,45 +214,60 @@ appLoop:
+@@ -191,45 +218,60 @@ appLoop:
  	return err
  }
  
 -func (app *HelloTriangleApplication) cleanup() {
 -	for _, fence := range app.inFlightFence {
--		fence.Destroy(nil)
+-		app.deviceDriver.DestroyFence(fence, nil)
 -	}
 -
 -	for _, semaphore := range app.renderFinishedSemaphore {
--		semaphore.Destroy(nil)
+-		app.deviceDriver.DestroySemaphore(semaphore, nil)
 -	}
 -
 -	for _, semaphore := range app.imageAvailableSemaphore {
--		semaphore.Destroy(nil)
+-		app.deviceDriver.DestroySemaphore(semaphore, nil)
 -	}
 -
--	if app.commandPool != nil {
--		app.commandPool.Destroy(nil)
+-	if app.commandPool.Initialized() {
+-		app.deviceDriver.DestroyCommandPool(app.commandPool, nil)
 -	}
 -
 +func (app *HelloTriangleApplication) cleanupSwapChain() {
  	for _, framebuffer := range app.swapchainFramebuffers {
- 		framebuffer.Destroy(nil)
+ 		app.deviceDriver.DestroyFramebuffer(framebuffer, nil)
  	}
 +	app.swapchainFramebuffers = []core1_0.Framebuffer{}
 +
 +	if len(app.commandBuffers) > 0 {
-+		app.device.FreeCommandBuffers(app.commandBuffers)
++		app.deviceDriver.FreeCommandBuffers(app.commandBuffers...)
 +		app.commandBuffers = []core1_0.CommandBuffer{}
 +	}
  
- 	if app.graphicsPipeline != nil {
- 		app.graphicsPipeline.Destroy(nil)
-+		app.graphicsPipeline = nil
+ 	if app.graphicsPipeline.Initialized() {
+ 		app.deviceDriver.DestroyPipeline(app.graphicsPipeline, nil)
++		app.graphicsPipeline = core1_0.Pipeline{}
  	}
  
- 	if app.pipelineLayout != nil {
- 		app.pipelineLayout.Destroy(nil)
-+		app.pipelineLayout = nil
+ 	if app.pipelineLayout.Initialized() {
+ 		app.deviceDriver.DestroyPipelineLayout(app.pipelineLayout, nil)
++		app.pipelineLayout = core1_0.PipelineLayout{}
  	}
  
- 	if app.renderPass != nil {
- 		app.renderPass.Destroy(nil)
-+		app.renderPass = nil
+ 	if app.renderPass.Initialized() {
+ 		app.deviceDriver.DestroyRenderPass(app.renderPass, nil)
++		app.renderPass = core1_0.RenderPass{}
  	}
  
  	for _, imageView := range app.swapchainImageViews {
- 		imageView.Destroy(nil)
+ 		app.deviceDriver.DestroyImageView(imageView, nil)
  	}
 +	app.swapchainImageViews = []core1_0.ImageView{}
  
- 	if app.swapchain != nil {
- 		app.swapchain.Destroy(nil)
-+		app.swapchain = nil
+ 	if app.swapchain.Initialized() {
+ 		app.swapchainExtension.DestroySwapchain(app.swapchain, nil)
++		app.swapchain = khr_swapchain.Swapchain{}
 +	}
 +}
 +
@@ -126,23 +129,29 @@ index 172ae82..3371308 100644
 +	app.cleanupSwapChain()
 +
 +	for _, fence := range app.inFlightFence {
-+		fence.Destroy(nil)
++		app.deviceDriver.DestroyFence(fence, nil)
 +	}
 +
 +	for _, semaphore := range app.renderFinishedSemaphore {
-+		semaphore.Destroy(nil)
++		app.deviceDriver.DestroySemaphore(semaphore, nil)
 +	}
 +
 +	for _, semaphore := range app.imageAvailableSemaphore {
-+		semaphore.Destroy(nil)
++		app.deviceDriver.DestroySemaphore(semaphore, nil)
 +	}
 +
-+	if app.commandPool != nil {
-+		app.commandPool.Destroy(nil)
++	if app.commandPool.Initialized() {
++		app.deviceDriver.DestroyCommandPool(app.commandPool, nil)
  	}
  
- 	if app.device != nil {
-@@ -253,6 +292,60 @@ func (app *HelloTriangleApplication) cleanup() {
+ 	if app.deviceDriver != nil {
+@@ -249,11 +291,65 @@ func (app *HelloTriangleApplication) cleanup() {
+ 	}
+ 
+ 	if app.window != nil {
+-		_ = app.window.Destroy()
++		app.window.Destroy()
+ 	}
  	sdl.Quit()
  }
  
@@ -155,7 +164,7 @@ index 172ae82..3371308 100644
 +		return nil
 +	}
 +
-+	_, err := app.device.WaitIdle()
++	_, err := app.deviceDriver.DeviceWaitIdle()
 +	if err != nil {
 +		return err
 +	}
@@ -194,7 +203,7 @@ index 172ae82..3371308 100644
 +
 +	app.imagesInFlight = []core1_0.Fence{}
 +	for i := 0; i < len(app.swapchainImages); i++ {
-+		app.imagesInFlight = append(app.imagesInFlight, nil)
++		app.imagesInFlight = append(app.imagesInFlight, core1_0.Fence{})
 +	}
 +
 +	return nil
@@ -203,21 +212,21 @@ index 172ae82..3371308 100644
  func (app *HelloTriangleApplication) createInstance() error {
  	instanceOptions := core1_0.InstanceCreateInfo{
  		ApplicationName:    "Hello Triangle",
-@@ -472,7 +565,11 @@ func (app *HelloTriangleApplication) createSwapchain() error {
+@@ -471,7 +567,12 @@ func (app *HelloTriangleApplication) createSwapchain() error {
+ 	}
+ 	app.swapchainExtent = extent
  	app.swapchain = swapchain
- 	app.swapchainImageFormat = surfaceFormat.Format
++	app.swapchainImageFormat = surfaceFormat.Format
  
--	images, _, err := swapchain.SwapchainImages()
 +	return nil
 +}
 +
 +func (app *HelloTriangleApplication) createImageViews() error {
-+	images, _, err := app.swapchain.SwapchainImages()
+ 	images, _, err := app.swapchainExtension.GetSwapchainImages(app.swapchain)
  	if err != nil {
  		return err
- 	}
-@@ -483,7 +580,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
- 		view, _, err := app.device.CreateImageView(nil, core1_0.ImageViewCreateInfo{
+@@ -483,7 +584,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
+ 		view, _, err := app.deviceDriver.CreateImageView(nil, core1_0.ImageViewCreateInfo{
  			ViewType: core1_0.ImageViewType2D,
  			Image:    image,
 -			Format:   surfaceFormat.Format,
@@ -225,26 +234,28 @@ index 172ae82..3371308 100644
  			Components: core1_0.ComponentMapping{
  				R: core1_0.ComponentSwizzleIdentity,
  				G: core1_0.ComponentSwizzleIdentity,
-@@ -827,13 +924,15 @@ func (app *HelloTriangleApplication) drawFrame() error {
+@@ -505,7 +606,6 @@ func (app *HelloTriangleApplication) createSwapchain() error {
+ 		imageViews = append(imageViews, view)
+ 	}
+ 	app.swapchainImageViews = imageViews
+-	app.swapchainImageFormat = surfaceFormat.Format
+ 
+ 	return nil
+ }
+@@ -826,8 +926,10 @@ func (app *HelloTriangleApplication) drawFrame() error {
  		return err
  	}
  
--	imageIndex, _, err := app.swapchain.AcquireNextImage(common.NoTimeout, app.imageAvailableSemaphore[app.currentFrame], nil)
+-	imageIndex, _, err := app.swapchainExtension.AcquireNextImage(app.swapchain, common.NoTimeout, &app.imageAvailableSemaphore[app.currentFrame], nil)
 -	if err != nil {
-+	imageIndex, res, err := app.swapchain.AcquireNextImage(common.NoTimeout, app.imageAvailableSemaphore[app.currentFrame], nil)
++	imageIndex, res, err := app.swapchainExtension.AcquireNextImage(app.swapchain, common.NoTimeout, &app.imageAvailableSemaphore[app.currentFrame], nil)
 +	if res == khr_swapchain.VKErrorOutOfDate {
 +		return app.recreateSwapChain()
 +	} else if err != nil {
  		return err
  	}
  
- 	if app.imagesInFlight[imageIndex] != nil {
--		_, err := app.device.WaitForFences(true, common.NoTimeout, []core1_0.Fence{app.imagesInFlight[imageIndex]})
-+		_, err := app.imagesInFlight[imageIndex].Wait(common.NoTimeout)
- 		if err != nil {
- 			return err
- 		}
-@@ -857,12 +956,14 @@ func (app *HelloTriangleApplication) drawFrame() error {
+@@ -855,12 +957,14 @@ func (app *HelloTriangleApplication) drawFrame() error {
  		return err
  	}
  

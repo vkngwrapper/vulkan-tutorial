@@ -1,5 +1,5 @@
 diff --git a/../steps/17_vertex_input/main.go b/../steps/18_vertex_buffer/main.go
-index 73caa9f..78746a7 100644
+index 50e7fcc..c6d8035 100644
 --- a/../steps/17_vertex_input/main.go
 +++ b/../steps/18_vertex_buffer/main.go
 @@ -1,7 +1,9 @@
@@ -12,7 +12,7 @@ index 73caa9f..78746a7 100644
  	"log"
  	"unsafe"
  
-@@ -117,6 +119,9 @@ type HelloTriangleApplication struct {
+@@ -118,6 +120,9 @@ type HelloTriangleApplication struct {
  	inFlightFence           []core1_0.Fence
  	imagesInFlight          []core1_0.Fence
  	currentFrame            int
@@ -22,7 +22,7 @@ index 73caa9f..78746a7 100644
  }
  
  func (app *HelloTriangleApplication) Run() error {
-@@ -209,6 +214,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -210,6 +215,11 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -34,29 +34,29 @@ index 73caa9f..78746a7 100644
  	err = app.createCommandBuffers()
  	if err != nil {
  		return err
-@@ -295,6 +305,14 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
+@@ -299,6 +309,14 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
  func (app *HelloTriangleApplication) cleanup() {
  	app.cleanupSwapChain()
  
-+	if app.vertexBuffer != nil {
-+		app.vertexBuffer.Destroy(nil)
++	if app.vertexBuffer.Initialized() {
++		app.deviceDriver.DestroyBuffer(app.vertexBuffer, nil)
 +	}
 +
-+	if app.vertexBufferMemory != nil {
-+		app.vertexBufferMemory.Free(nil)
++	if app.vertexBufferMemory.Initialized() {
++		app.deviceDriver.FreeMemory(app.vertexBufferMemory, nil)
 +	}
 +
  	for _, fence := range app.inFlightFence {
- 		fence.Destroy(nil)
+ 		app.deviceDriver.DestroyFence(fence, nil)
  	}
-@@ -880,6 +898,69 @@ func (app *HelloTriangleApplication) createCommandPool() error {
+@@ -884,6 +902,69 @@ func (app *HelloTriangleApplication) createCommandPool() error {
  	return nil
  }
  
 +func (app *HelloTriangleApplication) createVertexBuffer() error {
 +	var err error
 +	bufferSize := binary.Size(vertices)
-+	app.vertexBuffer, _, err = app.device.CreateBuffer(nil, core1_0.BufferCreateInfo{
++	app.vertexBuffer, _, err = app.deviceDriver.CreateBuffer(nil, core1_0.BufferCreateInfo{
 +		Size:        bufferSize,
 +		Usage:       core1_0.BufferUsageVertexBuffer,
 +		SharingMode: core1_0.SharingModeExclusive,
@@ -65,13 +65,13 @@ index 73caa9f..78746a7 100644
 +		return err
 +	}
 +
-+	memRequirements := app.vertexBuffer.MemoryRequirements()
++	memRequirements := app.deviceDriver.GetBufferMemoryRequirements(app.vertexBuffer)
 +	memoryTypeIndex, err := app.findMemoryType(memRequirements.MemoryTypeBits, core1_0.MemoryPropertyHostVisible|core1_0.MemoryPropertyHostCoherent)
 +	if err != nil {
 +		return err
 +	}
 +
-+	app.vertexBufferMemory, _, err = app.device.AllocateMemory(nil, core1_0.MemoryAllocateInfo{
++	app.vertexBufferMemory, _, err = app.deviceDriver.AllocateMemory(nil, core1_0.MemoryAllocateInfo{
 +		AllocationSize:  memRequirements.Size,
 +		MemoryTypeIndex: memoryTypeIndex,
 +	})
@@ -79,16 +79,16 @@ index 73caa9f..78746a7 100644
 +		return err
 +	}
 +
-+	_, err = app.vertexBuffer.BindBufferMemory(app.vertexBufferMemory, 0)
++	_, err = app.deviceDriver.BindBufferMemory(app.vertexBuffer, app.vertexBufferMemory, 0)
 +	if err != nil {
 +		return err
 +	}
 +
-+	memory, _, err := app.vertexBufferMemory.Map(0, bufferSize, 0)
++	memory, _, err := app.deviceDriver.MapMemory(app.vertexBufferMemory, 0, bufferSize, 0)
 +	if err != nil {
 +		return err
 +	}
-+	defer app.vertexBufferMemory.Unmap()
++	defer app.deviceDriver.UnmapMemory(app.vertexBufferMemory)
 +
 +	dataBuffer := unsafe.Slice((*byte)(memory), bufferSize)
 +
@@ -104,7 +104,7 @@ index 73caa9f..78746a7 100644
 +}
 +
 +func (app *HelloTriangleApplication) findMemoryType(typeFilter uint32, properties core1_0.MemoryPropertyFlags) (int, error) {
-+	memProperties := app.physicalDevice.MemoryProperties()
++	memProperties := app.instanceDriver.GetPhysicalDeviceMemoryProperties(app.physicalDevice)
 +	for i, memoryType := range memProperties.MemoryTypes {
 +		typeBit := uint32(1 << i)
 +
@@ -118,14 +118,12 @@ index 73caa9f..78746a7 100644
 +
  func (app *HelloTriangleApplication) createCommandBuffers() error {
  
- 	buffers, _, err := app.device.AllocateCommandBuffers(core1_0.CommandBufferAllocateInfo{
-@@ -915,7 +996,8 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
+ 	buffers, _, err := app.deviceDriver.AllocateCommandBuffers(core1_0.CommandBufferAllocateInfo{
+@@ -919,6 +1000,7 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
  		}
  
- 		buffer.CmdBindPipeline(core1_0.PipelineBindPointGraphics, app.graphicsPipeline)
--		buffer.CmdDraw(3, 1, 0, 0)
-+		buffer.CmdBindVertexBuffers(0, []core1_0.Buffer{app.vertexBuffer}, []int{0})
-+		buffer.CmdDraw(len(vertices), 1, 0, 0)
- 		buffer.CmdEndRenderPass()
+ 		app.deviceDriver.CmdBindPipeline(buffer, core1_0.PipelineBindPointGraphics, app.graphicsPipeline)
++		app.deviceDriver.CmdBindVertexBuffers(buffer, 0, []core1_0.Buffer{app.vertexBuffer}, []int{0})
+ 		app.deviceDriver.CmdDraw(buffer, 3, 1, 0, 0)
+ 		app.deviceDriver.CmdEndRenderPass(buffer)
  
- 		_, err = buffer.End()

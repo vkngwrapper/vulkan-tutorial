@@ -1,8 +1,8 @@
 diff --git a/../steps/13_framebuffers/main.go b/../steps/14_command_buffers/main.go
-index f04de7b..f3f8d35 100644
+index 2d95a15..bacae90 100644
 --- a/../steps/13_framebuffers/main.go
 +++ b/../steps/14_command_buffers/main.go
-@@ -64,6 +64,9 @@ type HelloTriangleApplication struct {
+@@ -66,6 +66,9 @@ type HelloTriangleApplication struct {
  	renderPass       core1_0.RenderPass
  	pipelineLayout   core1_0.PipelineLayout
  	graphicsPipeline core1_0.Pipeline
@@ -12,7 +12,7 @@ index f04de7b..f3f8d35 100644
  }
  
  func (app *HelloTriangleApplication) Run() error {
-@@ -141,7 +144,17 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -143,7 +146,17 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -31,18 +31,18 @@ index f04de7b..f3f8d35 100644
  }
  
  func (app *HelloTriangleApplication) mainLoop() error {
-@@ -159,6 +172,10 @@ appLoop:
+@@ -161,6 +174,10 @@ appLoop:
  }
  
  func (app *HelloTriangleApplication) cleanup() {
-+	if app.commandPool != nil {
-+		app.commandPool.Destroy(nil)
++	if app.commandPool.Initialized() {
++		app.deviceDriver.DestroyCommandPool(app.commandPool, nil)
 +	}
 +
  	for _, framebuffer := range app.swapchainFramebuffers {
- 		framebuffer.Destroy(nil)
+ 		app.deviceDriver.DestroyFramebuffer(framebuffer, nil)
  	}
-@@ -673,6 +690,71 @@ func (app *HelloTriangleApplication) createFramebuffers() error {
+@@ -675,6 +692,71 @@ func (app *HelloTriangleApplication) createFramebuffers() error {
  	return nil
  }
  
@@ -52,7 +52,7 @@ index f04de7b..f3f8d35 100644
 +		return err
 +	}
 +
-+	pool, _, err := app.device.CreateCommandPool(nil, core1_0.CommandPoolCreateInfo{
++	pool, _, err := app.deviceDriver.CreateCommandPool(nil, core1_0.CommandPoolCreateInfo{
 +		QueueFamilyIndex: *indices.GraphicsFamily,
 +	})
 +
@@ -66,7 +66,7 @@ index f04de7b..f3f8d35 100644
 +
 +func (app *HelloTriangleApplication) createCommandBuffers() error {
 +
-+	buffers, _, err := app.device.AllocateCommandBuffers(core1_0.CommandBufferAllocateInfo{
++	buffers, _, err := app.deviceDriver.AllocateCommandBuffers(core1_0.CommandBufferAllocateInfo{
 +		CommandPool:        app.commandPool,
 +		Level:              core1_0.CommandBufferLevelPrimary,
 +		CommandBufferCount: len(app.swapchainImages),
@@ -77,12 +77,12 @@ index f04de7b..f3f8d35 100644
 +	app.commandBuffers = buffers
 +
 +	for bufferIdx, buffer := range buffers {
-+		_, err = buffer.Begin(core1_0.CommandBufferBeginInfo{})
++		_, err = app.deviceDriver.BeginCommandBuffer(buffer, core1_0.CommandBufferBeginInfo{})
 +		if err != nil {
 +			return err
 +		}
 +
-+		err = buffer.CmdBeginRenderPass(core1_0.SubpassContentsInline,
++		err = app.deviceDriver.CmdBeginRenderPass(buffer, core1_0.SubpassContentsInline,
 +			core1_0.RenderPassBeginInfo{
 +				RenderPass:  app.renderPass,
 +				Framebuffer: app.swapchainFramebuffers[bufferIdx],
@@ -98,11 +98,11 @@ index f04de7b..f3f8d35 100644
 +			return err
 +		}
 +
-+		buffer.CmdBindPipeline(core1_0.PipelineBindPointGraphics, app.graphicsPipeline)
-+		buffer.CmdDraw(3, 1, 0, 0)
-+		buffer.CmdEndRenderPass()
++		app.deviceDriver.CmdBindPipeline(buffer, core1_0.PipelineBindPointGraphics, app.graphicsPipeline)
++		app.deviceDriver.CmdDraw(buffer, 3, 1, 0, 0)
++		app.deviceDriver.CmdEndRenderPass(buffer)
 +
-+		_, err = buffer.End()
++		_, err = app.deviceDriver.EndCommandBuffer(buffer)
 +		if err != nil {
 +			return err
 +		}

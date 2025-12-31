@@ -2,18 +2,19 @@ package main
 
 import (
 	"embed"
+	"log"
+
 	"github.com/pkg/errors"
 	"github.com/veandco/go-sdl2/sdl"
-	"github.com/vkngwrapper/core/v2"
-	"github.com/vkngwrapper/core/v2/common"
-	"github.com/vkngwrapper/core/v2/core1_0"
-	"github.com/vkngwrapper/extensions/v2/ext_debug_utils"
-	"github.com/vkngwrapper/extensions/v2/khr_portability_enumeration"
-	"github.com/vkngwrapper/extensions/v2/khr_portability_subset"
-	"github.com/vkngwrapper/extensions/v2/khr_surface"
-	"github.com/vkngwrapper/extensions/v2/khr_swapchain"
-	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2/v2"
-	"log"
+	"github.com/vkngwrapper/core/v3"
+	"github.com/vkngwrapper/core/v3/common"
+	"github.com/vkngwrapper/core/v3/core1_0"
+	"github.com/vkngwrapper/extensions/v3/ext_debug_utils"
+	"github.com/vkngwrapper/extensions/v3/khr_portability_enumeration"
+	"github.com/vkngwrapper/extensions/v3/khr_portability_subset"
+	"github.com/vkngwrapper/extensions/v3/khr_surface"
+	"github.com/vkngwrapper/extensions/v3/khr_swapchain"
+	vkng_sdl2 "github.com/vkngwrapper/integrations/sdl2/v3"
 )
 
 //go:embed shaders
@@ -40,20 +41,21 @@ type SwapChainSupportDetails struct {
 }
 
 type HelloTriangleApplication struct {
-	window *sdl.Window
-	loader core.Loader
+	globalDriver     core1_0.GlobalDriver
+	instanceDriver   core1_0.CoreInstanceDriver
+	deviceDriver     core1_0.DeviceDriver
+	debugExtension   ext_debug_utils.ExtensionDriver
+	surfaceExtension khr_surface.ExtensionDriver
+	window           *sdl.Window
 
-	instance       core1_0.Instance
 	debugMessenger ext_debug_utils.DebugUtilsMessenger
 	surface        khr_surface.Surface
-
 	physicalDevice core1_0.PhysicalDevice
-	device         core1_0.Device
 
 	graphicsQueue core1_0.Queue
 	presentQueue  core1_0.Queue
 
-	swapchainExtension    khr_swapchain.Extension
+	swapchainExtension    khr_swapchain.ExtensionDriver
 	swapchain             khr_swapchain.Swapchain
 	swapchainImages       []core1_0.Image
 	swapchainImageFormat  core1_0.Format
@@ -95,7 +97,7 @@ func (app *HelloTriangleApplication) initWindow() error {
 	}
 	app.window = window
 
-	app.loader, err = core.CreateLoaderFromProcAddr(sdl.VulkanGetVkGetInstanceProcAddr())
+	app.globalDriver, err = core.CreateDriverFromProcAddr(sdl.VulkanGetVkGetInstanceProcAddr())
 	if err != nil {
 		return err
 	}
@@ -172,52 +174,52 @@ appLoop:
 }
 
 func (app *HelloTriangleApplication) cleanup() {
-	if app.commandPool != nil {
-		app.commandPool.Destroy(nil)
+	if app.commandPool.Initialized() {
+		app.deviceDriver.DestroyCommandPool(app.commandPool, nil)
 	}
 
 	for _, framebuffer := range app.swapchainFramebuffers {
-		framebuffer.Destroy(nil)
+		app.deviceDriver.DestroyFramebuffer(framebuffer, nil)
 	}
 
-	if app.graphicsPipeline != nil {
-		app.graphicsPipeline.Destroy(nil)
+	if app.graphicsPipeline.Initialized() {
+		app.deviceDriver.DestroyPipeline(app.graphicsPipeline, nil)
 	}
 
-	if app.pipelineLayout != nil {
-		app.pipelineLayout.Destroy(nil)
+	if app.pipelineLayout.Initialized() {
+		app.deviceDriver.DestroyPipelineLayout(app.pipelineLayout, nil)
 	}
 
-	if app.renderPass != nil {
-		app.renderPass.Destroy(nil)
+	if app.renderPass.Initialized() {
+		app.deviceDriver.DestroyRenderPass(app.renderPass, nil)
 	}
 
 	for _, imageView := range app.swapchainImageViews {
-		imageView.Destroy(nil)
+		app.deviceDriver.DestroyImageView(imageView, nil)
 	}
 
-	if app.swapchain != nil {
-		app.swapchain.Destroy(nil)
+	if app.swapchain.Initialized() {
+		app.swapchainExtension.DestroySwapchain(app.swapchain, nil)
 	}
 
-	if app.device != nil {
-		app.device.Destroy(nil)
+	if app.deviceDriver != nil {
+		app.deviceDriver.DestroyDevice(nil)
 	}
 
-	if app.debugMessenger != nil {
-		app.debugMessenger.Destroy(nil)
+	if app.debugMessenger.Initialized() {
+		app.debugExtension.DestroyDebugUtilsMessenger(app.debugMessenger, nil)
 	}
 
-	if app.surface != nil {
-		app.surface.Destroy(nil)
+	if app.surface.Initialized() {
+		app.surfaceExtension.DestroySurface(app.surface, nil)
 	}
 
-	if app.instance != nil {
-		app.instance.Destroy(nil)
+	if app.instanceDriver != nil {
+		app.instanceDriver.DestroyInstance(nil)
 	}
 
 	if app.window != nil {
-		app.window.Destroy()
+		_ = app.window.Destroy()
 	}
 	sdl.Quit()
 }
@@ -233,7 +235,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 
 	// Add extensions
 	sdlExtensions := app.window.VulkanGetInstanceExtensions()
-	extensions, _, err := app.loader.AvailableExtensions()
+	extensions, _, err := app.globalDriver.AvailableExtensions()
 	if err != nil {
 		return err
 	}
@@ -257,7 +259,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 	}
 
 	// Add layers
-	layers, _, err := app.loader.AvailableLayers()
+	layers, _, err := app.globalDriver.AvailableLayers()
 	if err != nil {
 		return err
 	}
@@ -275,7 +277,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		instanceOptions.Next = app.debugMessengerOptions()
 	}
 
-	app.instance, _, err = app.loader.CreateInstance(nil, instanceOptions)
+	app.instanceDriver, _, err = app.globalDriver.CreateInstance(nil, instanceOptions)
 	if err != nil {
 		return err
 	}
@@ -297,8 +299,8 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 	}
 
 	var err error
-	debugLoader := ext_debug_utils.CreateExtensionFromInstance(app.instance)
-	app.debugMessenger, _, err = debugLoader.CreateDebugUtilsMessenger(app.instance, nil, app.debugMessengerOptions())
+	app.debugExtension = ext_debug_utils.CreateExtensionDriverFromCoreDriver(app.instanceDriver)
+	app.debugMessenger, _, err = app.debugExtension.CreateDebugUtilsMessenger(nil, app.debugMessengerOptions())
 	if err != nil {
 		return err
 	}
@@ -307,9 +309,9 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 }
 
 func (app *HelloTriangleApplication) createSurface() error {
-	surfaceLoader := khr_surface.CreateExtensionFromInstance(app.instance)
+	app.surfaceExtension = khr_surface.CreateExtensionDriverFromCoreDriver(app.instanceDriver)
 
-	surface, err := vkng_sdl2.CreateSurface(app.instance, surfaceLoader, app.window)
+	surface, err := vkng_sdl2.CreateSurface(app.instanceDriver.Instance(), app.surfaceExtension, app.window)
 	if err != nil {
 		return err
 	}
@@ -319,7 +321,7 @@ func (app *HelloTriangleApplication) createSurface() error {
 }
 
 func (app *HelloTriangleApplication) pickPhysicalDevice() error {
-	physicalDevices, _, err := app.instance.EnumeratePhysicalDevices()
+	physicalDevices, _, err := app.instanceDriver.EnumeratePhysicalDevices()
 	if err != nil {
 		return err
 	}
@@ -331,7 +333,7 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
 		}
 	}
 
-	if app.physicalDevice == nil {
+	if !app.physicalDevice.Initialized() {
 		return errors.New("failed to find a suitable GPU!")
 	}
 
@@ -362,7 +364,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 	extensionNames = append(extensionNames, deviceExtensions...)
 
 	// Makes this example compatible with vulkan portability, necessary to run on mobile & mac
-	extensions, _, err := app.physicalDevice.EnumerateDeviceExtensionProperties()
+	extensions, _, err := app.instanceDriver.EnumerateDeviceExtensionProperties(app.physicalDevice)
 	if err != nil {
 		return err
 	}
@@ -372,7 +374,7 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		extensionNames = append(extensionNames, khr_portability_subset.ExtensionName)
 	}
 
-	app.device, _, err = app.physicalDevice.CreateDevice(nil, core1_0.DeviceCreateInfo{
+	app.deviceDriver, _, err = app.instanceDriver.CreateDevice(app.physicalDevice, nil, core1_0.DeviceCreateInfo{
 		QueueCreateInfos:      queueFamilyOptions,
 		EnabledFeatures:       &core1_0.PhysicalDeviceFeatures{},
 		EnabledExtensionNames: extensionNames,
@@ -381,13 +383,13 @@ func (app *HelloTriangleApplication) createLogicalDevice() error {
 		return err
 	}
 
-	app.graphicsQueue = app.device.GetQueue(*indices.GraphicsFamily, 0)
-	app.presentQueue = app.device.GetQueue(*indices.PresentFamily, 0)
+	app.graphicsQueue = app.deviceDriver.GetQueue(*indices.GraphicsFamily, 0)
+	app.presentQueue = app.deviceDriver.GetQueue(*indices.PresentFamily, 0)
 	return nil
 }
 
 func (app *HelloTriangleApplication) createSwapchain() error {
-	app.swapchainExtension = khr_swapchain.CreateExtensionFromDevice(app.device)
+	app.swapchainExtension = khr_swapchain.CreateExtensionDriverFromCoreDriver(app.deviceDriver)
 
 	swapchainSupport, err := app.querySwapChainSupport(app.physicalDevice)
 	if err != nil {
@@ -416,7 +418,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 		queueFamilyIndices = append(queueFamilyIndices, *indices.GraphicsFamily, *indices.PresentFamily)
 	}
 
-	swapchain, _, err := app.swapchainExtension.CreateSwapchain(app.device, nil, khr_swapchain.SwapchainCreateInfo{
+	swapchain, _, err := app.swapchainExtension.CreateSwapchain(nil, khr_swapchain.SwapchainCreateInfo{
 		Surface: app.surface,
 
 		MinImageCount:    imageCount,
@@ -440,7 +442,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 	app.swapchainExtent = extent
 	app.swapchain = swapchain
 
-	images, _, err := swapchain.SwapchainImages()
+	images, _, err := app.swapchainExtension.GetSwapchainImages(app.swapchain)
 	if err != nil {
 		return err
 	}
@@ -448,7 +450,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 
 	var imageViews []core1_0.ImageView
 	for _, image := range images {
-		view, _, err := app.device.CreateImageView(nil, core1_0.ImageViewCreateInfo{
+		view, _, err := app.deviceDriver.CreateImageView(nil, core1_0.ImageViewCreateInfo{
 			ViewType: core1_0.ImageViewType2D,
 			Image:    image,
 			Format:   surfaceFormat.Format,
@@ -479,7 +481,7 @@ func (app *HelloTriangleApplication) createSwapchain() error {
 }
 
 func (app *HelloTriangleApplication) createRenderPass() error {
-	renderPass, _, err := app.device.CreateRenderPass(nil, core1_0.RenderPassCreateInfo{
+	renderPass, _, err := app.deviceDriver.CreateRenderPass(nil, core1_0.RenderPassCreateInfo{
 		Attachments: []core1_0.AttachmentDescription{
 			{
 				Format:         app.swapchainImageFormat,
@@ -546,13 +548,13 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		return err
 	}
 
-	vertShader, _, err := app.device.CreateShaderModule(nil, core1_0.ShaderModuleCreateInfo{
+	vertShader, _, err := app.deviceDriver.CreateShaderModule(nil, core1_0.ShaderModuleCreateInfo{
 		Code: bytesToBytecode(vertShaderBytes),
 	})
 	if err != nil {
 		return err
 	}
-	defer vertShader.Destroy(nil)
+	defer app.deviceDriver.DestroyShaderModule(vertShader, nil)
 
 	// Load fragment shader
 	fragShaderBytes, err := shaders.ReadFile("shaders/frag.spv")
@@ -560,13 +562,13 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		return err
 	}
 
-	fragShader, _, err := app.device.CreateShaderModule(nil, core1_0.ShaderModuleCreateInfo{
+	fragShader, _, err := app.deviceDriver.CreateShaderModule(nil, core1_0.ShaderModuleCreateInfo{
 		Code: bytesToBytecode(fragShaderBytes),
 	})
 	if err != nil {
 		return err
 	}
-	defer fragShader.Destroy(nil)
+	defer app.deviceDriver.DestroyShaderModule(fragShader, nil)
 
 	vertexInput := &core1_0.PipelineVertexInputStateCreateInfo{}
 
@@ -638,13 +640,13 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 		},
 	}
 
-	app.pipelineLayout, _, err = app.device.CreatePipelineLayout(nil, core1_0.PipelineLayoutCreateInfo{})
+	app.pipelineLayout, _, err = app.deviceDriver.CreatePipelineLayout(nil, core1_0.PipelineLayoutCreateInfo{})
 	if err != nil {
 		return err
 	}
 
-	pipelines, _, err := app.device.CreateGraphicsPipelines(nil, nil, []core1_0.GraphicsPipelineCreateInfo{
-		{
+	pipelines, _, err := app.deviceDriver.CreateGraphicsPipelines(nil, nil,
+		core1_0.GraphicsPipelineCreateInfo{
 			Stages: []core1_0.PipelineShaderStageCreateInfo{
 				vertStage,
 				fragStage,
@@ -660,7 +662,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 			Subpass:            0,
 			BasePipelineIndex:  -1,
 		},
-	})
+	)
 	if err != nil {
 		return err
 	}
@@ -671,7 +673,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
 
 func (app *HelloTriangleApplication) createFramebuffers() error {
 	for _, imageView := range app.swapchainImageViews {
-		framebuffer, _, err := app.device.CreateFramebuffer(nil, core1_0.FramebufferCreateInfo{
+		framebuffer, _, err := app.deviceDriver.CreateFramebuffer(nil, core1_0.FramebufferCreateInfo{
 			RenderPass: app.renderPass,
 			Layers:     1,
 			Attachments: []core1_0.ImageView{
@@ -696,7 +698,7 @@ func (app *HelloTriangleApplication) createCommandPool() error {
 		return err
 	}
 
-	pool, _, err := app.device.CreateCommandPool(nil, core1_0.CommandPoolCreateInfo{
+	pool, _, err := app.deviceDriver.CreateCommandPool(nil, core1_0.CommandPoolCreateInfo{
 		QueueFamilyIndex: *indices.GraphicsFamily,
 	})
 
@@ -710,7 +712,7 @@ func (app *HelloTriangleApplication) createCommandPool() error {
 
 func (app *HelloTriangleApplication) createCommandBuffers() error {
 
-	buffers, _, err := app.device.AllocateCommandBuffers(core1_0.CommandBufferAllocateInfo{
+	buffers, _, err := app.deviceDriver.AllocateCommandBuffers(core1_0.CommandBufferAllocateInfo{
 		CommandPool:        app.commandPool,
 		Level:              core1_0.CommandBufferLevelPrimary,
 		CommandBufferCount: len(app.swapchainImages),
@@ -721,12 +723,12 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
 	app.commandBuffers = buffers
 
 	for bufferIdx, buffer := range buffers {
-		_, err = buffer.Begin(core1_0.CommandBufferBeginInfo{})
+		_, err = app.deviceDriver.BeginCommandBuffer(buffer, core1_0.CommandBufferBeginInfo{})
 		if err != nil {
 			return err
 		}
 
-		err = buffer.CmdBeginRenderPass(core1_0.SubpassContentsInline,
+		err = app.deviceDriver.CmdBeginRenderPass(buffer, core1_0.SubpassContentsInline,
 			core1_0.RenderPassBeginInfo{
 				RenderPass:  app.renderPass,
 				Framebuffer: app.swapchainFramebuffers[bufferIdx],
@@ -742,11 +744,11 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
 			return err
 		}
 
-		buffer.CmdBindPipeline(core1_0.PipelineBindPointGraphics, app.graphicsPipeline)
-		buffer.CmdDraw(3, 1, 0, 0)
-		buffer.CmdEndRenderPass()
+		app.deviceDriver.CmdBindPipeline(buffer, core1_0.PipelineBindPointGraphics, app.graphicsPipeline)
+		app.deviceDriver.CmdDraw(buffer, 3, 1, 0, 0)
+		app.deviceDriver.CmdEndRenderPass(buffer)
 
-		_, err = buffer.End()
+		_, err = app.deviceDriver.EndCommandBuffer(buffer)
 		if err != nil {
 			return err
 		}
@@ -804,17 +806,17 @@ func (app *HelloTriangleApplication) querySwapChainSupport(device core1_0.Physic
 	var details SwapChainSupportDetails
 	var err error
 
-	details.Capabilities, _, err = app.surface.PhysicalDeviceSurfaceCapabilities(device)
+	details.Capabilities, _, err = app.surfaceExtension.GetPhysicalDeviceSurfaceCapabilities(app.surface, device)
 	if err != nil {
 		return details, err
 	}
 
-	details.Formats, _, err = app.surface.PhysicalDeviceSurfaceFormats(device)
+	details.Formats, _, err = app.surfaceExtension.GetPhysicalDeviceSurfaceFormats(app.surface, device)
 	if err != nil {
 		return details, err
 	}
 
-	details.PresentModes, _, err = app.surface.PhysicalDeviceSurfacePresentModes(device)
+	details.PresentModes, _, err = app.surfaceExtension.GetPhysicalDeviceSurfacePresentModes(app.surface, device)
 	return details, err
 }
 
@@ -840,7 +842,7 @@ func (app *HelloTriangleApplication) isDeviceSuitable(device core1_0.PhysicalDev
 }
 
 func (app *HelloTriangleApplication) checkDeviceExtensionSupport(device core1_0.PhysicalDevice) bool {
-	extensions, _, err := device.EnumerateDeviceExtensionProperties()
+	extensions, _, err := app.instanceDriver.EnumerateDeviceExtensionProperties(device)
 	if err != nil {
 		return false
 	}
@@ -857,7 +859,7 @@ func (app *HelloTriangleApplication) checkDeviceExtensionSupport(device core1_0.
 
 func (app *HelloTriangleApplication) findQueueFamilies(device core1_0.PhysicalDevice) (QueueFamilyIndices, error) {
 	indices := QueueFamilyIndices{}
-	queueFamilies := device.QueueFamilyProperties()
+	queueFamilies := app.instanceDriver.GetPhysicalDeviceQueueFamilyProperties(device)
 
 	for queueFamilyIdx, queueFamily := range queueFamilies {
 		if (queueFamily.QueueFlags & core1_0.QueueGraphics) != 0 {
@@ -865,7 +867,7 @@ func (app *HelloTriangleApplication) findQueueFamilies(device core1_0.PhysicalDe
 			*indices.GraphicsFamily = queueFamilyIdx
 		}
 
-		supported, _, err := app.surface.PhysicalDeviceSurfaceSupport(device, queueFamilyIdx)
+		supported, _, err := app.surfaceExtension.GetPhysicalDeviceSurfaceSupport(app.surface, device, queueFamilyIdx)
 		if err != nil {
 			return indices, err
 		}

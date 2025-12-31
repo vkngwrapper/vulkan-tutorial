@@ -1,14 +1,15 @@
 package main
 
 import (
+	"log"
+
 	"github.com/pkg/errors"
 	"github.com/veandco/go-sdl2/sdl"
-	"github.com/vkngwrapper/core/v2"
-	"github.com/vkngwrapper/core/v2/common"
-	"github.com/vkngwrapper/core/v2/core1_0"
-	"github.com/vkngwrapper/extensions/v2/ext_debug_utils"
-	"github.com/vkngwrapper/extensions/v2/khr_portability_enumeration"
-	"log"
+	"github.com/vkngwrapper/core/v3"
+	"github.com/vkngwrapper/core/v3/common"
+	"github.com/vkngwrapper/core/v3/core1_0"
+	"github.com/vkngwrapper/extensions/v3/ext_debug_utils"
+	"github.com/vkngwrapper/extensions/v3/khr_portability_enumeration"
 )
 
 var validationLayers = []string{"VK_LAYER_KHRONOS_validation"}
@@ -16,10 +17,11 @@ var validationLayers = []string{"VK_LAYER_KHRONOS_validation"}
 const enableValidationLayers = true
 
 type HelloTriangleApplication struct {
-	window *sdl.Window
-	loader core.Loader
+	globalDriver   core1_0.GlobalDriver
+	instanceDriver core1_0.CoreInstanceDriver
+	debugExtension ext_debug_utils.ExtensionDriver
+	window         *sdl.Window
 
-	instance       core1_0.Instance
 	debugMessenger ext_debug_utils.DebugUtilsMessenger
 }
 
@@ -49,7 +51,7 @@ func (app *HelloTriangleApplication) initWindow() error {
 	}
 	app.window = window
 
-	app.loader, err = core.CreateSystemLoader()
+	app.globalDriver, err = core.CreateSystemDriver()
 	if err != nil {
 		return err
 	}
@@ -81,16 +83,16 @@ appLoop:
 }
 
 func (app *HelloTriangleApplication) cleanup() {
-	if app.debugMessenger != nil {
-		app.debugMessenger.Destroy(nil)
+	if app.debugMessenger.Initialized() {
+		app.debugExtension.DestroyDebugUtilsMessenger(app.debugMessenger, nil)
 	}
 
-	if app.instance != nil {
-		app.instance.Destroy(nil)
+	if app.instanceDriver != nil {
+		app.instanceDriver.DestroyInstance(nil)
 	}
 
 	if app.window != nil {
-		app.window.Destroy()
+		_ = app.window.Destroy()
 	}
 	sdl.Quit()
 }
@@ -106,7 +108,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 
 	// Add extensions
 	sdlExtensions := app.window.VulkanGetInstanceExtensions()
-	extensions, _, err := app.loader.AvailableExtensions()
+	extensions, _, err := app.globalDriver.AvailableExtensions()
 	if err != nil {
 		return err
 	}
@@ -130,7 +132,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 	}
 
 	// Add layers
-	layers, _, err := app.loader.AvailableLayers()
+	layers, _, err := app.globalDriver.AvailableLayers()
 	if err != nil {
 		return err
 	}
@@ -148,7 +150,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		instanceOptions.Next = app.debugMessengerOptions()
 	}
 
-	app.instance, _, err = app.loader.CreateInstance(nil, instanceOptions)
+	app.instanceDriver, _, err = app.globalDriver.CreateInstance(nil, instanceOptions)
 	if err != nil {
 		return err
 	}
@@ -170,8 +172,8 @@ func (app *HelloTriangleApplication) setupDebugMessenger() error {
 	}
 
 	var err error
-	debugLoader := ext_debug_utils.CreateExtensionFromInstance(app.instance)
-	app.debugMessenger, _, err = debugLoader.CreateDebugUtilsMessenger(app.instance, nil, app.debugMessengerOptions())
+	app.debugExtension = ext_debug_utils.CreateExtensionDriverFromCoreDriver(app.instanceDriver)
+	app.debugMessenger, _, err = app.debugExtension.CreateDebugUtilsMessenger(nil, app.debugMessengerOptions())
 	if err != nil {
 		return err
 	}

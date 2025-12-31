@@ -1,20 +1,20 @@
 package main
 
 import (
+	"log"
+
 	"github.com/pkg/errors"
 	"github.com/veandco/go-sdl2/sdl"
-	"github.com/vkngwrapper/core/v2"
-	"github.com/vkngwrapper/core/v2/common"
-	"github.com/vkngwrapper/core/v2/core1_0"
-	"github.com/vkngwrapper/extensions/v2/khr_portability_enumeration"
-	"log"
+	"github.com/vkngwrapper/core/v3"
+	"github.com/vkngwrapper/core/v3/common"
+	"github.com/vkngwrapper/core/v3/core1_0"
+	"github.com/vkngwrapper/extensions/v3/khr_portability_enumeration"
 )
 
 type HelloTriangleApplication struct {
-	loader core.Loader
-	window *sdl.Window
-
-	instance core1_0.Instance
+	globalDriver   core1_0.GlobalDriver
+	instanceDriver core1_0.CoreInstanceDriver
+	window         *sdl.Window
 }
 
 func (app *HelloTriangleApplication) Run() error {
@@ -43,7 +43,7 @@ func (app *HelloTriangleApplication) initWindow() error {
 	}
 	app.window = window
 
-	app.loader, err = core.CreateSystemLoader()
+	app.globalDriver, err = core.CreateSystemDriver()
 	if err != nil {
 		return err
 	}
@@ -70,12 +70,12 @@ appLoop:
 }
 
 func (app *HelloTriangleApplication) cleanup() {
-	if app.instance != nil {
-		app.instance.Destroy(nil)
+	if app.instanceDriver != nil {
+		app.instanceDriver.DestroyInstance(nil)
 	}
 
 	if app.window != nil {
-		app.window.Destroy()
+		_ = app.window.Destroy()
 	}
 	sdl.Quit()
 }
@@ -91,7 +91,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 
 	// Add extensions
 	sdlExtensions := app.window.VulkanGetInstanceExtensions()
-	extensions, _, err := app.loader.AvailableExtensions()
+	extensions, _, err := app.globalDriver.AvailableExtensions()
 	if err != nil {
 		return err
 	}
@@ -110,7 +110,7 @@ func (app *HelloTriangleApplication) createInstance() error {
 		instanceOptions.Flags |= khr_portability_enumeration.InstanceCreateEnumeratePortability
 	}
 
-	app.instance, _, err = app.loader.CreateInstance(nil, instanceOptions)
+	app.instanceDriver, _, err = app.globalDriver.CreateInstance(nil, instanceOptions)
 	if err != nil {
 		return err
 	}

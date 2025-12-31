@@ -1,5 +1,5 @@
 diff --git a/../steps/21_descriptor_layout/main.go b/../steps/22_descriptor_sets/main.go
-index ec5b67b..40dd122 100644
+index 4b33247..3bcdab9 100644
 --- a/../steps/21_descriptor_layout/main.go
 +++ b/../steps/22_descriptor_sets/main.go
 @@ -54,9 +54,9 @@ type Vertex struct {
@@ -15,7 +15,7 @@ index ec5b67b..40dd122 100644
  }
  
  func getVertexBindingDescription() []core1_0.VertexInputBindingDescription {
-@@ -120,6 +120,8 @@ type HelloTriangleApplication struct {
+@@ -121,6 +121,8 @@ type HelloTriangleApplication struct {
  	swapchainFramebuffers []core1_0.Framebuffer
  
  	renderPass          core1_0.RenderPass
@@ -24,7 +24,7 @@ index ec5b67b..40dd122 100644
  	descriptorSetLayout core1_0.DescriptorSetLayout
  	pipelineLayout      core1_0.PipelineLayout
  	graphicsPipeline    core1_0.Pipeline
-@@ -253,6 +255,16 @@ func (app *HelloTriangleApplication) initVulkan() error {
+@@ -254,6 +256,16 @@ func (app *HelloTriangleApplication) initVulkan() error {
  		return err
  	}
  
@@ -41,16 +41,18 @@ index ec5b67b..40dd122 100644
  	err = app.createCommandBuffers()
  	if err != nil {
  		return err
-@@ -344,6 +356,8 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
- 		app.uniformBuffersMemory[i].Free(nil)
+@@ -348,6 +360,10 @@ func (app *HelloTriangleApplication) cleanupSwapChain() {
+ 		app.deviceDriver.FreeMemory(app.uniformBuffersMemory[i], nil)
  	}
  	app.uniformBuffersMemory = app.uniformBuffersMemory[:0]
 +
-+	app.descriptorPool.Destroy(nil)
++	if app.descriptorPool.Initialized() {
++		app.deviceDriver.DestroyDescriptorPool(app.descriptorPool, nil)
++	}
  }
  
  func (app *HelloTriangleApplication) cleanup() {
-@@ -453,6 +467,16 @@ func (app *HelloTriangleApplication) recreateSwapChain() error {
+@@ -457,6 +473,16 @@ func (app *HelloTriangleApplication) recreateSwapChain() error {
  		return err
  	}
  
@@ -67,7 +69,7 @@ index ec5b67b..40dd122 100644
  	err = app.createCommandBuffers()
  	if err != nil {
  		return err
-@@ -883,7 +907,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -887,7 +913,7 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  
  		PolygonMode: core1_0.PolygonModeFill,
  		CullMode:    core1_0.CullModeBack,
@@ -76,23 +78,13 @@ index ec5b67b..40dd122 100644
  
  		DepthBiasEnable: false,
  
-@@ -914,9 +938,6 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
- 			app.descriptorSetLayout,
- 		},
- 	})
--	if err != nil {
--		return err
--	}
- 
- 	pipelines, _, err := app.device.CreateGraphicsPipelines(nil, nil, []core1_0.GraphicsPipelineCreateInfo{
- 		{
-@@ -1077,6 +1098,61 @@ func (app *HelloTriangleApplication) createUniformBuffers() error {
+@@ -1081,6 +1107,61 @@ func (app *HelloTriangleApplication) createUniformBuffers() error {
  	return nil
  }
  
 +func (app *HelloTriangleApplication) createDescriptorPool() error {
 +	var err error
-+	app.descriptorPool, _, err = app.device.CreateDescriptorPool(nil, core1_0.DescriptorPoolCreateInfo{
++	app.descriptorPool, _, err = app.deviceDriver.CreateDescriptorPool(nil, core1_0.DescriptorPoolCreateInfo{
 +		MaxSets: len(app.swapchainImages),
 +		PoolSizes: []core1_0.DescriptorPoolSize{
 +			{
@@ -111,7 +103,7 @@ index ec5b67b..40dd122 100644
 +	}
 +
 +	var err error
-+	app.descriptorSets, _, err = app.device.AllocateDescriptorSets(core1_0.DescriptorSetAllocateInfo{
++	app.descriptorSets, _, err = app.deviceDriver.AllocateDescriptorSets(core1_0.DescriptorSetAllocateInfo{
 +		DescriptorPool: app.descriptorPool,
 +		SetLayouts:     allocLayouts,
 +	})
@@ -120,7 +112,7 @@ index ec5b67b..40dd122 100644
 +	}
 +
 +	for i := 0; i < len(app.swapchainImages); i++ {
-+		err = app.device.UpdateDescriptorSets([]core1_0.WriteDescriptorSet{
++		err = app.deviceDriver.UpdateDescriptorSets([]core1_0.WriteDescriptorSet{
 +			{
 +				DstSet:          app.descriptorSets[i],
 +				DstBinding:      0,
@@ -146,15 +138,15 @@ index ec5b67b..40dd122 100644
 +}
 +
  func (app *HelloTriangleApplication) createBuffer(size int, usage core1_0.BufferUsageFlags, properties core1_0.MemoryPropertyFlags) (core1_0.Buffer, core1_0.DeviceMemory, error) {
- 	buffer, _, err := app.device.CreateBuffer(nil, core1_0.BufferCreateInfo{
+ 	buffer, _, err := app.deviceDriver.CreateBuffer(nil, core1_0.BufferCreateInfo{
  		Size:        size,
-@@ -1200,6 +1276,9 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
- 		buffer.CmdBindPipeline(core1_0.PipelineBindPointGraphics, app.graphicsPipeline)
- 		buffer.CmdBindVertexBuffers(0, []core1_0.Buffer{app.vertexBuffer}, []int{0})
- 		buffer.CmdBindIndexBuffer(app.indexBuffer, 0, core1_0.IndexTypeUInt16)
-+		buffer.CmdBindDescriptorSets(core1_0.PipelineBindPointGraphics, app.pipelineLayout, 0, []core1_0.DescriptorSet{
+@@ -1206,6 +1287,9 @@ func (app *HelloTriangleApplication) createCommandBuffers() error {
+ 		app.deviceDriver.CmdBindPipeline(buffer, core1_0.PipelineBindPointGraphics, app.graphicsPipeline)
+ 		app.deviceDriver.CmdBindVertexBuffers(buffer, 0, []core1_0.Buffer{app.vertexBuffer}, []int{0})
+ 		app.deviceDriver.CmdBindIndexBuffer(buffer, app.indexBuffer, 0, core1_0.IndexTypeUInt16)
++		app.deviceDriver.CmdBindDescriptorSets(buffer, core1_0.PipelineBindPointGraphics, app.pipelineLayout, 0, []core1_0.DescriptorSet{
 +			app.descriptorSets[bufferIdx],
 +		}, nil)
- 		buffer.CmdDrawIndexed(len(indices), 1, 0, 0, 0)
- 		buffer.CmdEndRenderPass()
+ 		app.deviceDriver.CmdDrawIndexed(buffer, len(indices), 1, 0, 0, 0)
+ 		app.deviceDriver.CmdEndRenderPass(buffer)
  

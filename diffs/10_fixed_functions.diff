@@ -1,8 +1,8 @@
 diff --git a/../steps/09_shader_modules/main.go b/../steps/10_fixed_functions/main.go
-index 11fdb21..76e61c8 100644
+index f3f4bd3..93ea3e0 100644
 --- a/../steps/09_shader_modules/main.go
 +++ b/../steps/10_fixed_functions/main.go
-@@ -59,6 +59,8 @@ type HelloTriangleApplication struct {
+@@ -61,6 +61,8 @@ type HelloTriangleApplication struct {
  	swapchainImageFormat core1_0.Format
  	swapchainExtent      core1_0.Extent2D
  	swapchainImageViews  []core1_0.ImageView
@@ -11,29 +11,20 @@ index 11fdb21..76e61c8 100644
  }
  
  func (app *HelloTriangleApplication) Run() error {
-@@ -144,6 +146,10 @@ appLoop:
+@@ -146,6 +148,10 @@ appLoop:
  }
  
  func (app *HelloTriangleApplication) cleanup() {
-+	if app.pipelineLayout != nil {
-+		app.pipelineLayout.Destroy(nil)
++	if app.pipelineLayout.Initialized() {
++		app.deviceDriver.DestroyPipelineLayout(app.pipelineLayout, nil)
 +	}
 +
  	for _, imageView := range app.swapchainImageViews {
- 		imageView.Destroy(nil)
+ 		app.deviceDriver.DestroyImageView(imageView, nil)
  	}
-@@ -284,7 +290,7 @@ func (app *HelloTriangleApplication) pickPhysicalDevice() error {
+@@ -475,6 +481,13 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  	}
- 
- 	if app.physicalDevice == nil {
--		return errors.Errorf("failed to find a suitable GPU!")
-+		return errors.New("failed to find a suitable GPU!")
- 	}
- 
- 	return nil
-@@ -473,6 +479,13 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
- 	}
- 	defer fragShader.Destroy(nil)
+ 	defer app.deviceDriver.DestroyShaderModule(fragShader, nil)
  
 +	_ = &core1_0.PipelineVertexInputStateCreateInfo{}
 +
@@ -42,10 +33,10 @@ index 11fdb21..76e61c8 100644
 +		PrimitiveRestartEnable: false,
 +	}
 +
- 	_ = &core1_0.PipelineShaderStageCreateInfo{
+ 	_ = core1_0.PipelineShaderStageCreateInfo{
  		Stage:  core1_0.StageVertex,
  		Module: vertShader,
-@@ -485,6 +498,62 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
+@@ -487,6 +500,62 @@ func (app *HelloTriangleApplication) createGraphicsPipeline() error {
  		Name:   "main",
  	}
  
@@ -100,7 +91,7 @@ index 11fdb21..76e61c8 100644
 +		},
 +	}
 +
-+	app.pipelineLayout, _, err = app.device.CreatePipelineLayout(nil, core1_0.PipelineLayoutCreateInfo{})
++	app.pipelineLayout, _, err = app.deviceDriver.CreatePipelineLayout(nil, core1_0.PipelineLayoutCreateInfo{})
 +	if err != nil {
 +		return err
 +	}
