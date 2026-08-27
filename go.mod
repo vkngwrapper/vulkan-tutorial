@@ -7,9 +7,9 @@ require (
 	github.com/loov/hrtime v1.0.4
 	github.com/pkg/errors v0.9.1
 	github.com/veandco/go-sdl2 v0.4.40
-	github.com/vkngwrapper/core/v2 v2.2.4
-	github.com/vkngwrapper/extensions/v2 v2.2.1
-	github.com/vkngwrapper/integrations/sdl2/v2 v2.1.1
+	github.com/vkngwrapper/core/v3 v3.1.3
+	github.com/vkngwrapper/extensions/v3 v3.3.1
+	github.com/vkngwrapper/integrations/sdl2/v3 v3.0.3
 	github.com/vkngwrapper/math v1.2.1
 )
 
